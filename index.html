@@ -7,7 +7,7 @@
 (function(){var m=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)");
   function apply(){var t="system";try{t=localStorage.getItem("mp_theme")||"system";}catch(e){}
     var d=t==="dark"||(t==="system"&&m&&m.matches);document.documentElement.setAttribute("data-theme",d?"dark":"light");}
-  window.__applyLogo=function(){var l="classic";try{l=localStorage.getItem("mp_logo")||"classic";}catch(e){}document.documentElement.classList.toggle("logo-tin",l==="tin");};window.__applyLogo();
+  window.__applyLogo=function(){var l="classic";try{l=localStorage.getItem("mp_logo")||"classic";}catch(e){}document.documentElement.classList.toggle("logo-tin",l==="tin");var t=l==="tin";var a=document.querySelector('link[rel="apple-touch-icon"]');if(a)a.href=t?"img/icon-tin-192.png?v=1":"img/icon-192.png?v=2";var mf=document.querySelector('link[rel="manifest"]');if(mf)mf.href=t?"manifest-tin.webmanifest":"manifest.webmanifest";document.querySelectorAll("img.ic").forEach(function(i){i.src=t?"img/icon-tin-192.png":"img/icon-192.png";});};window.__applyLogo();document.addEventListener("DOMContentLoaded",window.__applyLogo);
   window.__applyTheme=apply;apply();if(m&&m.addEventListener)m.addEventListener("change",apply);})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Madro</title>
@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795038650";</script>
-<script src="config.js?v=1795038650"></script>
-<script src="importer.js?v=1795038650"></script>
-<script src="shim.js?v=1795038650"></script>
+<script>window.__appVersion="1795038834";</script>
+<script src="config.js?v=1795038834"></script>
+<script src="importer.js?v=1795038834"></script>
+<script src="shim.js?v=1795038834"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

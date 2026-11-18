@@ -479,7 +479,7 @@ function offerHomeScreen(){
   const steps=ios?'<ol><li>Tryk på '+share+' <b>Del</b> nederst i Safari.</li><li>Rul ned, og vælg <b>Føj til hjemmeskærm</b>.</li><li>Tryk <b>Tilføj</b>.</li></ol><p style="font-size:13px">Log derefter ind i appen på hjemmeskærmen med din mail og adgangskode.</p>'
     :(installEvt?'':'<ol><li>Tryk på menuen <b>⋮</b> øverst i Chrome.</li><li>Vælg <b>Føj til startskærm</b> eller <b>Installer app</b>.</li></ol>');
   const w=document.createElement("div");w.id="a2hs";w.setAttribute("role","dialog");w.setAttribute("aria-modal","true");w.setAttribute("aria-label","Gem Madro på hjemmeskærmen");
-  w.innerHTML='<div class="box"><img class="ic" src="img/icon-192.png" alt=""><h2>Gem Madro på din telefon</h2><p>Så åbner Madro som en rigtig app med ét tryk, uden adresselinje.</p>'+steps+
+  w.innerHTML='<div class="box"><img class="ic" src="'+(document.documentElement.classList.contains("logo-tin")?"img/icon-tin-192.png":"img/icon-192.png")+'" alt=""><h2>Gem Madro på din telefon</h2><p>Så åbner Madro som en rigtig app med ét tryk, uden adresselinje.</p>'+steps+
     (android&&installEvt?'<button class="au-btn" type="button" id="a2Install">Installér Madro</button>':'')+
     '<button class="au-btn'+(android&&installEvt?' plain':'')+'" type="button" id="a2Ok">'+(android&&installEvt?'Ikke nu':'Forstået')+'</button></div>';
   document.body.appendChild(w);
