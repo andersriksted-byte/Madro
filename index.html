@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795030789";</script>
-<script src="config.js?v=1795030789"></script>
-<script src="importer.js?v=1795030789"></script>
-<script src="shim.js?v=1795030789"></script>
+<script>window.__appVersion="1795030824";</script>
+<script src="config.js?v=1795030824"></script>
+<script src="importer.js?v=1795030824"></script>
+<script src="shim.js?v=1795030824"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -939,6 +939,18 @@ h1,h2,h3{font-family:var(--serif);letter-spacing:-.01em}
 #v-madplan #days .mag-day .dstat.wait b{position:absolute;top:-6px;right:-7px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#e0a020;color:#3a2600;font:800 10.5px/17px var(--body)}
 #v-madplan #days .meal.mag .mline .st{display:none!important}
 #v-madplan #days.menu-style .meal.mag .mline{display:none}
+
+/* full-screen week: the same side-standing day names and shopping icon as the plan */
+.wv-row{grid-template-columns:40px 1fr!important}
+.wv-dw{display:flex;flex-direction:column;align-items:center;justify-content:space-between;min-height:0;gap:4px;border-right:1px solid var(--line);padding-right:6px}
+.wv-row.today .wv-dw{border-color:#c8452a}
+.wv-day{writing-mode:vertical-rl;transform:rotate(180deg);flex-direction:column!important;align-items:flex-end;justify-content:flex-end!important;gap:3px;flex:1;min-height:0;overflow:hidden}
+.wv-day b{font-size:calc(17px * var(--fs))!important;line-height:1;white-space:nowrap}
+.wv-day small{margin:0!important;white-space:nowrap;font-size:calc(9px * var(--fs))!important}
+.wv-st{flex:none;width:24px;height:24px;border-radius:50%;border:1px dashed var(--line);display:grid;place-items:center;font-size:11px;position:relative;color:var(--muted)}
+.wv-st.done{background:#1f9d55;border:0;color:#fff;font-weight:800}
+.wv-st.wait{border:1.5px solid #e0a020}.wv-st.wait b{position:absolute;top:-6px;right:-8px;min-width:15px;height:15px;padding:0 3px;border-radius:8px;background:#e0a020;color:#3a2600;font:800 9.5px/15px var(--body)}
+.wv-row.today .wv-meals{box-shadow:none!important}
 /* recipe actions: one tidy block — servings and share on top, two equal buttons, the main action full width */
 .rec-actions.ra{display:flex;flex-direction:column;gap:8px}
 .ra .ra-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -2982,7 +2994,10 @@ function weekViewHTML(){const wk=state.week,w=isoWeek(wk),entries=planOf(weekKey
       const txt=e.note||e.pendingUrl||"";const nk=noteKind(txt);
 const ni=noteShowImg(e);
       return '<div class="wv-card" style="--rc:'+nk.c+'">'+(ni?'<img src="'+esc(ni)+'" alt="">':'<span class="emo" aria-hidden="true">'+nk.e+'</span>')+'<span class="wv-ov">'+(norm(nk.k)===norm(txt)?'':'<span class="k">'+esc(nk.k)+'</span>')+'<span class="t">'+esc(txt)+'</span>'+(e.sub?'<span class="k" style="text-transform:none;letter-spacing:0;font-style:italic">'+esc(e.sub)+'</span>':'')+'</span></div>';}).filter(Boolean);
-    return '<div class="wv-row'+(isT?' today':'')+'"><div class="wv-day"><b>'+d.slice(0,3)+'</b><small>'+date.getDate()+'. '+M[date.getMonth()]+'</small></div><div class="wv-meals n'+cards.length+'">'+(cards.join("")||'<button type="button" class="wv-empty" data-wvadd="'+i+'">+ Tilføj ret</button>')+'</div></div>';}).join("");
+    const dst=entries.filter(e=>e.day===i&&e.recipeId&&getRecipe(e.recipeId)).map(e=>entryStatus(e,getRecipe(e.recipeId))).filter(Boolean);
+    const miss=dst.filter(x=>x.cls==="wait").reduce((n,x)=>n+x.open.length,0);
+    const ic=!dst.length?"":dst.every(x=>x.cls==="done")?'<span class="wv-st done" aria-label="Handlet">✓</span>':miss?'<span class="wv-st wait" aria-label="'+miss+' mangler">🛒<b>'+miss+'</b></span>':'<span class="wv-st none" aria-label="Ikke handlet">🛒</span>';
+    return '<div class="wv-row'+(isT?' today':'')+'"><div class="wv-dw"><div class="wv-day"><b>'+d+'</b><small>'+date.getDate()+'. '+M[date.getMonth()]+'</small></div>'+ic+'</div><div class="wv-meals n'+cards.length+'">'+(cards.join("")||'<button type="button" class="wv-empty" data-wvadd="'+i+'">+ Tilføj ret</button>')+'</div></div>';}).join("");
   return '<div class="wv-head"><div><h2>Uge '+w.week+'</h2><small>'+wk.getDate()+'. '+M[wk.getMonth()]+' – '+end.getDate()+'. '+M[end.getMonth()]+'</small></div>'+
     '<div class="wv-nav"><button class="icon-btn" type="button" data-wvw="-1" aria-label="Forrige uge">‹</button><button class="icon-btn" type="button" data-wvw="1" aria-label="Næste uge">›</button><button class="btn small" type="button" id="wvClose">Luk</button></div></div>'+
     '<div class="wv-days">'+rows+'</div>';}
