@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795028791";</script>
-<script src="config.js?v=1795028791"></script>
-<script src="importer.js?v=1795028791"></script>
-<script src="shim.js?v=1795028791"></script>
+<script>window.__appVersion="1795028931";</script>
+<script src="config.js?v=1795028931"></script>
+<script src="importer.js?v=1795028931"></script>
+<script src="shim.js?v=1795028931"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1131,6 +1131,14 @@ span.g-x{display:block}
 .wv-ov .k{display:block;font-size:calc(9.5px * var(--fs));font-weight:800;letter-spacing:.14em;text-transform:uppercase;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wv-ov .t{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-family:var(--serif);font-weight:800;font-size:calc(16px * var(--fs));line-height:1.1}
 .wv-meals.n2 .wv-ov .t,.wv-meals.n3 .wv-ov .t{font-size:calc(13px * var(--fs))}
+#weekView.menu-style .wv-card{background:none;color:var(--ink);border-radius:6px;align-items:center}
+#weekView.menu-style .wv-card::after{display:none}
+#weekView.menu-style .wv-card img{left:auto;width:70%;-webkit-mask-image:linear-gradient(to right,transparent 0%,rgba(0,0,0,.12) 15%,rgba(0,0,0,.45) 38%,rgba(0,0,0,.85) 58%,#000 70%);mask-image:linear-gradient(to right,transparent 0%,rgba(0,0,0,.12) 15%,rgba(0,0,0,.45) 38%,rgba(0,0,0,.85) 58%,#000 70%)}
+#weekView.menu-style .wv-ov{max-width:62%}
+#weekView.menu-style .wv-ov .k{color:#c8452a;opacity:1;font-size:calc(8.5px * var(--fs));letter-spacing:.2em}
+#weekView.menu-style .wv-ov .t{font-style:italic;font-weight:700}
+#weekView.menu-style .wv-row{border-top:1px dotted var(--line);padding-top:4px}
+#weekView.menu-style .wv-row.today .wv-meals{box-shadow:inset 3px 0 0 #c8452a;border-radius:0}
 .wv-empty{flex:1;border:1.5px dashed var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-style:italic;color:var(--muted);background:none;font-size:calc(14px * var(--fs));cursor:pointer}
 
 body.wv-on .sheet-wrap{z-index:92;bottom:0}
@@ -2929,7 +2937,7 @@ function openWeekView(){let wv=$("#weekView");if(!wv){wv=document.createElement(
       const a=e.target.closest("[data-wvadd]");if(a){closeWeekView();const b=document.querySelector('#days [data-add="'+a.dataset.wvadd+'"]');if(b)b.click();}});
     let sx=0,sy=0;wv.addEventListener("touchstart",e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});
     wv.addEventListener("touchend",e=>{const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5){goWeek(dx<0?1:-1);wv.innerHTML=weekViewHTML();}},{passive:true});}
-  wv.innerHTML=weekViewHTML();document.documentElement.style.overflow="hidden";document.body.classList.add("wv-on");}
+  wv.classList.toggle("menu-style",planStyle()==="menu");wv.innerHTML=weekViewHTML();document.documentElement.style.overflow="hidden";document.body.classList.add("wv-on");}
 function closeWeekView(){const wv=$("#weekView");if(wv)wv.remove();document.documentElement.style.overflow="";document.body.classList.remove("wv-on");}
 
 
