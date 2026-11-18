@@ -77,6 +77,7 @@ function errText(e){const c=(e&&e.code)||"";
   if(c==="auth/weak-password")return "Adgangskoden skal være mindst 6 tegn.";
   if(c==="auth/invalid-action-code"||c==="auth/expired-action-code")return "Linket er udløbet eller allerede brugt. Bed om et nyt.";
   if(c==="auth/requires-recent-login")return "Log ind igen med et nyt link, før du vælger kode.";
+  if(c==="auth/user-token-expired")return "Du er blevet logget ud, fx fordi koden er skiftet på en anden enhed. Log ind igen.";
   if(c==="permission-denied")return "Du har ikke adgang til det.";
   if(c==="auth/network-request-failed"||c==="unavailable")return "Ingen forbindelse. Prøv igen.";
   return (e&&e.message)||"Noget gik galt.";}
@@ -113,7 +114,9 @@ function screenPassword(next){
   show(head("Madro","Vælg en adgangskode","Så kan du logge ind med mail og kode, også fra appen på hjemmeskærmen.")+
     '<form id="auF" style="display:contents"><input id="auPw" type="password" autocomplete="new-password" placeholder="Mindst 6 tegn"><button class="au-btn" type="submit">Gem kode</button></form><div class="au-msg"></div><button class="au-link" type="button" id="auSkip">Spring over</button>',
   box=>{box.querySelector("#auF").onsubmit=async e=>{e.preventDefault();const p=box.querySelector("#auPw").value;if(p.length<6){msg(box,"Mindst 6 tegn.");return;}
-      try{await auth.currentUser.updatePassword(p);try{sessionStorage.removeItem("mp_viaLink");}catch(e){}next();}catch(err){msg(box,errText(err));}};
+      try{await auth.currentUser.updatePassword(p);try{sessionStorage.removeItem("mp_viaLink");}catch(e){}next();}
+      catch(err){const c=err&&err.code;if(c==="auth/user-token-expired"||c==="auth/requires-recent-login"||c==="auth/user-disabled"){try{sessionStorage.removeItem("mp_viaLink");}catch(e){}
+        const m=low(auth.currentUser&&auth.currentUser.email);await auth.signOut();screenLogin(m);return;}msg(box,errText(err));}};
     box.querySelector("#auSkip").onclick=()=>{try{sessionStorage.removeItem("mp_viaLink");}catch(e){}next();};});
 }
 function screenNoFamily(inv){
