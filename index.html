@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795031067";</script>
-<script src="config.js?v=1795031067"></script>
-<script src="importer.js?v=1795031067"></script>
-<script src="shim.js?v=1795031067"></script>
+<script>window.__appVersion="1795031157";</script>
+<script src="config.js?v=1795031157"></script>
+<script src="importer.js?v=1795031157"></script>
+<script src="shim.js?v=1795031157"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2759,9 +2759,9 @@ function renderPlan(){
     const dst=entries.filter(e=>e.day===i&&e.recipeId&&getRecipe(e.recipeId)).map(e=>({e,st:entryStatus(e,getRecipe(e.recipeId))})).filter(x=>x.st);
     let dayStat="";if(dst.length){const miss=dst.filter(x=>x.st.cls==="wait").reduce((n,x)=>n+x.st.open.length,0),none=dst.some(x=>x.st.cls==="none"),allDone=dst.every(x=>x.st.cls==="done");
       const first=(dst.find(x=>x.st.cls!=="done")||dst[0]).e.id;
-      dayStat=allDone?'<button type="button" class="dstat done" data-status="'+esc(first)+'" aria-label="Der er handlet ind til '+esc(d)+'">✓</button>':
-        none&&!miss?'<button type="button" class="dstat none" data-status="'+esc(first)+'" aria-label="Ikke handlet til '+esc(d)+'">🛒</button>':
-        '<button type="button" class="dstat wait" data-status="'+esc(first)+'" aria-label="'+miss+' varer mangler til '+esc(d)+'">🛒<b>'+(miss||"!")+'</b></button>';}
+      dayStat=allDone?'<button type="button" class="dstat done" data-dstat="'+esc(first)+'" aria-label="Der er handlet ind til '+esc(d)+'">✓</button>':
+        none&&!miss?'<button type="button" class="dstat none" data-dstat="'+esc(first)+'" aria-label="Ikke handlet til '+esc(d)+'">🛒</button>':
+        '<button type="button" class="dstat wait" data-dstat="'+esc(first)+'" aria-label="'+miss+' varer mangler til '+esc(d)+'">🛒<b>'+(miss||"!")+'</b></button>';}
     return '<div class="day mag-day'+(isT?" today":"")+(meals?"":" empty-day")+'" data-dayidx="'+i+'"><div class="dname"><span class="dn-full">'+d+'</span><small>'+date.getDate()+'. '+MON[date.getMonth()]+(isT?' · i dag':'')+'</small></div>'+(dayStat?'<div class="dstat-w">'+dayStat+'</div>':'')+'<div class="dmeals">'+(meals||'<div class="none">— intet på menuen endnu —</div>')+'</div><button type="button" class="day-add" data-add="'+i+'" aria-label="Tilføj til '+d+'">+</button></div>';
   }).join("");
   $("#pickBtn").disabled=!entries.some(e=>e.recipeId&&getRecipe(e.recipeId));
@@ -3119,6 +3119,7 @@ function openDayAdd(day){
 }
 $("#days").addEventListener("click",async e=>{
   const ad=e.target.closest("[data-add]");if(ad){openDayAdd(+ad.dataset.add);return;}
+  const ds=e.target.closest("[data-dstat]");if(ds){const en=planOf(weekKey(state.week)).find(x=>x.id===ds.dataset.dstat);if(en)openShopStatus(en,state.week);return;}
   const sb=e.target.closest("[data-status]");if(sb){const key=weekKey(state.week);const en=planOf(key).find(x=>x.id===sb.dataset.status);const r=en&&getRecipe(en.recipeId);if(en&&r)openDishMenu(r,en,key);return;}
   let mc=!e.target.closest("[data-open],[data-rm],[data-grip],[data-add],button,a,input")&&e.target.closest(".meal[data-entry]");
   // tap elsewhere in the day box (day name, empty space): open the dish if the day has exactly one
@@ -3275,7 +3276,7 @@ function openShopStatus(entry,week){
   <div class="stack">
     <div><span class="st ${st.cls}" style="cursor:default"><span class="dot"></span>${esc(st.text)}</span></div>
     <p style="margin:0">${desc}</p>
-    ${st.open.length?'<div class="card">'+st.open.map(it=>'<div class="line" style="display:flex;justify-content:space-between;padding:4px 0"><span>'+esc(it.name)+'</span><span class="muted small num">'+esc(shopItemLine(it))+'</span></div>').join("")+'</div>':''}
+    ${st.open.length?'<div class="card">'+st.open.map(it=>'<div class="line" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0"><span style="flex:1">'+esc(it.name)+' <span class="muted small num">'+esc(shopItemLine(it))+'</span></span><button type="button" class="btn plain small" data-have="'+esc(it.id)+'">Har den</button></div>').join("")+'</div><p class="small muted" style="margin:0">Står en vare her, selvom du har købt den, blev den ikke krydset af på indkøbslisten. Tryk <b>Har den</b>, så fjernes den fra listen.</p>':''}
     ${(sh.skipped&&sh.skipped.length)?'<p class="small muted" style="margin:0">Har du i forvejen: '+esc(sh.skipped.join(", "))+'</p>':''}
     ${found.length?'<p class="small muted" style="margin:0">Fundet i butikken: '+esc(found.join(", "))+'</p>':''}
     <button class="btn" type="button" id="stPick">${st.cls==="none"?"Vælg ingredienser til indkøbslisten":"Vælg ingredienser igen"}</button>
@@ -3286,6 +3287,8 @@ function openShopStatus(entry,week){
     s.querySelector("#stPick").onclick=()=>openPicker([{r,servings:entry.servings,label:DAYS[entry.day],entryId:entry.id,week:key}],r.title);
     const d=s.querySelector("#stDone");if(d)d.onclick=()=>setShopped({at:Date.now(),added:(sh.added||[]).filter(n=>!st.open.some(o=>norm(o.name)===norm(n))),skipped:[...new Set([...(sh.skipped||[]),...st.open.map(o=>o.name)])],manual:true}).then(()=>toast(r.title+" er markeret som handlet"));
     const rs=s.querySelector("#stReset");if(rs)rs.onclick=()=>setShopped(null);
+    s.querySelectorAll("[data-have]").forEach(b=>b.onclick=async()=>{const it=state.shopping.find(x=>x.id===b.dataset.have);if(!it)return;
+      await saveShopping(state.shopping.filter(x=>x.id!==it.id));toast(it.name+" er fjernet fra indkøbslisten");renderPlan();openShopStatus(entry,week);});
   });
 }
 
