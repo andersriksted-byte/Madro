@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795037115";</script>
-<script src="config.js?v=1795037115"></script>
-<script src="importer.js?v=1795037115"></script>
-<script src="shim.js?v=1795037115"></script>
+<script>window.__appVersion="1795037481";</script>
+<script src="config.js?v=1795037481"></script>
+<script src="importer.js?v=1795037481"></script>
+<script src="shim.js?v=1795037481"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2158,6 +2158,7 @@ function choiceList(){const out=[{k:"insp",l:"✨ Inspiration"},{k:"safe",l:"De 
 let _qsOrder=null;addEventListener("hashchange",()=>{_qsOrder=null;});
 /* personal view settings (filters, sorting, list layout) live on this device only — never in the family's shared settings */
 function myPref(k,def){try{const v=localStorage.getItem("mp_my_"+k);if(v!=null)return JSON.parse(v);}catch(e){}
+  if(k==="listView"||k==="listGroup")return def;/* new phones start with the standard view */
   const old=state.settings&&state.settings[k];return old!==undefined?old:def;}
 function setMyPref(k,v){try{localStorage.setItem("mp_my_"+k,JSON.stringify(v));}catch(e){}}
 function topChoices(){if(_qsOrder)return _qsOrder;const use=myPref("filterUse",{})||{};const L=choiceList();
@@ -2265,7 +2266,7 @@ $("#rSearchTg").addEventListener("click",()=>{const box=$("#rSearchBox"),open=bo
 function foldTg(btn,box,other,otherBtn,focus){const open=box.hidden;box.hidden=!open;btn.setAttribute("aria-expanded",open);
   if(open){other.hidden=true;otherBtn.setAttribute("aria-expanded","false");if(focus)focus.focus();}}
 /* layout (list / big pictures) is kept apart from the sort dropdown, so neither resets the other */
-function recView(){try{const v=localStorage.getItem("mp_recLayout")||localStorage.getItem("mp_recView");return v==="gallery"?"gallery":(v==="list"?"list":(window._recView||"list"));}catch(e){return window._recView||"list";}}
+function recView(){try{const v=localStorage.getItem("mp_recLayout")||localStorage.getItem("mp_recView");return v==="list"?"list":(v==="gallery"?"gallery":(window._recView||"gallery"));}catch(e){return window._recView||"gallery";}}
 function drawViewToggle(){const g=recView()==="gallery";const b=$("#rView");b.innerHTML=g?'<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>':'<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="4" y="4" width="16" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 19h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
   b.setAttribute("aria-label",g?"Skift til liste":"Skift til store billeder");}
 $("#rView").addEventListener("click",()=>{const v=recView()==="gallery"?"list":"gallery";window._recView=v;try{localStorage.setItem("mp_recLayout",v);}catch(e){}drawViewToggle();renderRecipes();});
@@ -2833,7 +2834,7 @@ function renderPlan(){
   const wv=document.getElementById("weekView");if(wv)wv.innerHTML=weekViewHTML();
 }
 /* Billeder / Menukort for the week plan, remembered on this device */
-function planStyle(){try{return localStorage.getItem("mp_planStyle")||"img";}catch(e){return "img";}}
+function planStyle(){try{return localStorage.getItem("mp_planStyle")||"menu";}catch(e){return "menu";}}
 function drawPlanStyle(){const v=planStyle();$("#days").classList.toggle("menu-style",v==="menu");
   document.querySelectorAll("#planStyleSeg [data-ps]").forEach(b=>{const on=b.dataset.ps===v;b.classList.toggle("on",on);b.setAttribute("aria-pressed",String(on));});}
 $("#planStyleSeg").addEventListener("click",e=>{const b=e.target.closest("[data-ps]");if(!b)return;try{localStorage.setItem("mp_planStyle",b.dataset.ps);}catch(x){}drawPlanStyle();});
