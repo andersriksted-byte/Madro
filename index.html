@@ -13,6 +13,7 @@
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
 <script src="config.js"></script>
+<script src="importer.js"></script>
 <script src="shim.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -487,6 +488,7 @@ html.wheel #recipeList.gal-grid{padding-bottom:22vh}
 #v-madplan.pl-c .meal.note{border:0;background:#f4f2f8;border-radius:16px}
 /* magazine week plan */
 #v-madplan #days{gap:0}
+html:not(.web-app) .web-only{display:none}html.web-app .claude-only{display:none}
 #pickBtn:disabled{opacity:.35;cursor:default}
 #v-madplan>.top>.row{gap:6px!important}
 #v-madplan #days .day.mag-day{display:grid;grid-template-columns:1fr 40px;grid-template-areas:"name add" "meals meals";gap:8px 6px;background:none!important;border:0;border-top:1px solid var(--ink);border-radius:0;box-shadow:none!important;outline:0;padding:14px 0 18px}
@@ -1105,7 +1107,8 @@ body.wv-on .toast{z-index:210}
         <span class="lbl">Billede (valgfrit)</span>
         <div class="img-pick" id="impImgBox"><label class="btn plain small" for="impImg">Vælg billede</label><input type="file" id="impImg" accept="image/*" hidden><span class="small muted">eller kopiér billedet på hjemmesiden og indsæt det i tekstfeltet</span></div>
       </div>
-      <p class="small muted" style="margin:0"><b>Kun link:</b> Tryk <b>Sæt opskriften op</b>, så gemmes linket, og Claude henter opskriften fra hjemmesiden <span class="recWhen">automatisk kl. 7, 13 og 17</span>. <b>Link og tekst:</b> Opskriften sættes op med det samme.</p>
+      <p class="small muted web-only" style="margin:0"><b>Kun link:</b> Tryk <b>Sæt opskriften op</b>, så henter Madro opskriften med det samme og lægger den i Kogebogen.</p>
+      <p class="small muted claude-only" style="margin:0"><b>Kun link:</b> Tryk <b>Sæt opskriften op</b>, så gemmes linket, og Claude henter opskriften fra hjemmesiden <span class="recWhen">automatisk kl. 7, 13 og 17</span>. <b>Link og tekst:</b> Opskriften sættes op med det samme.</p>
       <div class="row">
         <button class="btn" id="impGo" type="button">Sæt opskriften op</button>
         <button class="btn plain small" id="impCopy" type="button">Kopiér besked til chatten</button>
@@ -1336,7 +1339,7 @@ function pickOffers(){
 async function loadOfferFile(){
   try{const res=await fetch("offers.json",{cache:"no-store"});if(!res.ok)return;fileOffers=await res.json();pickOffers();renderStores();renderShop();}catch(e){}
 }
-window.__appState=()=>state;
+window.__appState=()=>state;if(window.__webApp)document.documentElement.classList.add("web-app");
 async function init(){
   route();loadOfferFile();
   renderAll();
@@ -1713,10 +1716,10 @@ function renderImports(){
   const el=$("#importList");const list=state.imports;
   if(!list.length){el.innerHTML="";return;}
   const waiting=list.filter(x=>x.status!=="fejl").length;
-  el.innerHTML='<div class="card stack" style="border-left:5px solid var(--note);gap:8px"><div class="row" style="justify-content:space-between"><h3>Venter på Claude</h3><span class="small muted">'+waiting+' link'+(waiting===1?"":"s")+'</span></div>'+
+  el.innerHTML='<div class="card stack" style="border-left:5px solid var(--note);gap:8px"><div class="row" style="justify-content:space-between"><h3>'+(window.__webApp?"Henter opskrifter":"Venter på Claude")+'</h3><span class="small muted">'+waiting+' link'+(waiting===1?"":"s")+'</span></div>'+
     list.map(x=>{let host=x.url;try{host=new URL(x.url).hostname.replace(/^www\./,"")+new URL(x.url).pathname.replace(/\/$/,"").split("/").slice(-1).map(p=>" · "+decodeURIComponent(p).replace(/[-_]/g," ")).join("");}catch(e){}
-      return '<div class="row" style="justify-content:space-between;flex-wrap:nowrap;border-top:1px solid var(--line);padding-top:8px"><div style="min-width:0"><div style="overflow-wrap:anywhere;font-weight:600;font-size:calc(14px * var(--fs))">'+esc(host)+'</div><div class="small" style="color:'+(x.status==="fejl"?"var(--accent)":"var(--muted)")+'">'+(x.status==="fejl"?"Kunne ikke hentes"+(x.error?": "+esc(x.error):""):"Venter på at blive hentet")+'</div></div><button class="del" type="button" data-delimp="'+esc(x.id)+'" aria-label="Fjern link" style="border:0;background:none;color:var(--muted);font-size:calc(20px * var(--fs));width:32px;height:32px">×</button></div>';}).join("")+
-    '<p class="small muted" style="margin:0">Claude henter dem '+recWhen()+' og sætter dem op med næringsindhold. Har du travlt, kan du skrive <b>Hent mine opskrifter</b> til Claude i chatten.</p></div>';
+      return '<div class="row" style="justify-content:space-between;flex-wrap:nowrap;border-top:1px solid var(--line);padding-top:8px"><div style="min-width:0"><div style="overflow-wrap:anywhere;font-weight:600;font-size:calc(14px * var(--fs))">'+esc(host)+'</div><div class="small" style="color:'+(x.status==="fejl"?"var(--accent)":"var(--muted)")+'">'+(x.status==="fejl"?"Kunne ikke hentes"+(x.error?": "+esc(x.error):""):window.__webApp?(x.status==="henter"?"Henter opskriften…":x.auto==="fejl"?"Kunne ikke læses automatisk. Skriv Hent mine opskrifter til Claude.":"Henter om et øjeblik…"):"Venter på at blive hentet")+'</div></div><button class="del" type="button" data-delimp="'+esc(x.id)+'" aria-label="Fjern link" style="border:0;background:none;color:var(--muted);font-size:calc(20px * var(--fs));width:32px;height:32px">×</button></div>';}).join("")+
+    (window.__webApp?'':'<p class="small muted" style="margin:0">Claude henter dem '+recWhen()+' og sætter dem op med næringsindhold. Har du travlt, kan du skrive <b>Hent mine opskrifter</b> til Claude i chatten.</p>')+'</div>';
 }
 $("#importList").addEventListener("click",async e=>{
   const d=e.target.closest("[data-delimp]");if(d){await delDoc("imports",d.dataset.delimp);return;}
@@ -2063,7 +2066,7 @@ $("#impGo").addEventListener("click",async()=>{
     if(state.imports.some(x=>x.url===url&&x.status!=="fejl")){st.textContent="Det link venter allerede på at blive hentet.";return;}
     try{await setDoc("imports",uid(),{url,status:"venter",createdAt:Date.now(),image:impImage||""});}catch(e){return;}
     $("#impUrl").value="";impImage="";showImpImage();$("#importBox").style.display="none";st.textContent="";
-    toast(sched().recipes==="manual"?"Linket er gemt. Skriv Hent mine opskrifter til Claude i chatten.":"Linket er gemt. Claude henter opskriften "+recWhen()+".");return;}
+    toast(window.__webApp?"Henter opskriften…":sched().recipes==="manual"?"Linket er gemt. Skriv Hent mine opskrifter til Claude i chatten.":"Linket er gemt. Claude henter opskriften "+recWhen()+".");return;}
   if(!sample){st.textContent="Claude er ikke tilgængelig i denne visning. Brug Skriv selv i stedet.";return;}
   const btn=$("#impGo");btn.disabled=true;st.innerHTML='<span class="spin"></span> Claude sætter opskriften op…';
   try{

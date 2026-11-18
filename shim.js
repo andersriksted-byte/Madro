@@ -252,7 +252,9 @@ async function importFile(file){
 let impUnsub=null;const tried={};
 function watchImports(){
   if(impUnsub)impUnsub();
-  impUnsub=famCol("imports").onSnapshot(s=>{s.docs.forEach(d=>{const v=d.data();if(v.status==="venter")pullInbox(d.id);});},()=>{});
+  impUnsub=famCol("imports").onSnapshot(s=>{s.docs.forEach(d=>{const v=d.data();
+      if(v.status==="venter"){pullInbox(d.id);if(v.auto!=="fejl")autoImport(d.id,v);}
+      else if(v.status==="henter"&&Date.now()-(v.claimedAt||0)>180000)autoImport(d.id,v,true);});},()=>{});
   document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")Object.keys(tried).forEach(k=>{if(tried[k]!=="done")tried[k]=0;});});
 }
 async function pullInbox(id){
@@ -268,6 +270,23 @@ async function pullInbox(id){
     if(!r.image&&cur.data().image)r.image=cur.data().image;
     const nid="imp"+rid();await famCol("recipes").doc(nid).set(Object.assign({createdAt:Date.now()},r));await ref.delete();tried[id]="done";
   }catch(e){}
+}
+/* fetch the recipe straight away in the app; if the page can't be read, it stays in the queue for Claude */
+const autoBusy={};
+async function autoImport(id,v,stale){
+  if(!window.MadroImporter||autoBusy[id])return;autoBusy[id]=1;
+  const ref=famCol("imports").doc(id);
+  try{
+    const claimed=await fs.runTransaction(async t=>{const d=await t.get(ref);if(!d.exists)return false;const x=d.data();
+      const free=x.status==="venter"&&x.auto!=="fejl";const old=x.status==="henter"&&Date.now()-(x.claimedAt||0)>180000;
+      if(!free&&!old)return false;t.update(ref,{status:"henter",claimedBy:S.user.uid,claimedAt:Date.now()});return true;});
+    if(!claimed)return;
+    let r;try{r=await window.MadroImporter.importRecipe(v.url);}
+    catch(err){await ref.set({status:"venter",auto:"fejl",autoError:String((err&&err.message)||err).slice(0,120)},{merge:true});return;}
+    if(!r.image&&v.image)r.image=v.image;
+    await famCol("recipes").doc("imp"+rid()).set(r);await ref.delete();
+    try{const t=document.getElementById("toast");if(t){t.textContent="Lagt i Kogebogen: "+r.title;t.classList.add("on");setTimeout(()=>t.classList.remove("on"),3500);}}catch(e){}
+  }catch(e){}finally{delete autoBusy[id];}
 }
 async function toDataURL(u){try{const r=await fetch(u);if(!r.ok)return "";const b=await r.blob();
   const bmp=await createImageBitmap(b);const sc=Math.min(1,720/Math.max(bmp.width,bmp.height));const cv=document.createElement("canvas");cv.width=Math.round(bmp.width*sc);cv.height=Math.round(bmp.height*sc);
