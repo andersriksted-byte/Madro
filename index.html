@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795035006";</script>
-<script src="config.js?v=1795035006"></script>
-<script src="importer.js?v=1795035006"></script>
-<script src="shim.js?v=1795035006"></script>
+<script>window.__appVersion="1795035070";</script>
+<script src="config.js?v=1795035070"></script>
+<script src="importer.js?v=1795035070"></script>
+<script src="shim.js?v=1795035070"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -3164,7 +3164,11 @@ function openDayAdd(day){
 }
 $("#days").addEventListener("click",async e=>{
   const ad=e.target.closest("[data-add]");if(ad){openDayAdd(+ad.dataset.add);return;}
-  const ds=e.target.closest("[data-dstat]");if(ds){const en=planOf(weekKey(state.week)).find(x=>x.id===ds.dataset.dstat);if(en)openShopStatus(en,state.week);return;}
+  const ds=e.target.closest("[data-dstat]");if(ds){const key=weekKey(state.week);const en=planOf(key).find(x=>x.id===ds.dataset.dstat);if(!en)return;
+    /* several dishes on the day: the ones not shopped for yet go into the basket together */
+    const day=planOf(key).filter(x=>x.day===en.day&&x.recipeId&&getRecipe(x.recipeId));const todo=day.filter(x=>!x.shopped);
+    if(todo.length>1||(todo.length&&day.length>1)){openPicker(todo.map(x=>({r:getRecipe(x.recipeId),servings:x.servings,label:DAYS[x.day],entryId:x.id,week:key})),DAYS[en.day]);return;}
+    openShopStatus(todo[0]||en,state.week);return;}
   const sb=e.target.closest("[data-status]");if(sb){const key=weekKey(state.week);const en=planOf(key).find(x=>x.id===sb.dataset.status);const r=en&&getRecipe(en.recipeId);if(en&&r)openDishMenu(r,en,key);return;}
   let mc=!e.target.closest("[data-open],[data-rm],[data-grip],[data-add],button,a,input")&&e.target.closest(".meal[data-entry]");
   // tap elsewhere in the day box (day name, empty space): open the dish if the day has exactly one
