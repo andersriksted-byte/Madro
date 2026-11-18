@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795036644";</script>
-<script src="config.js?v=1795036644"></script>
-<script src="importer.js?v=1795036644"></script>
-<script src="shim.js?v=1795036644"></script>
+<script>window.__appVersion="1795036745";</script>
+<script src="config.js?v=1795036745"></script>
+<script src="importer.js?v=1795036745"></script>
+<script src="shim.js?v=1795036745"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -856,7 +856,7 @@ h1,h2,h3{font-family:var(--serif);letter-spacing:-.01em}
 .masthead-w{margin:0 0 16px}
 .masthead-w .masthead{margin:0;gap:14px}
 .masthead-w .masthead::before,.masthead-w .masthead::after{height:0;background:none;border-top:3px double currentColor;opacity:.7}
-.masthead-w .masthead span{font-family:'Playball',var(--serif);font-style:normal;font-weight:400;font-size:calc(40px * var(--fs));letter-spacing:0;line-height:1.1}
+.masthead-w .masthead span{font-size:calc(34px * var(--fs));font-weight:700;letter-spacing:.01em}
 .mast-sub{text-align:center;margin-top:5px;font-family:var(--body);font-size:calc(10.5px * var(--fs));font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
 :root[data-theme="dark"] .masthead{color:#dd5638}
 #v-madplan{--kick:"Ugens menu"}#v-indkob{--kick:"Til butikken"}#v-spil{--kick:"Leg med maden"}#v-opskrifter{--kick:"Opskrifter"}#v-butikker{--kick:"Indstillinger"}
@@ -2919,7 +2919,7 @@ async function drawWeekCanvas(style){
   const L=mm(12),R=W-mm(12);let T=mm(11);
   /* the app's wordmark: italic Madro between double rules, with what it is underneath; and the round M seal */
   const BRAND="#c8452a";
-  const mast=(cx,y,size,half)=>{c.fillStyle=BRAND;c.font="400 "+pt(size*1.12)+"px Playball,"+SERIF;const tw=c.measureText("Madro").width;
+  const mast=(cx,y,size,half)=>{c.fillStyle=BRAND;c.font="italic 800 "+pt(size)+"px "+SERIF;const tw=c.measureText("Madro").width;
     c.textAlign="center";c.fillText("Madro",cx,y);c.textAlign="left";
     const ly=y-pt(size)*.32,g=mm(4);[[cx-half,cx-tw/2-g],[cx+tw/2+g,cx+half]].forEach(([a,b])=>{c.fillRect(a,ly-mm(.55),b-a,mm(.25));c.fillRect(a,ly+mm(.3),b-a,mm(.25));});
     c.fillStyle=MUTE;c.font="700 "+pt(6.2)+"px "+SANS;sp("MADPLAN  ·  KOGEBOG  ·  INDKØB",cx,y+mm(4.6),pt(6.2)*.28,"center");};
@@ -2965,7 +2965,7 @@ async function drawWeekCanvas(style){
     c.fillStyle=CREAM;rr(xNotes,y,wNotes,rowH,rad);c.fill();c.strokeStyle=LINE+".45)";c.lineWidth=mm(.22);c.stroke();
     c.fillStyle=RED;c.font="700 "+pt(6)+"px "+SANS;sp("NOTER",xNotes+mm(2.6),y+mm(3.8),pt(6)*.2);
     const ly0=y+mm(5.2),lh2=(rowH-mm(5.2)-mm(.8))/5;c.fillStyle=LINE+".22)";for(let k=1;k<=4;k++)c.fillRect(xNotes+mm(2.6),ly0+lh2*k,wNotes-mm(5.2),mm(.18));});
-  seal(L+mm(2.6),H-mm(10.1),mm(2.6));c.fillStyle=BRAND;c.font="400 "+pt(10.5)+"px Playball,"+SERIF;c.fillText("Madro",L+mm(6.6),H-mm(9));
+  seal(L+mm(2.6),H-mm(10.1),mm(2.6));c.fillStyle=BRAND;c.font="italic 800 "+pt(9)+"px "+SERIF;c.fillText("Madro",L+mm(6.6),H-mm(9));
   c.fillStyle=MUTE;c.font="700 "+pt(6.5)+"px "+SANS;sp("VELBEKOMME",R,H-mm(9),pt(6.5)*.2,"right");
   return cv;}
 function jpegToPdf(jpg,wPx,hPx){/* minimal one-page A4 PDF with the JPEG as a full-page image */
