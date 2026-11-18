@@ -3,18 +3,23 @@
    sidens strukturerede data (schema.org Recipe, som de fleste opskriftssider har). */
 (function(){
 "use strict";
+/* several free gateways; the first one that answers wins */
 const PROXIES=[
-  u=>"https://corsproxy.io/?url="+encodeURIComponent(u),
-  u=>"https://api.allorigins.win/raw?url="+encodeURIComponent(u),
-  u=>"https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(u)
+  {u:u=>"https://api.allorigins.win/raw?url="+encodeURIComponent(u)},
+  {u:u=>"https://api.allorigins.win/get?url="+encodeURIComponent(u),json:"contents",text:true},
+  {u:u=>"https://corsproxy.io/?url="+encodeURIComponent(u)},
+  {u:u=>"https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(u)},
+  {u:u=>"https://r.jina.ai/"+u,h:{"X-Return-Format":"html"},text:true}
 ];
 async function viaProxy(url,as,ms){
   let lastErr=null;
   for(const p of PROXIES){
+    if(as==="blob"&&p.text)continue;
     try{const ac=new AbortController();const t=setTimeout(()=>ac.abort(),ms||15000);
-      const r=await fetch(p(url),{signal:ac.signal});
+      const r=await fetch(p.u(url),{signal:ac.signal,headers:p.h||{}});
       if(!r.ok){clearTimeout(t);lastErr=new Error("HTTP "+r.status);continue;}
-      const v=as==="blob"?await r.blob():await r.text();clearTimeout(t);
+      let v=as==="blob"?await r.blob():await r.text();clearTimeout(t);
+      if(p.json){try{v=JSON.parse(v)[p.json]||"";}catch(e){v="";}}
       if(as!=="blob"&&(!v||v.length<200)){lastErr=new Error("tom side");continue;}
       if(as==="blob"&&!/^image\//.test(v.type||"")&&v.size<1000){lastErr=new Error("intet billede");continue;}
       return v;}catch(e){lastErr=e;}
@@ -41,7 +46,7 @@ function isoDur(v){v=txt(v);const m=/^P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?/i.exe
   const h=Math.floor(mins/60),mm=mins%60;return h?(h+" t"+(mm?" "+mm+" min":"")):mm+" min";}
 function imageOf(v){if(!v)return "";if(typeof v==="string")return v;if(Array.isArray(v)){for(const x of v){const u=imageOf(x);if(u)return u;}return "";}return v.url||v.contentUrl||"";}
 function steps(v,out){out=out||[];if(!v)return out;
-  if(typeof v==="string"){decode(v).split(/\n+|(?<=\.)\s{2,}/).map(s=>s.trim()).filter(Boolean).forEach(s=>out.push(s));return out;}
+  if(typeof v==="string"){decode(v).split(/\n+|\.\s{2,}/).map(s=>s.trim()).filter(Boolean).forEach(s=>out.push(s));return out;}
   if(Array.isArray(v)){v.forEach(x=>steps(x,out));return out;}
   if(v.itemListElement)return steps(v.itemListElement,out);
   const s=txt(v.text||v.name);if(s)out.push(s);return out;}
@@ -101,7 +106,7 @@ async function importRecipe(url){
   const html=await viaProxy(url,"text",20000);
   const r=recipeFromHTML(html,url);
   if(!r)throw new Error("Siden har ingen opskrift, appen kan læse");
-  if(r.image){try{const b=await viaProxy(r.image,"blob",15000);r.image=await shrink(b);}catch(e){r.image="";}}
+  if(r.image){const orig=r.image;try{const b=await viaProxy(orig,"blob",15000);r.image=(await shrink(b))||orig;}catch(e){r.image=orig;}}
   if(!r.nutrition)delete r.nutrition;
   return r;
 }

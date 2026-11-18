@@ -354,7 +354,7 @@ async function autoImport(id,v,stale){
     if(!r.image&&v.image)r.image=v.image;
     await famCol("recipes").doc("imp"+rid()).set(r);await ref.delete();
     try{const t=document.getElementById("toast");if(t){t.textContent="Lagt i Kogebogen: "+r.title;t.classList.add("on");setTimeout(()=>t.classList.remove("on"),3500);}}catch(e){}
-  }catch(e){}finally{delete autoBusy[id];}
+  }catch(e){try{await ref.set({status:"venter",auto:"fejl",autoError:"Fejl: "+String((e&&(e.code||e.message))||e).slice(0,100)},{merge:true});}catch(e2){}}finally{delete autoBusy[id];}
 }
 async function toDataURL(u){try{const r=await fetch(u);if(!r.ok)return "";const b=await r.blob();
   const bmp=await createImageBitmap(b);const sc=Math.min(1,720/Math.max(bmp.width,bmp.height));const cv=document.createElement("canvas");cv.width=Math.round(bmp.width*sc);cv.height=Math.round(bmp.height*sc);
