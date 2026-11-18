@@ -12,10 +12,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795013695";</script>
-<script src="config.js?v=1795013695"></script>
-<script src="importer.js?v=1795013695"></script>
-<script src="shim.js?v=1795013695"></script>
+<script>window.__appVersion="1795013821";</script>
+<script src="config.js?v=1795013821"></script>
+<script src="importer.js?v=1795013821"></script>
+<script src="shim.js?v=1795013821"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -4015,7 +4015,8 @@ function renderStores(){renderSched();renderKidsEdit();renderSrcEdit();
   const custom=st.customStores||[];
   $("#storeChips").innerHTML=allStores().map(s=>'<span class="row" style="gap:2px"><button type="button" class="chip'+(st.stores.includes(s)?" on":"")+'" data-store="'+esc(s)+'" aria-pressed="'+st.stores.includes(s)+'">'+(st.stores.includes(s)?"✓ ":"")+esc(s)+'</button>'+(custom.includes(s)?'<button type="button" class="chip" data-rmstore="'+esc(s)+'" aria-label="Fjern '+esc(s)+'" style="padding:6px 9px">×</button>':'')+'</span>').join("");
   $("#primary").innerHTML=(st.stores.length?st.stores:allStores()).map(s=>'<option'+(s===st.primary?" selected":"")+'>'+esc(s)+'</option>').join("");
-  document.querySelectorAll("#maxSeg button").forEach(b=>b.classList.toggle("on",+b.dataset.v===(st.maxStores||2)));
+  {const n=Math.max(1,st.stores.length),cur=Math.min(st.maxStores||2,n);/* one button per chosen store */
+   $("#maxSeg").innerHTML=Array.from({length:n},(_,i)=>'<button type="button" data-v="'+(i+1)+'"'+(i+1===cur?' class="on"':'')+'>'+(i+1)+'</button>').join("");}
   const off=state.offers;const offs=allOffers();
   if(!offs.length){$("#offerStatus").innerHTML='<span class="pill">Ingen gældende tilbud</span>';}
   else{
