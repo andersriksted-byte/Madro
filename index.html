@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795030824";</script>
-<script src="config.js?v=1795030824"></script>
-<script src="importer.js?v=1795030824"></script>
-<script src="shim.js?v=1795030824"></script>
+<script>window.__appVersion="1795031067";</script>
+<script src="config.js?v=1795031067"></script>
+<script src="importer.js?v=1795031067"></script>
+<script src="shim.js?v=1795031067"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -951,6 +951,11 @@ h1,h2,h3{font-family:var(--serif);letter-spacing:-.01em}
 .wv-st.done{background:#1f9d55;border:0;color:#fff;font-weight:800}
 .wv-st.wait{border:1.5px solid #e0a020}.wv-st.wait b{position:absolute;top:-6px;right:-8px;min-width:15px;height:15px;padding:0 3px;border-radius:8px;background:#e0a020;color:#3a2600;font:800 9.5px/15px var(--body)}
 .wv-row.today .wv-meals{box-shadow:none!important}
+
+/* sheets scroll on their own (iPhone included): the page behind is locked while one is open, and the main button stays in view */
+html.sheet-open,html.sheet-open body{overflow:hidden;scroll-snap-type:none!important;overscroll-behavior:none}
+.sheet{max-height:calc(100dvh - var(--tabh,0px) - 28px);overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+#addSel{position:sticky;bottom:-4px;z-index:3;box-shadow:0 -10px 18px 6px var(--bg)}
 /* recipe actions: one tidy block — servings and share on top, two equal buttons, the main action full width */
 .rec-actions.ra{display:flex;flex-direction:column;gap:8px}
 .ra .ra-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -1882,9 +1887,9 @@ window.addEventListener("hashchange",()=>{if(/madplan/.test(location.hash))fresh
 
 /* ---------- sheet ---------- */
 let sheetGuard=null;
-function openSheet(html,onMount){sheetGuard=null;$("#sheet").classList.remove("add-sheet");$("#sheet").innerHTML=html;$("#sheetWrap").classList.add("on");$("#sheet").scrollTop=0;onMount&&onMount($("#sheet"));}
+function openSheet(html,onMount){sheetGuard=null;document.documentElement.classList.add("sheet-open");$("#sheet").classList.remove("add-sheet");$("#sheet").innerHTML=html;$("#sheetWrap").classList.add("on");$("#sheet").scrollTop=0;onMount&&onMount($("#sheet"));}
 let afterCreate=false;/* a new recipe was just shown: closing it lands on the full Kogebog */
-function closeSheet(){sheetGuard=null;$("#sheetWrap").classList.remove("on");$("#sheet").innerHTML="";
+function closeSheet(){sheetGuard=null;document.documentElement.classList.remove("sheet-open");$("#sheetWrap").classList.remove("on");$("#sheet").innerHTML="";
   if(afterCreate){afterCreate=false;const q=$("#rsearch");if(q){q.value="";q.dispatchEvent(new Event("input",{bubbles:true}));}recFilter.q="";
     if(location.hash!=="#opskrifter")location.hash="#opskrifter";else renderRecipes();window.scrollTo(0,0);}}
 /* ask before leaving an editor with unsaved changes */
