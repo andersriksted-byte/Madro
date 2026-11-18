@@ -12,9 +12,9 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script src="config.js?v=1795006709"></script>
-<script src="importer.js?v=1795006709"></script>
-<script src="shim.js?v=1795006709"></script>
+<script src="config.js?v=1795006872"></script>
+<script src="importer.js?v=1795006872"></script>
+<script src="shim.js?v=1795006872"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -489,7 +489,6 @@ html.wheel #recipeList.gal-grid{padding-bottom:22vh}
 /* magazine week plan */
 #v-madplan #days{gap:0}
 html:not(.web-app) .web-only{display:none}html.web-app .claude-only{display:none}
-.src-seg{display:flex;width:100%;margin:6px 0 0}.src-seg button{flex:1}
 #recipeList [data-r^="c_"]{position:relative}
 #recipeList [data-r^="c_"]::before{content:"Fællesskab";position:absolute;top:10px;right:10px;z-index:3;background:rgba(255,255,255,.92);color:#2a1f17;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:4px 8px;border-radius:999px}
 .clr-wrap{position:relative;display:block;flex:1 1 auto;min-width:0}
@@ -1031,6 +1030,7 @@ span.g-x{display:block}
 .dd-bar{flex:1;min-width:0;position:relative;z-index:20;display:flex;gap:2px;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--surface)}
 .dd-btn{flex:1 1 auto;min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:3px;border:0;background:none;border-radius:999px;padding:7px 7px;font:inherit;font-size:calc(13px * var(--fs));font-weight:600;color:var(--ink);cursor:pointer;white-space:nowrap}
 .dd-btn.dd-view{background:var(--ink);color:var(--bg)}
+.dd-btn.dd-src{flex:0 0 auto;padding:7px 9px}
 .dd-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dd-btn i{font-style:normal;font-size:9px;opacity:.6;flex:none;transition:transform .15s}
 .dd-btn.open i{transform:rotate(180deg)}
@@ -1124,7 +1124,6 @@ body.wv-on .toast{z-index:210}
       </div>
       <div id="impStatus" class="small"></div>
     </div>
-    <div class="seg src-seg" id="srcSeg" role="group" aria-label="Hvis opskrifter" hidden><button type="button" data-src="mine">Vores</button><button type="button" data-src="community">Fællesskabet</button><button type="button" data-src="all">Begge</button></div>
     <div class="stack" style="margin:10px 0;gap:8px"><div class="qs-row"><div class="dd-bar" id="qsBar" role="group" aria-label="Sortér og filtrér"></div><button type="button" class="icon-btn" id="rSearchTg" aria-label="Søg" aria-expanded="false"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div><div id="rSearchBox" hidden><input type="text" data-clear id="rsearch" placeholder="Søg i opskrifter" enterkeyhint="search" autocomplete="off" style="width:100%"></div><div id="rfilters" hidden></div></div>
     <div class="stack" id="importList" style="margin-bottom:12px"></div>
     <div class="stack" id="recipeList"></div>
@@ -1862,9 +1861,7 @@ try{const v=localStorage.getItem("mp_recSrc");if(v)recFilter.src=v;}catch(e){}
 /* web version: recipes other families share (the "community"); shown read-only until saved into our own book */
 state.community=[];
 window.__setCommunity=list=>{state.community=(list||[]).map(r=>Object.assign({},r,{id:"c_"+r.libId,_community:true}));try{renderRecipes();}catch(e){}};
-function drawSrcSeg(){const seg=$("#srcSeg");if(!seg)return;const on=!!window.__communityOn;seg.hidden=!on;if(!on&&recFilter.src!=="mine")recFilter.src="mine";
-  const cb=seg.querySelector('[data-src="community"]');if(cb)cb.textContent="Fællesskabet"+(state.community.length?" ("+state.community.length+")":"");
-  seg.querySelectorAll("[data-src]").forEach(b=>{const o=b.dataset.src===recFilter.src;b.classList.toggle("on",o);b.setAttribute("aria-pressed",String(o));});}
+function drawSrcSeg(){if(!window.__communityOn&&recFilter.src!=="mine")recFilter.src="mine";}
 function recSort(){try{return localStorage.getItem("mp_recSort2")||"insp";}catch(e){return window._recSort||"insp";}}
 function kidNoText(r){const ks=kidsList().filter(k=>kidLikes(r,k.id)===false);return ks.length?(ks.length===kidsList().length&&ks.length>1?"👎 Alle":"👎 "+ks.map(k=>k.name).join(", ")):"";}
 function kidPills(r){return (kidText(r)?'<span class="kp">'+esc(kidText(r))+'</span>':'')+(kidNoText(r)?'<span class="kp no">'+esc(kidNoText(r))+'</span>':'');}
@@ -1908,19 +1905,25 @@ const DD_PAIR={newest:"oldest",oldest:"newest",stars:"fewstars",fewstars:"stars"
 const DD_ALT={oldest:"Ældste retter",fewstars:"👍 Færrest tommel op",za:"Å–A",forgot:"Længst siden"};
 function ddOpts(f,which){
   if(which==="view"){const ks=kidsList(),cur=f.view||"insp";return DD_VIEW.map(o=>{const alt=DD_PAIR[o[0]];return alt&&cur===alt?{v:alt,l:DD_ALT[alt],flip:1}:{v:o[0],l:o[1],flip:!!alt};}).concat([{sep:1},{v:"kids",l:"❤️ Familiens favoritter"}],ks.map(k=>({v:"kid:"+k.id,l:"👍 "+k.name})));}
+  if(which==="src")return [{v:"mine",l:"🏠 Vores opskrifter"},{v:"community",l:"🌍 Fællesskabets"+(state.community.length?" ("+state.community.length+")":"")},{v:"all",l:"🏠🌍 Begge"}];
   if(which==="meal")return [{v:"",l:"Alle måltider"}].concat(MEALS.map(m=>({v:m,l:m})));
   if(which==="type")return [{v:"",l:"Alle typer"}].concat(TYPE_ORDER.filter(t=>state.recipes.some(r=>t==="Vegetar"?recipeTypes(r).some(x=>x==="Vegetar"||x==="Vegansk"):recipeTypes(r).includes(t))).map(t=>({v:t,l:t})));
   return [{v:"",l:"Alle temaer"}].concat([...new Set(state.recipes.flatMap(r=>r.themes||[]))].sort((a,b)=>a.localeCompare(b,"da")).map(t=>({v:t,l:t})));}
-function ddVal(f,which){return which==="view"?(f.view||"insp"):(f[which]||"");}
+function ddVal(f,which){return which==="view"?(f.view||"insp"):which==="src"?(f.src||"mine"):(f[which]||"");}
 const DD_SHORT={newest:"🆕 Nyeste",oldest:"Ældste",left:"🥕 Rester",insp:"✨ Inspiration",stars:"👍 Flest",fewstars:"👍 Færrest",often:"Oftest",rare:"Sjældne",az:"A–Å",za:"Å–A",forgot:"Længst siden",last:"Senest",kids:"❤️ Favoritter",Morgenmad:"Morgen",Aftensmad:"Aften",Dessert:"Dessert"};
-function ddLabel(f,which){const v=ddVal(f,which);if(!v)return {meal:"Måltid",type:"Type",theme:"Tema"}[which];if(DD_SHORT[v])return DD_SHORT[v];if(v.startsWith("kid:")){const k=kidsList().find(x=>x.id===v.slice(4));return "👍 "+(k?k.name:"");}const o=ddOpts(f,which).find(x=>x.v===v);return o?o.l:v;}
-function ddBarHTML(f){const B=w=>{const on=w==="view"?false:!!f[w];return '<button type="button" class="dd-btn dd-'+w+(on?' on':'')+(f.ddOpen===w?' open':'')+'" data-dd="'+w+'" aria-haspopup="listbox" aria-expanded="'+(f.ddOpen===w)+'"><span>'+esc(ddLabel(f,w))+'</span><i aria-hidden="true">▾</i></button>';};
+function ddLabel(f,which){const v=ddVal(f,which);if(which==="src")return v==="community"?"🌍":v==="all"?"🏠🌍":"🏠";if(!v)return {meal:"Måltid",type:"Type",theme:"Tema"}[which];if(DD_SHORT[v])return DD_SHORT[v];if(v.startsWith("kid:")){const k=kidsList().find(x=>x.id===v.slice(4));return "👍 "+(k?k.name:"");}const o=ddOpts(f,which).find(x=>x.v===v);return o?o.l:v;}
+function ddBarHTML(f){const B=w=>{const on=w==="view"?false:w==="src"?(f.src&&f.src!=="mine"):!!f[w];return '<button type="button" class="dd-btn dd-'+w+(on?' on':'')+(f.ddOpen===w?' open':'')+'" data-dd="'+w+'"'+(w==="src"?' aria-label="Hvis opskrifter"':'')+' aria-haspopup="listbox" aria-expanded="'+(f.ddOpen===w)+'"><span>'+esc(ddLabel(f,w))+'</span><i aria-hidden="true">▾</i></button>';};
   let menu="";if(f.ddOpen){const cur=ddVal(f,f.ddOpen);menu='<div class="dd-menu dd-m-'+f.ddOpen+'" role="listbox">'+ddOpts(f,f.ddOpen).map(o=>o.sep?'<hr>':'<button type="button" role="option" data-ddv="'+esc(o.v)+'" aria-selected="'+(o.v===cur)+'"'+(o.v===cur?' class="on"':'')+'><span>'+esc(o.l)+'</span>'+(o.v===cur?'<b aria-hidden="true">'+(o.flip?'⇅':'✓')+'</b>':'')+'</button>').join("")+'</div>';}
-  return ["view","meal","type","theme"].map(B).join("")+menu;}
+  const ws=["view","meal","type","theme"];if(f===recFilter&&window.__communityOn)ws.unshift("src");
+  let html=ws.map(B).join("");
+  if(ws.length>4){/* five buttons: the sort button shows only its emoji to make room */
+    html=html.replace(/(<button[^>]*data-dd="view"[^>]*><span>)([^<]*)(<\/span>)/,(m,a,t,b)=>{const em=(t.match(/^\p{Extended_Pictographic}\uFE0F?/u)||[""])[0];return a+(em||t.slice(0,3))+b;});}
+  return html+menu;}
 function ddSet(f,which,v){
   if(which==="view"){if(v==="last"||v==="forgot")v="insp";f.view=v||"insp";f.kid="";f.kidsFav=false;f.leftOnly=false;
     if(v==="kids"){f.kidsFav=true;f.sort="kids";}else if(v==="left"){f.leftOnly=true;f.sort="left";}else if(v.startsWith("kid:")){f.kid=v.slice(4);f.sort="kids";}else f.sort=v||"insp";
     try{if(f===recFilter)localStorage.setItem("mp_recSort",f.view);}catch(e){}}
+  else if(which==="src"){f.src=v||"mine";try{localStorage.setItem("mp_recSrc",f.src);}catch(e){}}
   else f[which]=v;}
 let _ddDoc=null;
 function wireDD(root,f,done){
@@ -1972,7 +1975,6 @@ function drawViewToggle(){const g=recView()==="gallery";const b=$("#rView");b.in
   b.setAttribute("aria-label",g?"Skift til liste":"Skift til store billeder");}
 $("#rView").addEventListener("click",()=>{const v=recView()==="gallery"?"list":"gallery";window._recView=v;try{localStorage.setItem("mp_recLayout",v);}catch(e){}drawViewToggle();renderRecipes();});
 drawViewToggle();
-$("#srcSeg").addEventListener("click",e=>{const b=e.target.closest("[data-src]");if(!b)return;recFilter.src=b.dataset.src;try{localStorage.setItem("mp_recSrc",recFilter.src);}catch(err){}renderRecipes();window.scrollTo(0,0);});
 $("#recipeList").addEventListener("click",e=>{
   const nf=e.target.closest("[data-nf]");if(nf){const q=(recFilter.q||"").trim();if(nf.dataset.nf==="rec")openEditor(null,{title:q});else openNotePlan(q);return;}
   const dy=e.target.closest("[data-swday]");if(dy){e.stopPropagation();swipeAdd(dy.closest(".sw-wrap"),+dy.dataset.swday);return;}
