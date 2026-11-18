@@ -38,6 +38,15 @@ Familiens fælles kogebog, madplan og indkøbsliste. Login og data ligger i Fire
 6. Invitér resten af familien. Vælg den person, de skal være, fx Bettina, så overtager de personens 👍 og 👎.
 7. Vil du have appen på hjemmeskærmen på iPhone, så åbn den i Safari, tryk Del og vælg **Føj til hjemmeskærm**. Log ind dér med mail og adgangskode.
 
+## Opskrifts-links og tilbud
+
+- **Opskrifts-links** hentes med det samme i appen gennem en gratis mellemstation. Kan en side ikke læses, ligger linket og venter. Skriv "Hent mine opskrifter" til Claude, så klarer Claude-opgaven det via mappen `inbox/`.
+- **Tilbud** lægges i `offers.json` af Claudes planlagte opgave søndag og torsdag.
+
+## Opskriftsfællesskab
+
+Under Opsætning vælger administratoren mellem "Del og hent opskrifter" og "Lukket kogebog". Delte opskrifter ligger i samlingen `library`. Hentede opskrifter er familiens egen kopi.
+
 ## Hvem kan hvad
 
 - **Administrator:** Kan invitere og trække invitationer tilbage, og kan læse data ind.
