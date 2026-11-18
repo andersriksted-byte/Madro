@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795025432";</script>
-<script src="config.js?v=1795025432"></script>
-<script src="importer.js?v=1795025432"></script>
-<script src="shim.js?v=1795025432"></script>
+<script>window.__appVersion="1795025616";</script>
+<script src="config.js?v=1795025616"></script>
+<script src="importer.js?v=1795025616"></script>
+<script src="shim.js?v=1795025616"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1294,6 +1294,12 @@ body.wv-on .toast{z-index:210}
         <div class="set-sec" style="border-top:0;padding-top:0;margin-top:0">
         <h4>Tema</h4>
         <div class="seg" id="themeSeg" role="group" aria-label="Tema"><button type="button" data-th="light">☀️ Lys</button><button type="button" data-th="dark">🌙 Mørk</button><button type="button" data-th="system">Som systemet</button></div>
+        </div>
+        <div class="set-sec">
+        <h4>Tips til appen</h4>
+        <div class="seg" id="tipsSeg" role="group" aria-label="Tips"><button type="button" data-tips="on">Til</button><button type="button" data-tips="off">Fra</button></div>
+        <p class="small muted" style="margin:0">Når tips er slået til, viser hver side kort, hvordan du bruger den: tryk, langt tryk, swipe og træk.</p>
+        <div><button type="button" class="btn plain small" id="tipsAgain">Vis alle tips igen</button></div>
         </div>
         <div class="set-sec">
         <h4>Madplanen</h4>
@@ -4265,6 +4271,86 @@ init();
   const go=()=>{if(!raf)raf=requestAnimationFrame(fit);};
   new MutationObserver(m=>{if(m.some(x=>x.type==="childList"&&x.target===L||x.type==="attributes"))go();}).observe(L,{childList:true,attributes:true,attributeFilter:["class"]});addEventListener("resize",go);
   if(document.fonts&&document.fonts.ready)document.fonts.ready.then(go);go();})();
+</script>
+<script>
+/* Tutorial: a short card per page that shows how to use it (tap, long press, swipe, drag). Switched on/off in Opsætning */
+(function(){
+  const web=()=>!!window.__webApp,comm=()=>!!window.__communityOn;
+  const G={tap:"👆",hold:"✋",left:"👈",right:"👉",drag:"✊",down:"👇"};
+  const TIPS={
+    indkob:{t:"Indkøbslisten",items:()=>[
+      ["tap","Tryk på firkanten","når du har lagt varen i kurven. Den bliver streget over."],
+      ["hold","Hold fingeren på en vare","for hurtigt at rette antal og enhed eller slette den."],
+      ["tap","Tryk på en vare","for flere detaljer: kategori, butik og tilbud."],
+      ["tap","Kategori · Butik · Ret","sorterer listen. Under Ret kan du holde på en rets overskrift for flere valg."],
+      ["tap","× i den gule tilbudslinje","fjerner et tilbud, der ikke passer til varen."],
+      ["tap","Afslut indkøb","gemmer turen i Arkiv og rydder de fundne varer."]]},
+    opskrifter:{t:"Kogebogen",items:()=>[
+      ["left","Swipe til venstre på en opskrift","for at sætte den på madplanen. Vælg dag og uge."],
+      ["right","Swipe til højre på en opskrift","for at give 👍 eller 👎 for hver i familien."],
+      ["tap","Tryk på en opskrift","for at åbne den med ingredienser og trinvis forklaring."],
+      ["tap","Filtrene og 🔍","finder retter efter måltid, type og tema. Finder søgningen intet, kan du oprette retten eller søge på nettet."]].concat(comm()?[["tap","Min kogebog · Fællesskabets kogebog","skifter mellem jeres egne og fællesskabets opskrifter."]]:[])},
+    madplan:{t:"Madplanen",items:()=>[
+      ["left","Swipe til venstre eller højre","for at bladre til næste eller forrige uge."],
+      ["drag","Hold på ⠿ og træk","for at flytte en ret til en anden dag."],
+      ["tap","+ ved en dag","tilføjer en ret fra kogebogen eller en note som \"Spiser ude\"."],
+      ["tap","Indkøbsvognen øverst","lægger ingredienserne til hele ugen på indkøbslisten."],
+      ["down","Træk ned helt øverst","for at opdatere siden."]]},
+    spil:{t:"Spil",items:()=>[
+      ["right","Opskrift Tinder: swipe til siden","for 👍 eller 👎. Pilene under kortet viser, hvilken vej der er hvad, og 🤷 springer over."],
+      ["tap","Tryk på kortet","for at se hele opskriften, før du svarer."],
+      ["tap","↶ Fortryd","tager dit seneste svar tilbage."],
+      ["tap","Lykkehjulet","vælger dagens ret for jer, når I ikke kan blive enige."]]},
+    butikker:{t:"Opsætning",items:()=>[
+      ["tap","Butikker I handler i","bestemmer, hvilke tilbud du får. Din faste butik bruges til varer uden tilbud."],
+      ["tap","Udseende","vælger lyst eller mørkt tema, visning af madplanen og tekststørrelse."]].concat(web()?[["tap","Familien","er stedet, hvor du inviterer, omdøber og fjerner personer."]]:[])}
+  };
+  const on=()=>{try{return localStorage.getItem("mp_tips")!=="off";}catch(e){return true;}};
+  const seen=()=>{try{return JSON.parse(localStorage.getItem("mp_tipsSeen")||"[]");}catch(e){return [];}};
+  const markSeen=k=>{const a=seen();if(!a.includes(k))a.push(k);try{localStorage.setItem("mp_tipsSeen",JSON.stringify(a));}catch(e){}};
+  const st=document.createElement("style");st.textContent=`
+#tipWrap{position:fixed;inset:0;z-index:2147481000;background:rgba(20,16,28,.42);display:flex;align-items:flex-end;justify-content:center;padding:0 12px calc(96px + env(safe-area-inset-bottom));opacity:0;transition:opacity .2s}
+#tipWrap.on{opacity:1}
+#tipCard{width:100%;max-width:460px;background:var(--surface,#fff);color:var(--ink);border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.3);padding:16px 16px 12px;transform:translateY(14px);transition:transform .25s}
+#tipWrap.on #tipCard{transform:none}
+#tipCard .tk{font-size:calc(10.5px * var(--fs));font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:#c8452a}
+#tipCard h3{margin:2px 0 10px;font-family:var(--serif);font-style:italic;font-size:calc(24px * var(--fs))}
+#tipCard ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;max-height:52vh;overflow:auto}
+#tipCard li{display:grid;grid-template-columns:40px 1fr;gap:10px;align-items:start}
+#tipCard .g{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:21px;background:var(--accent-soft)}
+#tipCard .g.left{animation:tipL 1.6s ease-in-out infinite}#tipCard .g.right{animation:tipR 1.6s ease-in-out infinite}
+#tipCard .g.hold{animation:tipH 1.6s ease-in-out infinite}#tipCard .g.down{animation:tipD 1.6s ease-in-out infinite}#tipCard .g.drag{animation:tipDr 2s ease-in-out infinite}
+@keyframes tipL{0%,100%{transform:none}50%{transform:translateX(-6px)}}@keyframes tipR{0%,100%{transform:none}50%{transform:translateX(6px)}}
+@keyframes tipH{0%,100%{box-shadow:0 0 0 0 rgba(200,69,42,.0)}50%{box-shadow:0 0 0 6px rgba(200,69,42,.25)}}@keyframes tipD{0%,100%{transform:none}50%{transform:translateY(5px)}}
+@keyframes tipDr{0%,100%{transform:none}40%{transform:translate(4px,6px)}70%{transform:translate(-2px,8px)}}
+#tipCard li b{display:block;font-size:calc(15px * var(--fs))}#tipCard li span{display:block;font-size:calc(13.5px * var(--fs));color:var(--muted);line-height:1.35}
+#tipCard .ta{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:12px}
+#tipCard .ta .btn{flex:none}
+@media (prefers-reduced-motion:reduce){#tipCard .g{animation:none!important}}`;document.head.appendChild(st);
+  let open=null;
+  function close(){const w=document.getElementById("tipWrap");if(!w)return;w.classList.remove("on");setTimeout(()=>w.remove(),200);open=null;}
+  function show(k,force){const T=TIPS[k];if(!T||open)return;if(!force&&(!on()||seen().includes(k)))return;
+    if(document.querySelector("#sheetWrap.on,.cbox-wrap,#authWrap:not([hidden])"))return;
+    open=k;const w=document.createElement("div");w.id="tipWrap";w.setAttribute("role","dialog");w.setAttribute("aria-modal","true");w.setAttribute("aria-labelledby","tipH");
+    w.innerHTML='<div id="tipCard"><div class="tk">Tip</div><h3 id="tipH">'+T.t+'</h3><ul>'+T.items().map(([g,a,b])=>'<li><span class="g '+g+'" aria-hidden="true">'+G[g]+'</span><div><b>'+a+'</b><span>'+b+'</span></div></li>').join("")+'</ul>'+
+      '<div class="ta"><button type="button" class="btn plain small" id="tipOff">Slå tips fra</button><button type="button" class="btn small" id="tipOk">Forstået</button></div></div>';
+    document.body.appendChild(w);requestAnimationFrame(()=>w.classList.add("on"));
+    const done=()=>{markSeen(k);close();};
+    w.querySelector("#tipOk").onclick=done;w.addEventListener("click",e=>{if(e.target===w)done();});
+    w.querySelector("#tipOff").onclick=()=>{try{localStorage.setItem("mp_tips","off");}catch(e){}markSeen(k);close();draw();};
+    setTimeout(()=>{const b=w.querySelector("#tipOk");if(b)b.focus();},250);}
+  const page=()=>{let h=(location.hash||"").replace("#","");if(h==="opsaetning")h="butikker";return TIPS[h]?h:"madplan";};
+  const later=()=>setTimeout(()=>show(page()),900);
+  addEventListener("hashchange",()=>{close();later();});
+  addEventListener("keydown",e=>{if(e.key==="Escape"&&open){markSeen(open);close();}});
+  function draw(){const v=on()?"on":"off";document.querySelectorAll("#tipsSeg [data-tips]").forEach(b=>{const o=b.dataset.tips===v;b.classList.toggle("on",o);b.setAttribute("aria-pressed",String(o));});}
+  const seg=document.getElementById("tipsSeg");if(seg)seg.addEventListener("click",e=>{const b=e.target.closest("[data-tips]");if(!b)return;try{localStorage.setItem("mp_tips",b.dataset.tips);}catch(x){}draw();});
+  const again=document.getElementById("tipsAgain");if(again)again.onclick=()=>{try{localStorage.setItem("mp_tips","on");localStorage.removeItem("mp_tipsSeen");}catch(e){}draw();if(window.toast)toast("Tips vises igen på hver side");show("butikker",true);};
+  draw();
+  /* wait until the app (and, on the web, the login) is ready before the first tip */
+  const first=()=>{if(document.querySelector("#authWrap:not([hidden])")){setTimeout(first,1500);return;}later();};setTimeout(first,1500);
+  window.__showTip=k=>show(k||page(),true);
+})();
 </script>
 </body>
 </html>
