@@ -174,7 +174,7 @@ async function enterFamily(fid){
   S.famUnsub=fs.doc("families/"+fid).onSnapshot(d=>{if(!d.exists)return;S.family=d.data();syncInv();S.me=S.family.members[S.user.uid]||S.me;if(S.me)window.__mePerson=S.me.personId;syncLock();drawFamCard();},()=>{});
   window.__onSettings=()=>drawFamCard();
   hide();ready();
-  watchImports();mountFamCard();
+  watchImports();mountFamCard();setTimeout(offerHomeScreen,1500);
   return true;
 }
 const isAdmin=()=>S.me&&S.me.role==="admin";
@@ -291,6 +291,35 @@ async function autoImport(id,v,stale){
 async function toDataURL(u){try{const r=await fetch(u);if(!r.ok)return "";const b=await r.blob();
   const bmp=await createImageBitmap(b);const sc=Math.min(1,720/Math.max(bmp.width,bmp.height));const cv=document.createElement("canvas");cv.width=Math.round(bmp.width*sc);cv.height=Math.round(bmp.height*sc);
   cv.getContext("2d").drawImage(bmp,0,0,cv.width,cv.height);return cv.toDataURL("image/jpeg",0.72);}catch(e){return "";}}
+
+/* ---------- first visit on a phone: suggest adding Madro to the home screen ---------- */
+let installEvt=null;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;});
+function offerHomeScreen(){
+  const standalone=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
+  const ua=navigator.userAgent||"";const ios=/iPhone|iPad|iPod/i.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);const android=/Android/i.test(ua);
+  let seen=null;try{seen=localStorage.getItem("mp_a2hs");}catch(e){}
+  if(standalone||seen||!(ios||android)||$("#a2hs"))return;
+  const st=document.createElement("style");st.textContent=`
+#a2hs{position:fixed;inset:0;z-index:2147483000;background:rgba(20,16,12,.45);display:flex;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom))}
+#a2hs .box{background:var(--bg,#fff);color:var(--ink,#222);border-radius:22px;padding:22px 20px 18px;max-width:420px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.3);display:flex;flex-direction:column;gap:12px}
+#a2hs img.ic{width:56px!important;height:56px!important;max-width:56px!important;position:static!important;border-radius:14px;align-self:center;object-fit:cover}
+#a2hs h2{font-family:var(--serif,Georgia,serif);font-size:26px;margin:0;text-align:center;line-height:1.1}
+#a2hs p{margin:0;color:var(--muted,#666);line-height:1.45;text-align:center}
+#a2hs ol{margin:0;padding-left:22px;line-height:1.6}
+#a2hs .sh{display:inline-block;vertical-align:-4px}`;
+  document.head.appendChild(st);
+  const share='<svg class="sh" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-label="Del"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
+  const steps=ios?'<ol><li>Tryk på '+share+' <b>Del</b> nederst i Safari.</li><li>Rul ned, og vælg <b>Føj til hjemmeskærm</b>.</li><li>Tryk <b>Tilføj</b>.</li></ol><p style="font-size:13px">Log derefter ind i appen på hjemmeskærmen med din mail og adgangskode.</p>'
+    :(installEvt?'':'<ol><li>Tryk på menuen <b>⋮</b> øverst i Chrome.</li><li>Vælg <b>Føj til startskærm</b> eller <b>Installer app</b>.</li></ol>');
+  const w=document.createElement("div");w.id="a2hs";w.setAttribute("role","dialog");w.setAttribute("aria-modal","true");w.setAttribute("aria-label","Gem Madro på hjemmeskærmen");
+  w.innerHTML='<div class="box"><img class="ic" src="img/icon-192.png" alt=""><h2>Gem Madro på din telefon</h2><p>Så åbner Madro som en rigtig app med ét tryk, uden adresselinje.</p>'+steps+
+    (android&&installEvt?'<button class="au-btn" type="button" id="a2Install">Installér Madro</button>':'')+
+    '<button class="au-btn'+(android&&installEvt?' plain':'')+'" type="button" id="a2Ok">'+(android&&installEvt?'Ikke nu':'Forstået')+'</button></div>';
+  document.body.appendChild(w);
+  const close=()=>{try{localStorage.setItem("mp_a2hs","1");}catch(e){}w.remove();};
+  w.querySelector("#a2Ok").onclick=close;w.addEventListener("click",e=>{if(e.target===w)close();});
+  const ib=w.querySelector("#a2Install");if(ib)ib.onclick=async()=>{try{installEvt.prompt();await installEvt.userChoice;}catch(e){}close();};
+}
 
 /* ---------- boot ---------- */
 function boot(){
