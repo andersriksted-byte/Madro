@@ -12,10 +12,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795014801";</script>
-<script src="config.js?v=1795014801"></script>
-<script src="importer.js?v=1795014801"></script>
-<script src="shim.js?v=1795014801"></script>
+<script>window.__appVersion="1795014835";</script>
+<script src="config.js?v=1795014835"></script>
+<script src="importer.js?v=1795014835"></script>
+<script src="shim.js?v=1795014835"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1186,6 +1186,13 @@ body.wv-on .toast{z-index:210}
         <h3>Højst antal butikker pr. indkøbstur</h3>
         <div class="seg" id="maxSeg"><button type="button" data-v="1">1</button><button type="button" data-v="2">2</button><button type="button" data-v="3">3</button></div>
       </div>
+      <div class="card stack">
+        <h3>Ugens tilbud</h3>
+        <div id="offerStatus" class="small"></div>
+        <p class="small muted claude-only" style="margin:0">Tilbudsaviserne fra jeres butikker hentes automatisk og lægges ind i appen.</p>
+        <p class="small muted web-only" style="margin:0" id="offInfo"></p>
+        <div class="claude-only"><button class="btn plain small" id="copyOffer" type="button">Kopiér besked til chatten</button> <span class="small muted">hvis du vil opdatere dem med det samme</span></div>
+      </div>
       <div class="card stack claude-only">
         <h3>Familien</h3>
         <p class="small muted" style="margin:0">Alle i familien kan give en ret 👍 eller 👎. Antallet af 👍 er rettens vurdering, og når alle kan li' den, er den en familiefavorit.</p>
@@ -1206,20 +1213,13 @@ body.wv-on .toast{z-index:210}
         <span class="small muted" id="exportMsg"></span>
         <div id="impSlot" class="web-only"></div>
       </div>
-      <div class="card stack">
-        <h3><span class="claude-only">Automatisk opdatering</span><span class="web-only">Tilbud</span></h3>
-        <p class="small muted web-only" style="margin:0" id="offInfo"></p>
+      <div class="card stack claude-only">
+        <h3>Automatisk opdatering</h3>
         <div class="claude-only"><label class="lbl" for="schedOffers">Søg efter nye tilbud i dine butikker</label>
           <select id="schedOffers"><option value="daily">Hver dag kl. 7</option><option value="twice">Søndag og torsdag kl. 7</option><option value="weekly">Søndag kl. 7</option><option value="manual">Kun når jeg beder om det</option></select></div>
         <div class="claude-only"><label class="lbl" for="schedRecipes">Hent opskrifter fra gemte links</label>
           <select id="schedRecipes"><option value="2h">Hver 2. time (kl. 7–21)</option><option value="3x">3 gange dagligt (kl. 7, 13 og 17)</option><option value="1x">1 gang dagligt (kl. 7)</option><option value="manual">Kun når jeg beder om det</option></select></div>
         <div id="runlog" class="small muted claude-only"></div>
-      </div>
-      <div class="card stack">
-        <h3>Ugens tilbud</h3>
-        <div id="offerStatus" class="small"></div>
-        <p class="small muted" style="margin:0">Tilbudsaviserne fra jeres butikker hentes automatisk og lægges ind i appen.</p>
-        <div class="claude-only"><button class="btn plain small" id="copyOffer" type="button">Kopiér besked til chatten</button> <span class="small muted">hvis du vil opdatere dem med det samme</span></div>
       </div>
       <div class="card stack">
         <h3>Tekststørrelse</h3>
@@ -3900,7 +3900,7 @@ $("#planBtn")&&$("#planBtn").addEventListener("click",()=>{
       (d.fixed.length?'<div class="group-title">Valgt af dig</div>'+d.fixed.map(x=>'<div class="line"><span>'+esc(x.it.name)+(x.o?' <span class="muted small">'+esc(x.o.product)+'</span>':'')+'</span><span class="muted small num">'+(x.o?fmtKr(x.o.price):esc(shopItemLine(x.it)))+'</span></div>').join(""):'')+
       (d.other.length?'<div class="group-title">Uden tilbud</div>'+d.other.map(it=>'<div class="line"><span>'+esc(it.name)+'</span><span class="muted small">'+esc(shopItemLine(it))+'</span></div>').join(""):'')+'</div>';}).join("");
   const missed=p.missed.length?'<div class="card"><h3>Tilbud du springer over</h3><p class="small muted" style="margin:4px 0 6px">Kun i butikker uden for din tur.</p>'+p.missed.map(x=>'<div class="line" style="display:flex;justify-content:space-between;gap:10px;padding:4px 0"><span class="small">'+esc(x.it.name)+' · '+esc(x.o.store)+'</span><span class="num small">'+fmtKr(x.o.price)+'</span></div>').join("")+'</div>':'';
-  openSheet(`<div class="sheet-head"><div><h2>Din indkøbstur</h2><div class="sub">${esc(p.chosen.join(" + "))}${off.validNote?" · "+esc(off.validNote):""}</div></div>${closeBtn}</div>
+  openSheet(`<div class="sheet-head"><div><h2>Din indkøbstur</h2><div class="sub">${esc(p.chosen.join(" + "))}${off.validNote&&!/^hentet/i.test(off.validNote)?" · "+esc(off.validNote):""}</div></div>${closeBtn}</div>
   <div class="stack">
     <div class="summary"><div class="card"><b class="num">${p.offerCount}/${p.count}</b><span>varer på tilbud</span></div><div class="card"><b class="num">${p.chosen.length}</b><span>butik${p.chosen.length>1?"ker":""}</span></div><div class="card"><b class="num">${Math.round(p.total)} kr.</b><span>for tilbudsvarer</span></div></div>
     ${cards}${missed}
@@ -3954,7 +3954,7 @@ function sched(){return Object.assign({},SCHED_DEF,state.settings.schedule||{});
 function recWhen(){return {"2h":"automatisk hver 2. time (kl. 7–21)","3x":"automatisk kl. 7, 13 og 17","1x":"automatisk kl. 7","manual":"når du beder Claude om det i chatten"}[sched().recipes]||"automatisk";}
 function renderSched(){
   {const oi=$("#offInfo");if(oi){const when=(window.MADRO_INFO&&window.MADRO_INFO.offers)||"søndag og torsdag morgen";const u=fileOffers&&fileOffers.updatedAt?new Date(fileOffers.updatedAt):null;
-    oi.innerHTML="Ugens tilbud fra jeres butikker hentes automatisk "+esc(when)+"."+(u&&!isNaN(u)?"<br>Sidst opdateret: "+esc(u.toLocaleString("da-DK",{weekday:"long",day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"}))+".":"");}}
+    oi.innerHTML="Tilbudsaviserne hentes automatisk "+esc(when)+" og lægges ind i appen.";}}
   const sc=sched();const a=$("#schedOffers"),b=$("#schedRecipes");if(a)a.value=sc.offers;if(b)b.value=sc.recipes;
   document.querySelectorAll(".recWhen").forEach(e=>e.textContent=recWhen());
   const rl=state.runlog||{},f=v=>{const d=new Date(v);return isNaN(d)?"":d.toLocaleString("da-DK",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});};
@@ -4041,7 +4041,7 @@ function renderStores(){renderSched();renderKidsEdit();renderSrcEdit();
   else{
     const counts={};offs.forEach(o=>counts[o.store]=(counts[o.store]||0)+1);
     const upd=off.updatedAt?new Date(off.updatedAt):null;
-    $("#offerStatus").innerHTML='<div class="row" style="margin-bottom:6px"><span class="pill offer">'+offs.length+' gældende tilbud</span>'+(upd?'<span class="muted">Hentet '+fmtDate(upd)+'</span>':'')+(off.validNote?'<span class="muted">· '+esc(off.validNote)+'</span>':'')+'</div>'+Object.entries(counts).map(([s,n])=>'<div class="row" style="justify-content:space-between;padding:3px 0"><span>'+esc(s)+'</span><span class="row" style="gap:10px"><span class="num muted">'+n+'</span>'+offerLinkHTML(s,"Se avis")+'</span></div>').join("")+'<div style="margin-top:8px"><button class="btn small" type="button" id="browseOffers">Se alle tilbud</button></div>';
+    $("#offerStatus").innerHTML='<div class="row" style="margin-bottom:6px"><span class="pill offer">'+offs.length+' gældende tilbud</span>'+(upd?'<span class="muted">Hentet '+fmtDate(upd)+'</span>':'')+(off.validNote&&!/^hentet/i.test(off.validNote)?'<span class="muted">· '+esc(off.validNote)+'</span>':'')+'</div>'+Object.entries(counts).map(([s,n])=>'<div class="row" style="justify-content:space-between;padding:3px 0"><span>'+esc(s)+'</span><span class="row" style="gap:10px"><span class="num muted">'+n+'</span>'+offerLinkHTML(s,"Se avis")+'</span></div>').join("")+'<div style="margin-top:8px"><button class="btn small" type="button" id="browseOffers">Se alle tilbud</button></div>';
   }
 }
 async function saveSettings(){const b=Object.assign({},state.settings);delete b.id;await setDoc("meta","settings",b);}
