@@ -167,8 +167,11 @@ async function enterFamily(fid){
   if(!snap.exists||!(snap.data().members||{})[S.user.uid]){return false;}
   S.fid=fid;S.family=snap.data();S.me=S.family.members[S.user.uid];window.__mePerson=S.me.personId;window.__family={id:fid,name:S.family.name};
   if(S.famUnsub)S.famUnsub();
+  /* thumbs: a person linked to another login can only be rated by that login */
+  const syncLock=()=>{const mine=S.me&&S.me.personId;window.__lockedPersons=new Set(Object.entries(S.family.members||{}).filter(([uid,m])=>uid!==S.user.uid&&m.personId&&m.personId!==mine).map(([,m])=>m.personId));};
+  syncLock();
   const syncInv=()=>{S.invites=Object.values(S.family.invites||{}).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));};syncInv();
-  S.famUnsub=fs.doc("families/"+fid).onSnapshot(d=>{if(!d.exists)return;S.family=d.data();syncInv();S.me=S.family.members[S.user.uid]||S.me;if(S.me)window.__mePerson=S.me.personId;drawFamCard();},()=>{});
+  S.famUnsub=fs.doc("families/"+fid).onSnapshot(d=>{if(!d.exists)return;S.family=d.data();syncInv();S.me=S.family.members[S.user.uid]||S.me;if(S.me)window.__mePerson=S.me.personId;syncLock();drawFamCard();},()=>{});
   window.__onSettings=()=>drawFamCard();
   hide();ready();
   watchImports();mountFamCard();
@@ -197,7 +200,7 @@ function drawFamCard(){
     (isAdmin()?'<form id="invForm"><b style="margin-top:6px">Invitér til familien</b><input type="email" id="invMail" placeholder="Mail" autocomplete="off" inputmode="email">'+
       '<select id="invPerson"><option value="">Ny person i familien</option>'+free.map(p=>'<option value="'+esc(p.id)+'">Er '+esc(p.name)+' (overtager '+esc(p.name)+'s 👍)</option>').join("")+'</select>'+
       '<input id="invName" placeholder="Navn (fx Bettina)"><button class="btn small" type="submit" style="align-self:flex-start">Send invitation</button><div class="fm-msg" id="invMsg">'+esc(S.invMsg||"")+'</div></form>':'')+
-    '<div class="fm-row"><div><b>Dig i tommel-vurderingen</b><small>Bruges som standard i Opskrift Tinder</small></div><select id="mePerson">'+ps.map(p=>'<option value="'+esc(p.id)+'"'+(S.me&&S.me.personId===p.id?' selected':'')+'>'+esc(p.name)+'</option>').join("")+'</select></div>'+
+    '<div class="fm-row"><div><b>Dig i tommel-vurderingen</b><small>Bruges som standard i Opskrift Tinder</small></div><select id="mePerson">'+ps.filter(p=>!(window.__lockedPersons&&window.__lockedPersons.has(p.id))).map(p=>'<option value="'+esc(p.id)+'"'+(S.me&&S.me.personId===p.id?' selected':'')+'>'+esc(p.name)+'</option>').join("")+'</select></div>'+
     (isAdmin()?'<div class="fm-row"><div><b>Læs data ind fra Claude-appen</b><small>Vælg filen fra "Eksportér alle data"</small></div><label class="btn ghost small" style="cursor:pointer"><input type="file" accept="application/json,.json" id="impFile" hidden>Vælg fil</label></div><div class="fm-msg" id="impMsg">'+esc(S.impMsg||"")+'</div>':'')+
     '<button type="button" class="btn plain small" id="logOut" style="align-self:flex-start">Log ud ('+esc(S.user.email)+')</button>';
   const sel=c.querySelector("#invPerson"),nm=c.querySelector("#invName");

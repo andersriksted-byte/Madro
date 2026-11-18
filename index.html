@@ -895,6 +895,7 @@ html.wheel .sw-wrap.sw-gal>.gal-card{scroll-snap-align:none}
 .sw-stars{width:84px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(2px * var(--k,1));padding:4px 0;overflow:hidden}
 .sw-kids{flex:1;min-width:0;display:grid;grid-template-columns:1fr;align-content:center;gap:6px 10px;padding:6px 10px;overflow:hidden}
 .sw-kids.two{grid-template-columns:1fr 1fr}
+.kids-t.locked,.sw-kid.locked{opacity:.55;cursor:default}
 .sw-kid{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;border:0;background:none;padding:0;cursor:pointer;font:inherit}
 .sw-kid span{min-width:0;color:#fff;font-size:calc(11px * var(--fs));font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
@@ -1474,13 +1475,13 @@ function drawDisc(box){const deck=discDeck(),src=discSources(),yl=game.yesDir===
 /* swipe */
 /* Mad-match: each family member swipes 👍 / 👎 / skip; the answers are the family's thumbs on the recipes.
    Only recipes the member has not rated yet are in the deck, so new recipes join it automatically. */
-function mmWho(){const ks=kidsList();let w=game.who;if(!w){try{w=localStorage.getItem("mp_who");}catch(e){}}if(!ks.some(k=>k.id===w))w=window.__mePerson;if(!ks.some(k=>k.id===w))w=ks[0]&&ks[0].id;game.who=w;return w;}
+function mmWho(){const ks=kidsList().filter(k=>canVote(k.id));let w=game.who;if(!w){try{w=localStorage.getItem("mp_who");}catch(e){}}if(!ks.some(k=>k.id===w))w=window.__mePerson;if(!ks.some(k=>k.id===w))w=ks[0]&&ks[0].id;game.who=w;return w;}
 function mmName(){const k=kidsList().find(x=>x.id===mmWho());return k?k.name:"";}
 function mmPool(){return state.recipes.slice();}/* rating covers every recipe, filters are not used here */
 function mmCounts(){const w=mmWho(),c={yes:0,no:0,open:0};mmPool().forEach(r=>{const v=kidLikes(r,w);if(v===true)c.yes++;else if(v===false)c.no++;else c.open++;});return c;}
 function startSwipe(){const w=mmWho();game.skip=game.skip||{};const sk=game.skip[w]||(game.skip[w]=new Set());
   game.deck=sortRecipes(mmPool().filter(r=>kidLikes(r,w)==null&&!sk.has(r.id)),"newest",x=>x).map(r=>Object.assign({r},gameReasons(r)));game.idx=0;}
-async function setMemberVote(id,kid,v){const r=getRecipe(id);if(!r)return;
+async function setMemberVote(id,kid,v){if(!canVote(kid))return;const r=getRecipe(id);if(!r)return;
   const kids=Object.assign({},r.kids||{});kidsList().forEach(k=>{if(!(k.id in kids)&&(k.id==="c1"||k.id==="c2")&&legacyKids(r))kids[k.id]=true;});
   kids[kid]=v;r.kids=kids;const cur=Object.assign({},r,{kids});delete cur.id;
   try{await setDoc("recipes",id,cur);}catch(e){toast("Kunne ikke gemme svaret");}}
@@ -1491,7 +1492,7 @@ function mmUndo(){const w=mmWho(),hs=game.hist||[];let i=-1;for(let j=hs.length-
   if(game.idx>0&&game.deck[game.idx-1]&&game.deck[game.idx-1].r.id===h.id)game.idx--;
   else{game.deck=game.deck.filter((d,k)=>k<game.idx||d.r.id!==h.id);game.deck.splice(game.idx,0,Object.assign({r},gameReasons(r)));}
   game.mode="swipe";gHaptic();renderGames();toast("Fortrudt: "+r.title);}
-function mmWhoHTML(){const ks=kidsList(),w=mmWho();return '<div class="mm-who" role="group" aria-label="Hvem swiper?"><span>Hvem swiper?</span>'+ks.map(k=>'<button type="button" data-who="'+esc(k.id)+'"'+(k.id===w?' class="on" aria-pressed="true"':' aria-pressed="false"')+'>'+esc(k.name)+'</button>').join("")+'</div>';}
+function mmWhoHTML(){const ks=kidsList().filter(k=>canVote(k.id)),w=mmWho();return '<div class="mm-who" role="group" aria-label="Hvem swiper?"><span>Hvem swiper?</span>'+ks.map(k=>'<button type="button" data-who="'+esc(k.id)+'"'+(k.id===w?' class="on" aria-pressed="true"':' aria-pressed="false"')+'>'+esc(k.name)+'</button>').join("")+'</div>';}
 function wireWho(box){box.querySelectorAll("[data-who]").forEach(b=>b.onclick=()=>{game.who=b.dataset.who;try{localStorage.setItem("mp_who",game.who);}catch(e){}game._mmEmptyShown=false;startSwipe();if(game.mode==="swipeEnd")game.mode="swipe";renderGames();});}
 function drawSwipe(box){
   const left=game.deck.length-game.idx;const yl=game.yesDir==="left";const c=mmCounts();
@@ -1957,7 +1958,7 @@ function drawRate(w){const r=getRecipe(w.querySelector("[data-r]").dataset.r)||{
   const stars="";
   /* one button per child: 👍 → 👎 → neutral → 👍 */
   const kids=kidsList().length?'<div class="sw-kids'+(kidsList().length>2?' two':'')+'">'+kidsList().map(k=>{const v=kidLikes(r,k.id);const cls=v===true?" on":v===false?" no on":"";
-    return '<button type="button" class="sw-kid" data-swkid="'+esc(k.id)+'" tabindex="-1" aria-label="'+esc(k.name)+': '+(v===true?"kan lide den":v===false?"kan ikke lide den":"ingen vurdering")+'. Tryk for at skifte"><span>'+esc(k.name)+'</span><i class="sw-th'+cls+'">'+(v===false?"👎":"👍")+'</i></button>';}).join("")+'</div>':'';
+    return '<button type="button" class="sw-kid'+(canVote(k.id)?'':' locked')+'" data-swkid="'+esc(k.id)+'" tabindex="-1" aria-label="'+esc(k.name)+': '+(v===true?"kan lide den":v===false?"kan ikke lide den":"ingen vurdering")+'. Tryk for at skifte"><span>'+esc(k.name)+'</span><i class="sw-th'+cls+'">'+(v===false?"👎":"👍")+'</i></button>';}).join("")+'</div>':'';
   const p=w.querySelector(".sw-rate");p.style.width=swR()+"px";p.innerHTML=stars+kids;
   const c=w.querySelector("[data-r]");w.style.minHeight="";
 
@@ -1971,7 +1972,10 @@ async function swipeRate(w,n){const id=w.querySelector("[data-r]").dataset.r;con
   const v=Math.round(+r.rating||0)===n?0:n;const cur=Object.assign({},r,{rating:v});delete cur.id;r.rating=v;try{gHaptic();}catch(e){}
   drawRate(w);freshCard(w,id);
   try{await setDoc("recipes",id,cur);toast(v?r.title+": "+"★".repeat(v):"Stjerner fjernet");}catch(e){toast("Kunne ikke gemme bedømmelsen");}}
-async function swipeKid(w,kid,like){const id=w.querySelector("[data-r]").dataset.r;const r=getRecipe(id);if(!r)return;
+/* web version: a person who has their own login can only be rated by themselves */
+function canVote(pid){const L=window.__lockedPersons;return !(L&&L.has&&L.has(pid));}
+function lockedName(pid){const k=kidsList().find(x=>x.id===pid);return k?k.name:"personen";}
+async function swipeKid(w,kid,like){if(!canVote(kid)){toast("Kun "+lockedName(kid)+" kan ændre sin egen tommel");return;}const id=w.querySelector("[data-r]").dataset.r;const r=getRecipe(id);if(!r)return;
   const kids=Object.assign({},r.kids||{});kidsList().forEach(k=>{if(!(k.id in kids)&&legacyKids(r))kids[k.id]=true;});
   const now=kidLikes(r,kid);kids[kid]=now===like?null:like;r.kids=kids;const cur=Object.assign({},r,{kids});delete cur.id;try{gHaptic();}catch(e){}
   drawRate(w);freshCard(w,id);const k=kidsList().find(x=>x.id===kid);
@@ -2186,7 +2190,7 @@ function openRecipe(id,fallback){
       ${(r.image&&isImg(r.image))?'<div class="hero-wrap"><img class="hero" src="'+r.image+'" alt="'+esc(r.title)+'"><button type="button" class="btn plain small hero-btn" id="imgChange">Skift billede</button></div>':''}
       ${r.id?'<div class="paste-zone" id="pasteWrap"'+((r.image&&isImg(r.image))?' hidden':'')+'><div class="paste-box" id="pasteBox" contenteditable="true" role="textbox" aria-label="Indsæt billede her" inputmode="none"></div><div class="paste-hint">Kopiér et billede, og <b>tryk og hold her</b> → <b>Indsæt</b></div><label class="btn plain small" for="imgFile">eller vælg fra billeder</label><input type="file" id="imgFile" accept="image/*" hidden><div class="small" id="imgStatus"></div></div>':''}
       ${r.id?'<div class="row" style="justify-content:space-between;gap:8px"><b class="fam-score" aria-label="'+rateOf(r)+' af '+kidsList().length+' kan li\' den">'+("👍".repeat(rateOf(r))||"Ingen 👍 endnu")+' <span class="small muted">'+rateOf(r)+'/'+kidsList().length+'</span></b><span class="hist">'+esc(histText(r.id))+'</span></div>':''}
-      ${r.id?'<div class="row" style="gap:8px;flex-wrap:wrap" role="group" aria-label="Hvem kan li\' den?">'+kidsList().map(k=>{const v=kidLikes(r,k.id);return '<button type="button" class="kids-t'+(v===true?' on':v===false?' no':'')+'" data-kid="'+esc(k.id)+'"'+' aria-label="'+esc(k.name)+(v===true?' kan li\' den':v===false?' kan ikke li\' den':' – ikke markeret')+'">'+(v===true?'👍 ':v===false?'👎 ':'👤 ')+esc(k.name)+(v===null?'?':'')+'</button>';}).join('')+'</div>':''}
+      ${r.id?'<div class="row" style="gap:8px;flex-wrap:wrap" role="group" aria-label="Hvem kan li\' den?">'+kidsList().map(k=>{const v=kidLikes(r,k.id);return '<button type="button" class="kids-t'+(v===true?' on':v===false?' no':'')+(canVote(k.id)?'':' locked')+'" data-kid="'+esc(k.id)+'"'+(canVote(k.id)?'':' aria-disabled="true" title="Kun '+esc(k.name)+' kan ændre sin egen tommel"')+' aria-label="'+esc(k.name)+(v===true?' kan li\' den':v===false?' kan ikke li\' den':' – ikke markeret')+'">'+(v===true?'👍 ':v===false?'👎 ':'👤 ')+esc(k.name)+(v===null?'?':'')+'</button>';}).join('')+'</div>':''}
       <div class="row" style="gap:6px">${typePills(r)}</div>
       ${r.description?'<p style="margin:0">'+esc(r.description)+'</p>':''}
       ${nutriHTML(r.nutrition)||(sample&&r.id?'<div><button class="btn plain small" type="button" id="calcN">Beregn kcal, protein og kostfibre</button> <span class="small muted" id="calcNs"></span></div>':'')}
@@ -2200,7 +2204,7 @@ function openRecipe(id,fallback){
       s.querySelector("#sMinus").onclick=()=>{if(serv>1){serv--;draw();}};
       s.querySelector("#sPlus").onclick=()=>{if(serv<40){serv++;draw();}};
       // tap cycles: ? -> likes -> dislikes -> ?
-      s.querySelectorAll("[data-kid]").forEach(b=>b.onclick=async()=>{const id=b.dataset.kid;const v=kidLikes(r,id);const nv=v===true?false:v===false?null:true;
+      s.querySelectorAll("[data-kid]").forEach(b=>b.onclick=async()=>{const id=b.dataset.kid;if(!canVote(id)){toast("Kun "+lockedName(id)+" kan ændre sin egen tommel");return;}const v=kidLikes(r,id);const nv=v===true?false:v===false?null:true;
         const base=getRecipe(r.id)||r;const kids=Object.assign({},base.kids||{});kidsList().forEach(k=>{if(!(k.id in kids)&&legacyKids(base))kids[k.id]=true;});
         if(nv===null)kids[id]=null;else kids[id]=nv;r.kids=kids;const cur=Object.assign({},base,{kids});delete cur.id;draw();
         try{await setDoc("recipes",r.id,cur);}catch(e){toast("Kunne ikke gemme");}});
