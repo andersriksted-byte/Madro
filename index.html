@@ -311,7 +311,9 @@ a{color:var(--accent)}
 .view>.top{opacity:calc(1 - var(--hf,0));transform:translateY(calc(var(--hf,0) * 18px)) scale(calc(1 - var(--hf,0) * .04));transform-origin:50% 0;will-change:opacity,transform}
 @media (prefers-reduced-motion:reduce){.view>.top{transform:none}}
 /* wheel: magazine cards roll on a drum and snap one by one */
-html.wheel{scroll-snap-type:y mandatory}
+html.wheel{scroll-snap-type:y mandatory;scroll-padding-top:12px;scroll-padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+/* each picture card must fit between the top of the screen and the tab bar, so its bottom line (time, thumbs) is always visible */
+#recipeList.gal-grid .gal-card{max-height:calc(100svh - 84px - env(safe-area-inset-bottom) - 52px)}
 html.wheel #v-opskrifter>.top{scroll-snap-align:start}
 html.wheel .gal-card{scroll-snap-align:center;scroll-snap-stop:always}
 html.wheel #recipeList.gal-grid{padding-bottom:22vh}
@@ -3851,10 +3853,8 @@ async function exportAll(){const msg=$("#exportMsg");const say=t=>{if(msg)msg.te
   for(const c of ["recipes","imports","archive","plans","lists","meta"]){
     try{const snap=await db.collection(c).get();out.collections[c]={};for(const d of snap.docs){out.collections[c][d.id]=d.data();}}catch(e){out.collections[c]={};}}
   delete (out.collections.meta||{}).offers;
-  const recs=Object.values(out.collections.recipes||{});const todo=recs.filter(r=>r.image&&/^\/_blob\//.test(r.image));let n=0,miss=0,ix=0;
-  say("Billeder 0 af "+todo.length+"…");
-  const worker=async()=>{while(ix<todo.length){const r=todo[ix++];const d=await blobToData(r.image);if(d)r.image=d;else miss++;say("Billeder "+(++n)+" af "+todo.length+"…");}};
-  await Promise.all(Array.from({length:4},worker));
+  /* pictures stored as /_blob/ files stay as links; the web version has copies of them under img/blob/ */
+  const recs=Object.values(out.collections.recipes||{});const miss=0;
   const s=JSON.stringify(out);const name="madplan-eksport-"+new Date().toISOString().slice(0,10)+".json";
   try{const dl=await claude.use("downloads");if(!dl)throw new Error("no downloads");await dl.save({filename:name,data:new Blob([s],{type:"application/json"})});
     say("Gemt: "+recs.length+" opskrifter"+(miss?" ("+miss+" uden billede)":"")+", "+Object.keys(out.collections.plans||{}).length+" uger ("+Math.round(s.length/1024)+" kB).");}
