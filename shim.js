@@ -51,6 +51,11 @@ const css=`
 .au-link{background:none;border:0;padding:0;font:inherit;color:var(--accent,#a8452c);font-weight:700;text-decoration:underline;cursor:pointer;align-self:flex-start}
 .au-msg{min-height:1.2em;font-size:14px;color:var(--accent,#a8452c);font-weight:600}
 .au-msg.ok{color:#2f7d4f}
+.au-start{border:1px solid var(--line,#e3dfeb);border-radius:14px;padding:10px 12px;margin:2px 0;display:flex;flex-direction:column;gap:8px}
+.au-start legend{font-weight:700;font-size:14px;padding:0 4px}
+.au-opt{display:flex;gap:10px;align-items:flex-start;cursor:pointer;margin:0!important;font-weight:400!important}
+.au-opt input{width:auto!important;margin-top:3px}
+.au-opt span{display:flex;flex-direction:column}.au-opt small{color:var(--muted,#666);font-size:13px}
 .au-hr{height:1px;background:var(--line,#e3dfeb);margin:6px 0}
 #famCard .fm-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid var(--line)}
 #famCard .fm-row small{display:block;color:var(--muted);font-size:12px}
@@ -135,21 +140,47 @@ function screenNoFamily(inv){
   }
   show(head("Ny familie","Opret jeres familie","Du er logget ind som <b>"+esc(mail)+"</b>. Opret familien, og invitér resten bagefter under Opsætning.")+
     '<label for="auFam">Familiens navn</label><input id="auFam" placeholder="fx Familien Riksted"><label for="auName">Dit navn</label><input id="auName" placeholder="fx Anders">'+
+    '<fieldset class="au-start"><legend>Hvordan vil I starte?</legend>'+
+    '<label class="au-opt"><input type="radio" name="auStart" value="lib" checked><span><b>Med opskrifter fra andre familier</b><small id="auLibN">Få en kogebog med det samme, som I selv kan rette i</small></span></label>'+
+    '<label class="au-opt"><input type="radio" name="auStart" value="empty"><span><b>Med en helt tom kogebog</b><small>I lægger selv jeres opskrifter ind</small></span></label></fieldset>'+
     '<button class="au-btn" type="button" id="auCreate">Opret familie</button><div class="au-msg"></div><p style="font-size:13px">Er du blevet inviteret? Så skal du logge ind med præcis den mail, invitationen blev sendt til.</p><button class="au-link" type="button" id="auOut">Log ud</button>',
-  box=>{box.querySelector("#auCreate").onclick=async()=>{const fn=box.querySelector("#auFam").value.trim(),nm=box.querySelector("#auName").value.trim();
+  box=>{libraryCount().then(n=>{const el=box.querySelector("#auLibN");if(!el)return;if(n>0)el.textContent=n+" opskrifter, som I selv kan rette i og tilføje til";else{el.textContent="Der er ingen delte opskrifter endnu";const r=box.querySelector('input[value="empty"]');if(r)r.checked=true;}});
+    box.querySelector("#auCreate").onclick=async()=>{const fn=box.querySelector("#auFam").value.trim(),nm=box.querySelector("#auName").value.trim();
       if(!fn||!nm){msg(box,"Skriv både familiens og dit navn.");return;}msg(box,"Opretter…",true);
-      try{await createFamily(fn,nm);}catch(err){msg(box,errText(err));}};
+      const useLib=(box.querySelector('input[name="auStart"]:checked')||{}).value==="lib";
+      try{await createFamily(fn,nm,useLib,t=>msg(box,t,true));}catch(err){msg(box,errText(err));}};
     box.querySelector("#auOut").onclick=()=>auth.signOut();});
 }
 
 /* ---------- family data ---------- */
-async function createFamily(famName,myName){
+async function createFamily(famName,myName,useLib,progress){
   const uid=S.user.uid,fid="f"+rid(),pid="p"+rid();
   await fs.doc("families/"+fid).set({name:famName,createdAt:Date.now(),createdBy:uid,members:{[uid]:{name:myName,email:low(S.user.email),role:"admin",personId:pid,joinedAt:Date.now()}}});
   await fs.doc("families/"+fid+"/meta/settings").set({kids:[{id:pid,name:myName}],stores:["Netto","Rema 1000"],primary:"Netto",maxStores:2},{merge:true});
   await fs.doc("users/"+uid).set({familyId:fid});
+  S.fid=fid;S.family={name:famName,members:{}};
+  if(useLib){try{await copyLibrary(progress);}catch(e){}}
   await enterFamily(fid);
 }
+
+/* ---------- shared recipes between families (library/<familie>_<opskrift>) ---------- */
+const STRIP=["kids","rating","stars","uses","lastUsed","history","createdAt"];
+async function libraryCount(){try{const s=await fs.collection("library").get();return s.docs.length;}catch(e){return 0;}}
+async function copyLibrary(progress,onlyNew){
+  const lib=await fs.collection("library").get();
+  let have=new Set();if(onlyNew){const mine=await famCol("recipes").get();mine.docs.forEach(d=>{const r=d.data();have.add(low(r.title)+"|"+(r.source||""));});}
+  const seen=new Set();let n=0;const jobs=[];
+  lib.docs.forEach(d=>{const r=d.data();if(r.familyId===S.fid)return;const k=low(r.title)+"|"+(r.source||"");if(seen.has(k)||have.has(k))return;seen.add(k);jobs.push(r);});
+  let ix=0;const worker=async()=>{while(ix<jobs.length){const r=Object.assign({},jobs[ix++]);["familyId","ownerUid","sharedBy","sharedAt","libId"].forEach(f=>delete r[f]);r.createdAt=Date.now();r.fromLibrary=true;
+      await famCol("recipes").doc("lib"+rid()).set(r);n++;if(progress)progress("Henter opskrifter… "+n+" af "+jobs.length);}};
+  await Promise.all(Array.from({length:6},worker));return n;}
+async function shareRecipes(progress){
+  const mine=await famCol("recipes").get();let n=0;const docs=mine.docs.filter(d=>!d.data().fromLibrary);let ix=0;
+  const worker=async()=>{while(ix<docs.length){const d=docs[ix++];const r=Object.assign({},d.data());STRIP.forEach(f=>delete r[f]);
+      Object.assign(r,{familyId:S.fid,ownerUid:S.user.uid,sharedBy:S.family.name,sharedAt:Date.now(),libId:S.fid+"_"+d.id});
+      await fs.collection("library").doc(S.fid+"_"+d.id).set(r);n++;if(progress)progress("Deler… "+n+" af "+docs.length);}};
+  await Promise.all(Array.from({length:6},worker));return n;}
+async function unshareRecipes(){const s=await fs.collection("library").where("ownerUid","==",S.user.uid).get();for(const d of s.docs)await d.ref.delete();return s.docs.length;}
 async function joinFamily(inv,myName){
   const uid=S.user.uid,fid=inv.familyId,mail=low(S.user.email);let pid=inv.personId||"";
   if(!pid)pid="p"+rid();
@@ -201,6 +232,9 @@ function drawFamCard(){
       '<select id="invPerson"><option value="">Ny person i familien</option>'+free.map(p=>'<option value="'+esc(p.id)+'">Er '+esc(p.name)+' (overtager '+esc(p.name)+'s 👍)</option>').join("")+'</select>'+
       '<input id="invName" placeholder="Navn (fx Bettina)"><button class="btn small" type="submit" style="align-self:flex-start">Send invitation</button><div class="fm-msg" id="invMsg">'+esc(S.invMsg||"")+'</div></form>':'')+
     '<div class="fm-row"><div><b>Dig i tommel-vurderingen</b><small>Bruges som standard i Opskrift Tinder</small></div><select id="mePerson">'+ps.filter(p=>!(window.__lockedPersons&&window.__lockedPersons.has(p.id))).map(p=>'<option value="'+esc(p.id)+'"'+(S.me&&S.me.personId===p.id?' selected':'')+'>'+esc(p.name)+'</option>').join("")+'</select></div>'+
+    '<div class="fm-row"><div><b>Opskrifter fra andre familier</b><small>Hent dem, I ikke allerede har</small></div><button type="button" class="btn ghost small" id="libGet">Hent</button></div>'+
+    (isAdmin()?'<div class="fm-row"><div><b>Del jeres opskrifter</b><small>Andre familier kan hente en kopi. Jeres 👍 og madplaner deles ikke</small></div><div style="display:flex;gap:6px"><button type="button" class="btn ghost small" id="libShare">Del</button><button type="button" class="linkbtn" id="libUnshare">Fjern</button></div></div>':'')+
+    '<div class="fm-msg" id="libMsg">'+esc(S.libMsg||"")+'</div>'+
     (isAdmin()?'<div class="fm-row"><div><b>Læs data ind fra Claude-appen</b><small>Vælg filen fra "Eksportér alle data"</small></div><label class="btn ghost small" style="cursor:pointer"><input type="file" accept="application/json,.json" id="impFile" hidden>Vælg fil</label></div><div class="fm-msg" id="impMsg">'+esc(S.impMsg||"")+'</div>':'')+
     '<button type="button" class="btn plain small" id="logOut" style="align-self:flex-start">Log ud ('+esc(S.user.email)+')</button>';
   const sel=c.querySelector("#invPerson"),nm=c.querySelector("#invName");
@@ -208,6 +242,10 @@ function drawFamCard(){
   const f=c.querySelector("#invForm");if(f)f.onsubmit=async e=>{e.preventDefault();await sendInvite(low(c.querySelector("#invMail").value),sel.value,nm.value.trim());};
   c.querySelectorAll("[data-uninv]").forEach(b=>b.onclick=async()=>{const em=b.dataset.uninv;try{await fs.doc("families/"+S.fid).update({["invites."+ikey(em)]:firebase.firestore.FieldValue.delete()});await fs.doc("invites/"+em).delete();}catch(err){alert(errText(err));}});
   const mp=c.querySelector("#mePerson");if(mp)mp.onchange=async()=>{try{await fs.doc("families/"+S.fid).update({["members."+S.user.uid+".personId"]:mp.value});try{localStorage.removeItem("mp_who");}catch(e){}}catch(err){alert(errText(err));}};
+  const libSay=t=>{S.libMsg=t;const m=$("#libMsg");if(m)m.textContent=t;};
+  const lg=c.querySelector("#libGet");if(lg)lg.onclick=async()=>{lg.disabled=true;try{const n=await copyLibrary(libSay,true);libSay(n?n+" nye opskrifter er lagt i Kogebogen.":"I har allerede alle de delte opskrifter.");}catch(err){libSay(errText(err));}lg.disabled=false;};
+  const ls=c.querySelector("#libShare");if(ls)ls.onclick=async()=>{if(!confirm("Del en kopi af jeres opskrifter med andre familier, der bruger Madro?"))return;ls.disabled=true;try{const n=await shareRecipes(libSay);libSay(n+" opskrifter er delt. Del igen, når I har lagt nye ind.");}catch(err){libSay(errText(err));}ls.disabled=false;};
+  const lu=c.querySelector("#libUnshare");if(lu)lu.onclick=async()=>{if(!confirm("Fjern jeres delte opskrifter? Familier, der allerede har hentet dem, beholder deres kopi."))return;try{const n=await unshareRecipes();libSay(n+" delte opskrifter er fjernet.");}catch(err){libSay(errText(err));}};
   const fi=c.querySelector("#impFile");if(fi)fi.onchange=()=>{if(fi.files[0])importFile(fi.files[0]);fi.value="";};
   c.querySelector("#logOut").onclick=async()=>{if(confirm("Log ud af Madro?")){await auth.signOut();location.reload();}};
 }

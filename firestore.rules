@@ -26,6 +26,14 @@ service cloud.firestore {
       allow delete: if signedIn() && (myMail() == mail || isAdmin(resource.data.familyId));
     }
 
+    // Opskrifter, som familier deler med hinanden. Alle med login kan læse og hente en kopi.
+    // Kun den, der har delt en opskrift, kan ændre eller fjerne den.
+    match /library/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+
     match /families/{fid} {
       // Opret en ny familie med dig selv som eneste medlem og administrator.
       allow create: if signedIn()
