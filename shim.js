@@ -225,14 +225,12 @@ async function importFile(file){
   if(!confirm("Læs data ind i familien "+S.family.name+"? Opskrifter, madplaner og indkøbsliste med samme id bliver overskrevet."))return;
   let n=0,bad=[];const cols=["recipes","plans","lists","archive","imports","meta"];
   const total=cols.reduce((a,c)=>a+Object.keys(data.collections[c]||{}).length,0);
-  for(const c of cols){for(const [id,doc] of Object.entries(data.collections[c]||{})){
-    if(c==="meta"&&id==="offers")continue;
-    let d=doc;
-    if(c==="meta"&&id==="settings"){ // keep the logged-in people's links to persons that still exist
-      d=Object.assign({},doc);}
-    try{await famCol(c).doc(id).set(d);}catch(e){bad.push(c+"/"+id+" ("+((e&&e.code)||"fejl")+")");}
-    n++;if(n%5===0)say("Læser ind… "+n+" af "+total);
-  }}
+  /* several writes at a time: each one waits for the server, so one-by-one is slow with pictures */
+  const jobs=[];for(const c of cols){for(const [id,doc] of Object.entries(data.collections[c]||{})){if(c==="meta"&&id==="offers")continue;jobs.push([c,id,doc]);}}
+  let next=0;const worker=async()=>{while(next<jobs.length){const [c,id,d]=jobs[next++];
+      try{await famCol(c).doc(id).set(d);}catch(e){bad.push(c+"/"+id+" ("+((e&&e.code)||"fejl")+")");}
+      n++;say("Læser ind… "+n+" af "+total);}};
+  await Promise.all(Array.from({length:6},worker));
   // members whose person no longer exists: offer the first unlinked person with the same name
   const ps=(data.collections.meta&&data.collections.meta.settings&&data.collections.meta.settings.kids)||[];
   for(const [uid,mm] of Object.entries(S.family.members||{})){if(ps.some(p=>p.id===mm.personId))continue;const same=ps.find(p=>low(p.name)===low(mm.name));
