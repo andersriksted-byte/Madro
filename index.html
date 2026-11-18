@@ -487,6 +487,8 @@ html.wheel #recipeList.gal-grid{padding-bottom:22vh}
 #v-madplan.pl-c .meal.note{border:0;background:#f4f2f8;border-radius:16px}
 /* magazine week plan */
 #v-madplan #days{gap:0}
+#pickBtn:disabled{opacity:.35;cursor:default}
+#v-madplan>.top>.row{gap:6px!important}
 /* scroll the plan one day at a time: every day (and the page top) is a stopping point */
 html:has(#v-madplan.on){scroll-snap-type:y mandatory;scroll-padding-top:8px;scroll-padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 html:has(#v-madplan.on) .masthead,#v-madplan>.top{scroll-snap-align:start}
@@ -1122,7 +1124,7 @@ body.wv-on .toast{z-index:210}
 
   <!-- MADPLAN -->
   <section class="view" id="v-madplan">
-    <div class="top"><div><h1>Madplan</h1><div class="sub" id="weekSub"></div></div><div class="row" style="gap:8px;flex-wrap:nowrap;align-items:center"><button type="button" class="btn small" id="goTodayBtn" style="flex:none" aria-label="Gå til i dag">I dag</button><button type="button" class="icon-btn" id="weekViewBtn" style="flex:none" aria-label="Se hele ugen" title="Se hele ugen"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M4 8h16M4 12.2h16M4 16.4h16"/></svg></button><button type="button" class="icon-btn" id="printBtn" style="flex:none" aria-label="Print ugeplan" title="Print ugeplan"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M7 8V3h10v5"/><rect x="3" y="8" width="18" height="9" rx="2"/><path d="M7 14h10v7H7z"/></svg></button></div></div>
+    <div class="top"><div><h1>Madplan</h1><div class="sub" id="weekSub"></div></div><div class="row" style="gap:8px;flex-wrap:nowrap;align-items:center"><button type="button" class="btn small" id="goTodayBtn" style="flex:none" aria-label="Gå til i dag">I dag</button><button type="button" class="icon-btn" id="weekViewBtn" style="flex:none" aria-label="Se hele ugen" title="Se hele ugen"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M4 8h16M4 12.2h16M4 16.4h16"/></svg></button><button type="button" class="icon-btn" id="pickBtn" style="flex:none" aria-label="Handl ind til hele ugen" title="Handl ind til hele ugen"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2.2l2.3 11h10.3l2-8H6.4"/><circle cx="9.5" cy="19.5" r="1.4"/><circle cx="16.5" cy="19.5" r="1.4"/></svg></button><button type="button" class="icon-btn" id="printBtn" style="flex:none" aria-label="Print ugeplan" title="Print ugeplan"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M7 8V3h10v5"/><rect x="3" y="8" width="18" height="9" rx="2"/><path d="M7 14h10v7H7z"/></svg></button></div></div>
     <div class="week-nav">
       <button class="icon-btn" id="wPrev" type="button" aria-label="Forrige uge">‹</button>
       <div style="text-align:center"><h2 id="weekTitle" class="num"></h2><button type="button" id="wToday" class="pill ex" style="border:0;cursor:pointer;margin-top:2px">Gå til denne uge</button></div>
@@ -1130,7 +1132,6 @@ body.wv-on .toast{z-index:210}
     </div>
     <div class="stack" id="days"></div>
     <p class="small muted" style="text-align:center;margin:10px 0 0">Swipe til siden for at skifte uge</p>
-    <div style="margin-top:16px"><button class="btn wide" id="pickBtn" type="button">Handl ind til hele ugen</button></div>
   </section>
 
   <!-- INDKØB -->
