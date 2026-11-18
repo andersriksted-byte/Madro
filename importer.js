@@ -11,20 +11,21 @@ const PROXIES=[
   {u:u=>"https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(u)},
   {u:u=>"https://r.jina.ai/"+u,h:{"X-Return-Format":"html"},text:true}
 ];
-async function viaProxy(url,as,ms){
-  let lastErr=null;
-  for(const p of PROXIES){
+async function viaProxy(url,as,ms,progress){
+  let lastErr=null;const errs=[];let n=0;
+  for(const p of PROXIES){n++;if(progress&&as!=="blob")progress("Henter opskriften fra siden… ("+n+"/"+PROXIES.length+")");
     if(as==="blob"&&p.text)continue;
     try{const ac=new AbortController();const t=setTimeout(()=>ac.abort(),ms||15000);
       const r=await fetch(p.u(url),{signal:ac.signal,headers:p.h||{}});
-      if(!r.ok){clearTimeout(t);lastErr=new Error("HTTP "+r.status);continue;}
+      if(!r.ok){clearTimeout(t);lastErr=new Error("HTTP "+r.status);errs.push(r.status);continue;}
       let v=as==="blob"?await r.blob():await r.text();clearTimeout(t);
       if(p.json){try{v=JSON.parse(v)[p.json]||"";}catch(e){v="";}}
-      if(as!=="blob"&&(!v||v.length<200)){lastErr=new Error("tom side");continue;}
+      if(as!=="blob"&&(!v||v.length<200)){lastErr=new Error("tom side");errs.push("tom");continue;}
+      if(as!=="blob"&&!/ld\+json|recipeIngredient|schema\.org\/Recipe/i.test(v)){lastErr=new Error("ingen opskriftsdata");errs.push("uden opskrift");continue;}
       if(as==="blob"&&!/^image\//.test(v.type||"")&&v.size<1000){lastErr=new Error("intet billede");continue;}
-      return v;}catch(e){lastErr=e;}
+      return v;}catch(e){lastErr=e;errs.push(e&&e.name==="AbortError"?"for langsom":"blokeret");}
   }
-  throw lastErr||new Error("kunne ikke hentes");
+  const e=new Error("ingen af mellemstationerne kunne hente siden: "+errs.join(", "));throw e;
 }
 
 /* ---------- schema.org Recipe ---------- */
@@ -82,9 +83,25 @@ const TAGS=[[/aftensmad|middag|hovedret|dinner|main/i,"Aftensmad"],[/frokost|lun
 function tagsOf(r,title){const hay=[txt(r.recipeCategory),Array.isArray(r.recipeCategory)?r.recipeCategory.join(" "):"",txt(r.keywords),Array.isArray(r.keywords)?r.keywords.join(" "):"",txt(r.recipeCuisine),title].join(" ");
   const out=[];TAGS.forEach(([re,t])=>{if(re.test(hay)&&!out.includes(t))out.push(t);});return out.slice(0,3);}
 
+/* schema.org Recipe written as microdata (itemprop="…") instead of JSON-LD, as e.g. Valdemarsro does */
+function microdata(doc){
+  const root=doc.querySelector('[itemtype*="schema.org/Recipe" i]');if(!root)return null;
+  const val=el=>{if(!el)return "";if(el.hasAttribute("content"))return el.getAttribute("content");if(el.tagName==="META")return el.getAttribute("content")||"";
+    if(el.tagName==="TIME")return el.getAttribute("datetime")||el.textContent;if(el.tagName==="IMG")return el.getAttribute("src")||el.getAttribute("data-src")||"";
+    if(el.tagName==="LINK"||el.tagName==="A")return el.getAttribute("href")||"";return el.textContent;};
+  const all=p=>[...root.querySelectorAll('[itemprop~="'+p+'"]')];const one=p=>all(p)[0];
+  const ingr=all("recipeIngredient").concat(all("ingredients")).map(e=>val(e).replace(/\s+/g," ").trim()).filter(Boolean);
+  let ins=all("recipeInstructions");let steps=[];
+  ins.forEach(e=>{const li=e.querySelectorAll("li,p,[itemprop=text]");if(li.length)li.forEach(x=>{const t=x.textContent.replace(/\s+/g," ").trim();if(t)steps.push(t);});else{const t=val(e).replace(/\s+/g," ").trim();if(t)steps.push(t);}});
+  const nut=root.querySelector('[itemprop~="nutrition"]');
+  return {name:val(one("name")).trim(),recipeYield:val(one("recipeYield")),totalTime:val(one("totalTime"))||val(one("cookTime"))||val(one("prepTime")),
+    description:val(one("description")),recipeIngredient:ingr,recipeInstructions:steps,image:val(one("image")),recipeCategory:val(one("recipeCategory")),keywords:val(one("keywords")),
+    nutrition:nut?{calories:val(nut.querySelector('[itemprop~="calories"]')),proteinContent:val(nut.querySelector('[itemprop~="proteinContent"]')),fiberContent:val(nut.querySelector('[itemprop~="fiberContent"]'))}:null};
+}
 function recipeFromHTML(html,url){
   const doc=new DOMParser().parseFromString(html,"text/html");
   let r=null;for(const s of doc.querySelectorAll('script[type="application/ld+json"]')){try{r=findRecipe(JSON.parse(s.textContent));}catch(e){try{r=findRecipe(JSON.parse(s.textContent.replace(/[\u0000-\u001f]+/g," ")));}catch(e2){}}if(r)break;}
+  if(!r)r=microdata(doc);
   if(!r)return null;
   const title=txt(r.name)||txt(doc.querySelector('meta[property="og:title"]')&&doc.querySelector('meta[property="og:title"]').content);
   const ingr=[];const raw=r.recipeIngredient||r.ingredients||[];(Array.isArray(raw)?raw:[raw]).forEach(l=>{if(typeof l==="string"&&l.trim())ingr.push(parseIngredient(l));});
@@ -102,11 +119,11 @@ async function shrink(blob){try{const bmp=await createImageBitmap(blob);const sc
   cv.width=Math.round(bmp.width*sc);cv.height=Math.round(bmp.height*sc);cv.getContext("2d").drawImage(bmp,0,0,cv.width,cv.height);return cv.toDataURL("image/jpeg",.72);}catch(e){return "";}}
 
 /* fetch + parse one link; returns a recipe object ready for Firestore, or throws */
-async function importRecipe(url){
-  const html=await viaProxy(url,"text",20000);
+async function importRecipe(url,progress){
+  const html=await viaProxy(url,"text",15000,progress);if(progress)progress("Læser opskriften…");
   const r=recipeFromHTML(html,url);
   if(!r)throw new Error("Siden har ingen opskrift, appen kan læse");
-  if(r.image){const orig=r.image;try{const b=await viaProxy(orig,"blob",15000);r.image=(await shrink(b))||orig;}catch(e){r.image=orig;}}
+  if(r.image){if(progress)progress("Henter billedet…");const orig=r.image;try{const b=await viaProxy(orig,"blob",15000);r.image=(await shrink(b))||orig;}catch(e){r.image=orig;}}
   if(!r.nutrition)delete r.nutrition;
   return r;
 }

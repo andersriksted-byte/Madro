@@ -12,10 +12,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795010319";</script>
-<script src="config.js?v=1795010319"></script>
-<script src="importer.js?v=1795010319"></script>
-<script src="shim.js?v=1795010319"></script>
+<script>window.__appVersion="1795010910";</script>
+<script src="config.js?v=1795010910"></script>
+<script src="importer.js?v=1795010910"></script>
+<script src="shim.js?v=1795010910"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2141,6 +2141,16 @@ $("#impGo").addEventListener("click",async()=>{
   const url=$("#impUrl").value.trim(), text=$("#impText").value.trim(), st=$("#impStatus");
   if(!text){
     if(!/^https?:\/\/\S+\.\S+/i.test(url)){st.textContent="Indsæt et link til opskriften (der starter med https://) eller opskriftens tekst.";return;}
+    if(window.__webApp&&window.MadroImporter){/* web: fetch and read the recipe right here, with progress and a clear error */
+      const btn=$("#impGo");btn.disabled=true;st.textContent="Henter opskriften fra siden…";
+      try{const r=await window.MadroImporter.importRecipe(url,t=>{st.textContent=t;});if(!r.image&&impImage)r.image=impImage;
+        st.textContent="Gemmer…";const nid="imp"+uid();await setDoc("recipes",nid,r);
+        for(const x of state.imports.filter(x=>x.url===url))try{await delDoc("imports",x.id);}catch(e){}
+        $("#impUrl").value="";impImage="";showImpImage();$("#importBox").style.display="none";st.textContent="";btn.disabled=false;
+        toast("Lagt i Kogebogen: "+r.title);for(let i=0;i<30&&!getRecipe(nid);i++)await new Promise(res=>setTimeout(res,100));if(getRecipe(nid))openRecipe(nid);return;}
+      catch(err){btn.disabled=false;const m=String((err&&err.message)||err);
+        if(!state.imports.some(x=>x.url===url)){try{await setDoc("imports",uid(),{url,status:"venter",auto:"fejl",autoError:m.slice(0,120),createdAt:Date.now(),image:impImage||""});}catch(e){}}
+        st.innerHTML="Opskriften kunne ikke hentes automatisk ("+esc(m)+"). Linket er gemt, så Claude kan hente den, når du skriver <b>Hent mine opskrifter</b>. Du kan også indsætte opskriftens tekst i feltet herunder.";return;}}
     if(state.imports.some(x=>x.url===url&&x.status!=="fejl")){st.textContent="Det link venter allerede på at blive hentet.";return;}
     try{await setDoc("imports",uid(),{url,status:"venter",createdAt:Date.now(),image:impImage||""});}catch(e){return;}
     $("#impUrl").value="";impImage="";showImpImage();$("#importBox").style.display="none";st.textContent="";
