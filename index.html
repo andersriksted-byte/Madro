@@ -12,10 +12,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795010988";</script>
-<script src="config.js?v=1795010988"></script>
-<script src="importer.js?v=1795010988"></script>
-<script src="shim.js?v=1795010988"></script>
+<script>window.__appVersion="1795012481";</script>
+<script src="config.js?v=1795012481"></script>
+<script src="importer.js?v=1795012481"></script>
+<script src="shim.js?v=1795012481"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1768,8 +1768,8 @@ function renderImports(){
   const waiting=list.filter(x=>x.status!=="fejl").length;
   el.innerHTML='<div class="card stack" style="border-left:5px solid var(--note);gap:8px"><div class="row" style="justify-content:space-between"><h3>'+(window.__webApp?"Henter opskrifter":"Venter på Claude")+'</h3><span class="small muted">'+waiting+' link'+(waiting===1?"":"s")+'</span></div>'+
     list.map(x=>{let host=x.url;try{host=new URL(x.url).hostname.replace(/^www\./,"")+new URL(x.url).pathname.replace(/\/$/,"").split("/").slice(-1).map(p=>" · "+decodeURIComponent(p).replace(/[-_]/g," ")).join("");}catch(e){}
-      return '<div class="row" style="justify-content:space-between;flex-wrap:nowrap;border-top:1px solid var(--line);padding-top:8px"><div style="min-width:0"><div style="overflow-wrap:anywhere;font-weight:600;font-size:calc(14px * var(--fs))">'+esc(host)+'</div><div class="small" style="color:'+(x.status==="fejl"?"var(--accent)":"var(--muted)")+'">'+(x.status==="fejl"?"Kunne ikke hentes"+(x.error?": "+esc(x.error):""):window.__webApp?(x.status==="henter"?"Henter opskriften…":x.auto==="fejl"?'Kunne ikke læses automatisk'+(x.autoError?' ('+esc(x.autoError)+')':'')+'. <button type="button" class="linkbtn" data-retryimp="'+esc(x.id)+'">Prøv igen</button> eller skriv Hent mine opskrifter til Claude.':"Henter om et øjeblik…"):"Venter på at blive hentet")+'</div></div><button class="del" type="button" data-delimp="'+esc(x.id)+'" aria-label="Fjern link" style="border:0;background:none;color:var(--muted);font-size:calc(20px * var(--fs));width:32px;height:32px">×</button></div>';}).join("")+
-    (window.__webApp?'':'<p class="small muted" style="margin:0">Claude henter dem '+recWhen()+' og sætter dem op med næringsindhold. Har du travlt, kan du skrive <b>Hent mine opskrifter</b> til Claude i chatten.</p>')+'</div>';
+      return '<div class="row" style="justify-content:space-between;flex-wrap:nowrap;border-top:1px solid var(--line);padding-top:8px"><div style="min-width:0"><div style="overflow-wrap:anywhere;font-weight:600;font-size:calc(14px * var(--fs))">'+esc(host)+'</div><div class="small" style="color:'+(x.status==="fejl"?"var(--accent)":"var(--muted)")+'">'+(x.status==="fejl"?"Kunne ikke hentes"+(x.error?": "+esc(x.error):""):window.__webApp?(x.status==="henter"?"Henter opskriften…":x.auto==="fejl"?'Kunne ikke læses automatisk'+(x.autoError?' ('+esc(x.autoError)+')':'')+'. <button type="button" class="linkbtn" data-retryimp="'+esc(x.id)+'">Prøv igen</button> eller indsæt opskriftens tekst.':"Henter om et øjeblik…"):"Venter på at blive hentet")+'</div></div><button class="del" type="button" data-delimp="'+esc(x.id)+'" aria-label="Fjern link" style="border:0;background:none;color:var(--muted);font-size:calc(20px * var(--fs));width:32px;height:32px">×</button></div>';}).join("")+
+    '</div>';
 }
 $("#importList").addEventListener("click",async e=>{
   const rt=e.target.closest("[data-retryimp]");if(rt){const x=state.imports.find(i=>i.id===rt.dataset.retryimp);if(x){await setDoc("imports",x.id,{url:x.url,status:"venter",createdAt:x.createdAt||Date.now(),image:x.image||""});toast("Prøver igen…");}return;}
@@ -2152,7 +2152,7 @@ $("#impGo").addEventListener("click",async()=>{
         toast("Lagt i Kogebogen: "+r.title);for(let i=0;i<30&&!getRecipe(nid);i++)await new Promise(res=>setTimeout(res,100));if(getRecipe(nid))openRecipe(nid);return;}
       catch(err){btn.disabled=false;const m=String((err&&err.message)||err);
         if(!state.imports.some(x=>x.url===url)){try{await setDoc("imports",uid(),{url,status:"venter",auto:"fejl",autoError:m.slice(0,120),createdAt:Date.now(),image:impImage||""});}catch(e){}}
-        st.innerHTML="Opskriften kunne ikke hentes automatisk ("+esc(m)+"). Linket er gemt, så Claude kan hente den, når du skriver <b>Hent mine opskrifter</b>. Du kan også indsætte opskriftens tekst i feltet herunder.";return;}}
+        st.innerHTML="Opskriften kunne ikke hentes automatisk ("+esc(m)+"). Du kan prøve igen senere eller indsætte opskriftens tekst i feltet herunder.";return;}}
     if(state.imports.some(x=>x.url===url&&x.status!=="fejl")){st.textContent="Det link venter allerede på at blive hentet.";return;}
     try{await setDoc("imports",uid(),{url,status:"venter",createdAt:Date.now(),image:impImage||""});}catch(e){return;}
     $("#impUrl").value="";impImage="";showImpImage();$("#importBox").style.display="none";st.textContent="";
