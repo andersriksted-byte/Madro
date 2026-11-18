@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795036913";</script>
-<script src="config.js?v=1795036913"></script>
-<script src="importer.js?v=1795036913"></script>
-<script src="shim.js?v=1795036913"></script>
+<script>window.__appVersion="1795037115";</script>
+<script src="config.js?v=1795037115"></script>
+<script src="importer.js?v=1795037115"></script>
+<script src="shim.js?v=1795037115"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -934,11 +934,11 @@ h1,h2,h3{font-family:var(--serif);letter-spacing:-.01em}
 #v-madplan #days .mag-day.empty-day .dmeals{align-self:center}
 
 /* the day's shopping status sits under the day name instead of on each dish */
-#v-madplan #days .day.mag-day,#v-madplan #days.menu-style .day.mag-day{grid-template-areas:"name meals add" "stat meals add";grid-template-rows:1fr auto}
+#v-madplan #days .day.mag-day,#v-madplan #days.menu-style .day.mag-day{grid-template-areas:"name meals add" "stat meals add";grid-template-rows:auto 1fr}
 #v-madplan #days .mag-day .dstat-w{grid-area:stat;display:flex;justify-content:center;padding-top:4px}
 #v-madplan #days .day.mag-day,#v-madplan #days.menu-style .day.mag-day{grid-template-columns:38px minmax(0,1fr) 30px!important;grid-template-rows:auto 1fr!important;gap:0 10px!important}
-#v-madplan #days .mag-day .dname,#v-madplan #days.menu-style .mag-day .dname{min-height:84px!important;align-self:start!important;padding-left:5px!important}
-#v-madplan #days .mag-day.today .dname{min-height:104px!important}
+#v-madplan #days .mag-day .dname,#v-madplan #days.menu-style .mag-day .dname{min-height:0!important;align-self:start!important;padding-left:5px!important}
+#v-madplan #days .mag-day.today .dname{min-height:0!important}
 #v-madplan #days .mag-day .dstat-w{align-self:start}
 #v-madplan #days .mag-day .dstat{width:28px;height:28px;font-size:13px}
 #v-madplan #days .mag-day .dstat{width:32px;height:32px;border-radius:50%;border:1px dashed var(--line);background:none;color:var(--muted);font-size:14px;display:grid;place-items:center;position:relative;padding:0;cursor:pointer}
