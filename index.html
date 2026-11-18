@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795029584";</script>
-<script src="config.js?v=1795029584"></script>
-<script src="importer.js?v=1795029584"></script>
-<script src="shim.js?v=1795029584"></script>
+<script>window.__appVersion="1795029645";</script>
+<script src="config.js?v=1795029645"></script>
+<script src="importer.js?v=1795029645"></script>
+<script src="shim.js?v=1795029645"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -4386,6 +4386,16 @@ init();
   const first=()=>{if(document.querySelector("#authWrap:not([hidden])")){setTimeout(first,1500);return;}later();};setTimeout(first,1500);
   window.__showTip=k=>show(k||page(),true);
 })();
+</script>
+<script>
+/* Kogebog gallery: the first card must end above the tab bar while the Madro logo is still on screen */
+(function(){const L=document.getElementById("recipeList");if(!L)return;let raf=0;
+  function fit(){raf=0;const c=L.querySelector(".gal-card");if(!c||!L.classList.contains("gal-grid")||!/opskrifter/.test(location.hash))return;
+    c.style.maxHeight="";const top=c.getBoundingClientRect().top+window.scrollY;const tab=document.querySelector(".tabs");const th=tab?tab.getBoundingClientRect().height:84;
+    const room=window.innerHeight-top-th-10;if(room>220)c.style.maxHeight=room+"px";}
+  const go=()=>{if(!raf)raf=requestAnimationFrame(fit);};
+  new MutationObserver(go).observe(L,{childList:true});addEventListener("resize",go);addEventListener("hashchange",()=>setTimeout(go,60));
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(go);go();})();
 </script>
 </body>
 </html>
