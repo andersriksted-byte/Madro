@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795030176";</script>
-<script src="config.js?v=1795030176"></script>
-<script src="importer.js?v=1795030176"></script>
-<script src="shim.js?v=1795030176"></script>
+<script>window.__appVersion="1795030443";</script>
+<script src="config.js?v=1795030443"></script>
+<script src="importer.js?v=1795030443"></script>
+<script src="shim.js?v=1795030443"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -917,6 +917,18 @@ h1,h2,h3{font-family:var(--serif);letter-spacing:-.01em}
 .sheet .hero-btn,.sheet #pasteWrap{display:none!important}
 .sheet .hero{max-height:min(34vh,260px)}
 .sheet .rec-actions{position:sticky;bottom:-24px;z-index:6;background:var(--bg);margin:0 -16px;padding:10px 16px 34px;border-top:1px solid var(--line);box-shadow:0 -8px 16px -8px rgba(0,0,0,.12);flex-wrap:wrap;gap:8px}
+
+/* day name and date stand on their side in a narrow column to the left of the dishes */
+#v-madplan #days .day.mag-day,#v-madplan #days.menu-style .day.mag-day{grid-template-columns:42px minmax(0,1fr) 30px;grid-template-areas:"name meals add";gap:0 10px;align-items:start;padding:12px 0 12px}
+#v-madplan #days .mag-day .dname,#v-madplan #days.menu-style .mag-day .dname{writing-mode:vertical-rl;transform:rotate(180deg);display:flex;flex-direction:column;flex-wrap:nowrap;align-items:flex-end;justify-content:flex-end;gap:4px;align-self:stretch;min-height:96px;font-size:inherit}
+#v-madplan #days .mag-day .dname .dn-full,#v-madplan #days.menu-style .mag-day .dname > span{font-size:calc(20px * var(--fs))!important;line-height:1;white-space:nowrap}
+#v-madplan #days .mag-day .dname small,#v-madplan #days.menu-style .mag-day .dname small{display:block;font-size:calc(9.5px * var(--fs));letter-spacing:.16em;white-space:nowrap;margin:0}
+#v-madplan #days .mag-day .dname{border-left:1px solid var(--line);padding-left:8px!important}
+#v-madplan #days .mag-day.today .dname{border-color:#c8452a}
+#v-madplan #days .mag-day .dmeals{align-self:center}
+#v-madplan #days .mag-day .day-add,#v-madplan #days.menu-style .mag-day .day-add{align-self:start;justify-self:end;width:28px;height:28px;font-size:17px}
+#v-madplan #days .mag-day.empty-day .dname{min-height:64px}
+#v-madplan #days .mag-day.empty-day .dmeals{align-self:center}
 /* recipe actions: one tidy block — servings and share on top, two equal buttons, the main action full width */
 .rec-actions.ra{display:flex;flex-direction:column;gap:8px}
 .ra .ra-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
