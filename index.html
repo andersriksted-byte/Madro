@@ -12,10 +12,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795010910";</script>
-<script src="config.js?v=1795010910"></script>
-<script src="importer.js?v=1795010910"></script>
-<script src="shim.js?v=1795010910"></script>
+<script>window.__appVersion="1795010988";</script>
+<script src="config.js?v=1795010988"></script>
+<script src="importer.js?v=1795010988"></script>
+<script src="shim.js?v=1795010988"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1198,18 +1198,20 @@ body.wv-on .toast{z-index:210}
         <form class="row" id="srcForm" style="flex-wrap:nowrap"><input type="text" id="srcUrl" placeholder="fx valdemarsro.dk" aria-label="Ny opskriftskilde" autocomplete="off" autocapitalize="off" inputmode="url"><button class="btn" type="submit">Tilføj</button></form>
       </div>
       <div class="card stack" id="exportCard">
-        <h3>Flyt appen</h3>
-        <p class="small muted" style="margin:0">Gem alle data i én fil: opskrifter med billeder, madplaner, indkøbsliste, familien og vurderinger. Filen kan læses ind i web-versionen af appen.</p>
-        <button type="button" class="btn ghost small" id="exportAll" style="align-self:flex-start">⇩ Eksportér alle data</button>
+        <h3>Data eksport</h3>
+        <p class="small muted" style="margin:0">Download jeres opskrifter, madplaner og indkøbsliste som en CSV-fil, der kan åbnes i Excel, Numbers eller Google Sheets.</p>
+        <button type="button" class="btn ghost small" id="exportCsv" style="align-self:flex-start">⇩ Download CSV</button>
+        <button type="button" class="linkbtn claude-only" id="exportAll" style="align-self:flex-start">Fuld eksport til web-versionen (JSON)</button>
         <span class="small muted" id="exportMsg"></span>
       </div>
       <div class="card stack">
-        <h3>Automatisk opdatering</h3>
-        <div><label class="lbl" for="schedOffers">Søg efter nye tilbud i dine butikker</label>
+        <h3><span class="claude-only">Automatisk opdatering</span><span class="web-only">Tilbud</span></h3>
+        <p class="small muted web-only" style="margin:0" id="offInfo"></p>
+        <div class="claude-only"><label class="lbl" for="schedOffers">Søg efter nye tilbud i dine butikker</label>
           <select id="schedOffers"><option value="daily">Hver dag kl. 7</option><option value="twice">Søndag og torsdag kl. 7</option><option value="weekly">Søndag kl. 7</option><option value="manual">Kun når jeg beder om det</option></select></div>
-        <div><label class="lbl" for="schedRecipes">Hent opskrifter fra gemte links</label>
+        <div class="claude-only"><label class="lbl" for="schedRecipes">Hent opskrifter fra gemte links</label>
           <select id="schedRecipes"><option value="2h">Hver 2. time (kl. 7–21)</option><option value="3x">3 gange dagligt (kl. 7, 13 og 17)</option><option value="1x">1 gang dagligt (kl. 7)</option><option value="manual">Kun når jeg beder om det</option></select></div>
-        <div id="runlog" class="small muted"></div>
+        <div id="runlog" class="small muted claude-only"></div>
       </div>
       <div class="card stack">
         <h3>Ugens tilbud</h3>
@@ -3928,7 +3930,10 @@ $("#fsSeg").addEventListener("click",async e=>{const b=e.target.closest("[data-f
 const SCHED_DEF={offers:"twice",recipes:"3x"};
 function sched(){return Object.assign({},SCHED_DEF,state.settings.schedule||{});}
 function recWhen(){return {"2h":"automatisk hver 2. time (kl. 7–21)","3x":"automatisk kl. 7, 13 og 17","1x":"automatisk kl. 7","manual":"når du beder Claude om det i chatten"}[sched().recipes]||"automatisk";}
-function renderSched(){const sc=sched();const a=$("#schedOffers"),b=$("#schedRecipes");if(a)a.value=sc.offers;if(b)b.value=sc.recipes;
+function renderSched(){
+  {const oi=$("#offInfo");if(oi){const when=(window.MADRO_INFO&&window.MADRO_INFO.offers)||"søndag og torsdag morgen";const u=fileOffers&&fileOffers.updatedAt?new Date(fileOffers.updatedAt):null;
+    oi.innerHTML="Ugens tilbud fra jeres butikker hentes automatisk "+esc(when)+"."+(u&&!isNaN(u)?"<br>Sidst opdateret: "+esc(u.toLocaleString("da-DK",{weekday:"long",day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"}))+".":"");}}
+  const sc=sched();const a=$("#schedOffers"),b=$("#schedRecipes");if(a)a.value=sc.offers;if(b)b.value=sc.recipes;
   document.querySelectorAll(".recWhen").forEach(e=>e.textContent=recWhen());
   const rl=state.runlog||{},f=v=>{const d=new Date(v);return isNaN(d)?"":d.toLocaleString("da-DK",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});};
   const r=$("#runlog");if(r)r.innerHTML=(rl.offersAt?"Tilbud sidst søgt: "+esc(f(rl.offersAt))+"<br>":"")+(rl.recipesAt?"Opskrifter sidst hentet: "+esc(f(rl.recipesAt)):"")||"Ændringer gælder fra næste kørsel.";}
@@ -3982,6 +3987,21 @@ async function exportAll(){const msg=$("#exportMsg");const say=t=>{if(msg)msg.te
     say("Gemt: "+recs.length+" opskrifter"+(miss?" ("+miss+" uden billede)":"")+", "+Object.keys(out.collections.plans||{}).length+" uger ("+Math.round(s.length/1024)+" kB).");}
   catch(e){say("Filen kunne ikke gemmes: "+(e&&e.message||e));}}
 $("#exportAll").addEventListener("click",()=>exportAll());
+/* CSV for people: one row per recipe, plan entry and shopping item; semicolons + BOM so Danish Excel opens it right */
+function csvCell(v){v=v==null?"":String(v);return /[;"\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
+async function exportCsv(){const msg=$("#exportMsg");const say=t=>{if(msg)msg.textContent=t;};
+  const rows=[["Type","Navn","Personer","Tid","Kategorier","Ingredienser","Fremgangsmåde","Kilde","Uge","Dag","Antal","Enhed","Tommel op"]];
+  const ingTxt=r=>(r.ingredients||[]).map(i=>[i.amount!=null?fmtAmt(i.amount):"",i.unit||"",i.name||"",i.note?"("+i.note+")":""].filter(Boolean).join(" ")).join(" | ");
+  state.recipes.slice().sort((a,b)=>String(a.title).localeCompare(String(b.title),"da")).forEach(r=>{
+    rows.push(["Opskrift",r.title||"",r.servings||"",r.time||"",[...(r.tags||[]),...(r.themes||[])].join(", "),ingTxt(r),(r.steps||[]).map((x,i)=>(i+1)+". "+x).join(" "),r.source||"","","","","",kidsList().filter(k=>kidLikes(r,k.id)===true).map(k=>k.name).join(", ")]);});
+  Object.keys(state.plans).sort().forEach(k=>{(state.plans[k].entries||[]).slice().sort((a,b)=>a.day-b.day).forEach(e=>{const r=e.recipeId&&getRecipe(e.recipeId);
+    rows.push(["Madplan",r?r.title:(e.note||"")+(e.sub?" – "+e.sub:""),e.servings||"","","","","","",k,DAYS[e.day]||"","","",""]);});});
+  (state.shopping||[]).forEach(it=>rows.push(["Indkøbsliste",it.name||"","","","","","","","","",it.amount!=null?fmtAmt(it.amount):"",it.unit||"",""]));
+  const csv="\ufeff"+rows.map(r=>r.map(csvCell).join(";")).join("\r\n");
+  const name="madro-"+new Date().toISOString().slice(0,10)+".csv";
+  try{const dl=await claude.use("downloads");if(!dl)throw new Error("Download er ikke tilgængelig her");await dl.save({filename:name,data:new Blob([csv],{type:"text/csv;charset=utf-8"})});
+    say("Gemt: "+state.recipes.length+" opskrifter, "+(rows.length-1-state.recipes.length)+" andre linjer.");}catch(e){say("Filen kunne ikke gemmes: "+(e&&e.message||e));}}
+$("#exportCsv").addEventListener("click",()=>exportCsv());
 function renderStores(){renderSched();renderKidsEdit();renderSrcEdit();
   const st=state.settings;
   const custom=st.customStores||[];

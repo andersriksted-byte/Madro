@@ -7,3 +7,6 @@ window.FIREBASE_CONFIG = {
   messagingSenderId: "41867769721",
   appId: "1:41867769721:web:dd39785eac41b4686ce1a8"
 };
+
+/* Info til brugerne. Frekvensen styres af udvikleren i Claude-opgaven "Opdater tilbud". */
+window.MADRO_INFO = { offers: "søndag og torsdag morgen" };
