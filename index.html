@@ -12,10 +12,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795014418";</script>
-<script src="config.js?v=1795014418"></script>
-<script src="importer.js?v=1795014418"></script>
-<script src="shim.js?v=1795014418"></script>
+<script>window.__appVersion="1795014801";</script>
+<script src="config.js?v=1795014801"></script>
+<script src="importer.js?v=1795014801"></script>
+<script src="shim.js?v=1795014801"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -577,7 +577,7 @@ html:not(.web-app) .web-only{display:none}html.web-app .claude-only{display:none
 .sl-sub{display:block;font-size:calc(13px * var(--fs));color:var(--muted);margin-top:2px}
 .sl-badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
 .sl-badges b{font-size:calc(11px * var(--fs));font-weight:700;border-radius:999px;padding:1px 7px}
-.b-offer{background:var(--offer-soft);color:var(--offer-ink)}
+.b-offer{background:var(--offer-soft);color:var(--offer-ink)}.b-offer .b-offx{border:0;background:none;color:inherit;font:inherit;font-weight:700;font-size:1.15em;line-height:1;padding:0 2px 0 8px;margin:-4px 0;cursor:pointer;opacity:.7}
 .b-left{background:var(--good-soft);color:var(--good)}
 .b-recent{background:var(--note-soft);color:var(--note)}
 .sl-cb{appearance:none;-webkit-appearance:none;flex:none;width:30px;height:30px;border:2px solid var(--line);border-radius:7px;background:var(--surface);display:grid;place-items:center;cursor:pointer;margin:0}
@@ -1183,7 +1183,7 @@ body.wv-on .toast{z-index:210}
         <select id="primary" aria-label="Fast butik"></select>
       </div>
       <div class="card stack">
-        <h3>Højst antal butikker pr. tur</h3>
+        <h3>Højst antal butikker pr. indkøbstur</h3>
         <div class="seg" id="maxSeg"><button type="button" data-v="1">1</button><button type="button" data-v="2">2</button><button type="button" data-v="3">3</button></div>
       </div>
       <div class="card stack claude-only">
@@ -1199,11 +1199,12 @@ body.wv-on .toast{z-index:210}
         <form class="row" id="srcForm" style="flex-wrap:nowrap"><input type="text" id="srcUrl" placeholder="fx valdemarsro.dk" aria-label="Ny opskriftskilde" autocomplete="off" autocapitalize="off" inputmode="url"><button class="btn" type="submit">Tilføj</button></form>
       </div>
       <div class="card stack" id="exportCard">
-        <h3>Data eksport</h3>
+        <h3><span class="claude-only">Data eksport</span><span class="web-only">Import / eksport</span></h3>
         <p class="small muted" style="margin:0">Download jeres opskrifter, madplaner og indkøbsliste som en CSV-fil, der kan åbnes i Excel, Numbers eller Google Sheets.</p>
         <button type="button" class="btn ghost small" id="exportCsv" style="align-self:flex-start">⇩ Download CSV</button>
         <button type="button" class="linkbtn claude-only" id="exportAll" style="align-self:flex-start">Fuld eksport til web-versionen (JSON)</button>
         <span class="small muted" id="exportMsg"></span>
+        <div id="impSlot" class="web-only"></div>
       </div>
       <div class="card stack">
         <h3><span class="claude-only">Automatisk opdatering</span><span class="web-only">Tilbud</span></h3>
@@ -3221,11 +3222,12 @@ const SKIP=new Set(["frisk","friske","økologisk","økologiske","øko","dansk","
 const SHORT_HEADS=["æg","ost","løg","ris","kål","bær","øl","vin","mel","olie"];
 const CLASSW=["sodavand","læskedrik","lemonade","cola","tonic","vand","te","urtete","sauce","dressing","is","mælkeis","flødeis","isvafler","proteinbar","bar","drik","energidrik","skyrdrik","juice","saft","suppe","salat","shot","likør","kiks","snack","chips","kapsler","kaffekapsler","pulver","kit","cookies","cookie","småkager","kage","kager","sild","karrysild","chokolade","slik","yoghurt","marmelade","syltetøj"];
 const CUTS=["side","filet","fileter","portioner","stykker","bryst","brystfilet","lår","overlår","underlår","kød","steg","skiver","tern","strimler","bøffer","koteletter","mørbrad","inderlår","culotte"];
-const NOT={"mælk":["kokos","kakao","mandel","havre","soja","ris","skyr"],"æg":["pål"],"ris":["blomkål","grød"],"løg":["hvid"],"smør":["jordnød","peanut"],"ost":["hytte","fløde","tærte"],"is":[]};
+const NOT={"mælk":["kokos","kakao","mandel","havre","soja","ris","skyr","kærne","kondens","choko","banan","jordbær","laktosefri"],"æg":["pål","spejl"],"ris":["blomkål","grød"],"løg":["hvid"],"smør":["jordnød","peanut"],"ost":["hytte","fløde","tærte","æblem","m"],"is":[]};
+const MODS=["laktosefri","glutenfri","sukkerfri","fedtfri","vegansk","vegan","plantebase","plantebaseret","protein","kakao","chokolade","choko","jordbær","vanilje","hindbær","banan","kærne","kondens","kokos","mandel","havre","soja","barista","light","diæt","zero","koffeinfri","alkoholfri","baby","børne"];
 function itemWords(name){return norm(name).split(" ").filter(w=>w&&!/^\d/.test(w)&&!SKIP.has(w)).map(w=>SYN[w]||w);}
 function wordHit(w,prodWords,prod){
   const bad=NOT[w]||[];
-  return prodWords.some(p=>{if(bad.some(b=>p.startsWith(b)))return false;if(p===w)return true;
+  return prodWords.some(p=>{if(bad.some(b=>p.startsWith(b)||(p!==w&&p.slice(0,-w.length).endsWith(b))))return false;if(p===w)return true;
     if(p.endsWith(w)&&p.length>w.length+1&&(w.length>=5||SHORT_HEADS.includes(w)))return true;
     if(p.startsWith(w)){const rest=p.slice(w.length);
       // inflections (æbler, pølserne) and cuts of the same thing (lakseside, kyllingebryst)
@@ -3251,6 +3253,9 @@ function matchesOffer(name,o){
   const ws=itemWords(name);if(!ws.length)return false;
   const prod=norm(prodCore(o.product)).split(" ").map(w=>SYN[w]||w).join(" ");const pw=prod.split(" ").filter(Boolean);
   if(!ws.every(w=>wordHit(w,pw,prod)))return false;
+  // a special kind the item didn't ask for: "laktosefri mælk" is not "mælk", "kærnemælk" is not "mælk"
+  const iw=" "+norm(name)+" ";
+  if(MODS.some(m=>pw.some(p=>p.startsWith(m))&&!iw.includes(m)))return false;
   // a different kind of product: mint is not mint tea, roast pork is not roast sauce
   const isClass=(word,c)=>word===c||(c.length>=4&&word.endsWith(c));
   for(const c of CLASSW){if(pw.some(p=>isClass(p,c))&&!ws.some(w=>isClass(w,c)))return false;}
@@ -3265,6 +3270,10 @@ function unitPrice(o){
 }
 /* offers the user said do not fit an item ("Tuborg Squash" is not squash) */
 function offKey(o){return norm(o.store+" "+o.product);}
+document.addEventListener("click",async e=>{const x=e.target.closest("[data-offx]");if(!x)return;e.preventDefault();e.stopPropagation();
+  const name=x.dataset.offitem;if(!await confirmBox("Fjern tilbuddet fra "+name+"?","Tilbuddet passer ikke til varen og bliver ikke vist ved "+name+" igen.","Fjern tilbud"))return;
+  const st=state.settings;st.offerNo=Object.assign({},st.offerNo||{});const k=norm(name);
+  st.offerNo[k]=[...new Set((st.offerNo[k]||[]).concat(x.dataset.offx.split("||")))];renderShop();await saveSettings();toast("Tilbuddet vises ikke mere ved "+name);},true);
 function offerNo(name){const m=(state.settings&&state.settings.offerNo)||{};return m[norm(name)]||[];}
 /* the same deal in several variants (pitabrød / fuldkornspitabrød, same price, size and dates) is one offer */
 function mergeVariants(list){const g=new Map();
@@ -3537,7 +3546,7 @@ function renderShop(){
     }else{
       // store and dish are shown by their own sorting (Butik / Ret) and in the item's details
       sub=[shopItemLine(it),inDish&&others.length?"også til "+others.join(", "):""].filter(Boolean).join(" · ");
-      if(o)badges.push('<b class="b-offer">Tilbud: '+esc(o.store)+' · '+esc(offerText(o))+'</b>');
+      if(o)badges.push('<b class="b-offer">Tilbud: '+esc(o.store)+' · '+esc(offerText(o))+'<button type="button" class="b-offx" data-offx="'+esc((o._keys||[offKey(o)]).join("||"))+'" data-offitem="'+esc(it.name)+'" aria-label="Forkert tilbud – fjern det fra '+esc(it.name)+'">×</button></b>');
       if(!it.checked){const l=leftoverOf(it);if(l)badges.push('<b class="b-left">Køber '+esc(l.buyText)+' · '+esc(l.text)+'</b>');
         const rb=recentBuy(it.name);if(rb)badges.push('<b class="b-recent">Købt '+esc(fmtDate(rb.date))+(rb.item.store?' i '+esc(rb.item.store):'')+' · tjek om du har det</b>');}
     }

@@ -80,6 +80,7 @@ const css=`
 #famMore .fm-comm{display:flex;flex-direction:column;gap:8px;padding:10px 2px}
 #famMore .fm-opt{display:flex;gap:10px;align-items:flex-start;cursor:pointer}#famMore .fm-opt input{margin-top:4px}
 #famMore .fm-opt span{display:flex;flex-direction:column}#famMore .fm-opt small,#famMore .fm-comm>small{color:var(--muted);font-size:12.5px;line-height:1.35}
+#impSlot .imp-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0 4px;border-top:1px solid var(--line)}#impSlot small{display:block;color:var(--muted);font-size:12px}#impSlot .fm-msg{font-size:13px;color:var(--muted)}
 #famMore .fm-msg{font-size:13px;color:var(--muted);min-height:1em}
 `;
 function mountUI(){
@@ -301,7 +302,6 @@ function drawFamCard(force){
       (adm?'':'<small>Kun administratoren kan ændre det.</small>')+
       '<div class="fm-msg" id="libMsg">'+esc(S.libMsg||"")+'</div></div>'+
     '<h3 style="margin-top:6px">Konto</h3>'+
-    (adm?'<div class="fm-row"><div><b>Læs data ind fra Claude-appen</b><small>Vælg filen fra "Eksportér alle data"</small></div><label class="btn ghost small" style="cursor:pointer"><input type="file" accept="application/json,.json" id="impFile" hidden>Vælg fil</label></div><div class="fm-msg" id="impMsg">'+esc(S.impMsg||"")+'</div>':'')+
     '<div class="fm-row"><div><b>Anbefal Madro til en anden familie</b><small>Send et link på mail eller besked. De opretter deres egen familie</small></div><button type="button" class="btn ghost small" id="tellFriend">Send</button></div>'+
     '<button type="button" class="btn plain small" id="logOut" style="align-self:flex-start">Log ud ('+esc(S.user.email)+')</button>';
   const say=t=>{S.invMsg=t;const m=$("#invMsg");if(m)m.textContent=t;};
@@ -335,13 +335,14 @@ function drawFamCard(force){
     }catch(err){b.disabled=false;alert(errText(err));}});
   c.querySelectorAll("[data-uninv]").forEach(b=>b.onclick=async()=>{const em=b.dataset.uninv;try{await fs.doc("families/"+S.fid).update({["invites."+ikey(em)]:firebase.firestore.FieldValue.delete()});await fs.doc("invites/"+em).delete();}catch(err){alert(errText(err));}});
   const mp=c.querySelector("#mePerson");if(mp)mp.onchange=async()=>{try{await fs.doc("families/"+S.fid).update({["members."+S.user.uid+".personId"]:mp.value});try{localStorage.removeItem("mp_who");}catch(e){}}catch(err){alert(errText(err));}};
+  const slot=$("#impSlot");if(slot){slot.innerHTML=adm?'<div class="imp-row"><div><b>Læs data ind fra Claude-appen</b><small>Vælg filen fra "Fuld eksport til web-versionen"</small></div><label class="btn ghost small" style="cursor:pointer;flex:none"><input type="file" accept="application/json,.json" id="impFile" hidden>Vælg fil</label></div><div class="fm-msg" id="impMsg">'+esc(S.impMsg||"")+'</div>':'';
+    const fi=slot.querySelector("#impFile");if(fi)fi.onchange=()=>{if(fi.files[0])importFile(fi.files[0]);fi.value="";};}
   if(!more)return;const c2=more;
   const libSay=t=>{S.libMsg=t;const m=$("#libMsg");if(m)m.textContent=t;};
   const lg=c2.querySelector("#libGet");if(lg)lg.onclick=async()=>{lg.disabled=true;try{const n=await copyLibrary(libSay,true);libSay(n?n+" nye opskrifter er lagt i Kogebogen.":"I har allerede alle de delte opskrifter.");}catch(err){libSay(errText(err));}lg.disabled=false;};
   c2.querySelectorAll('input[name="comm"]').forEach(r=>r.onchange=async()=>{const on=r.value==="on";
     if(!on&&!confirm("Gøre kogebogen lukket? De opskrifter, I har delt, fjernes fra fællesskabet. Familier, der allerede har hentet dem, beholder deres egen kopi.")){drawFamCard();return;}
     try{libSay(on?"Melder jer ind…":"Fjerner jeres delte opskrifter…");await setCommunity(on);libSay(on?"I er med i fællesskabet. Del en opskrift med knappen 🌍 i opskriften.":"Kogebogen er nu lukket.");}catch(err){libSay(errText(err));}});
-  const fi=c2.querySelector("#impFile");if(fi)fi.onchange=()=>{if(fi.files[0])importFile(fi.files[0]);fi.value="";};
   c2.querySelector("#tellFriend").onclick=async()=>{const url=linkURL();const me=(S.me&&S.me.name)||"";
     const text="Hej! Jeg bruger Madro til madplan, kogebog og indkøbsliste. Prøv den her: "+url+"\n\nSkriv din mail, få et login-link, og opret jeres egen familie."+(me?"\n\nHilsen "+me:"");
     try{if(navigator.share){await navigator.share({title:"Madro",text});return;}}catch(e){if(e&&e.name==="AbortError")return;}
