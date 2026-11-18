@@ -62,6 +62,10 @@ const css=`
 #famCard .fm-tag{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 #famCard form{display:flex;flex-direction:column;gap:8px}
 #famCard input,#famCard select{font:inherit;font-size:16px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+#famCard .fm-comm{display:flex;flex-direction:column;gap:8px;padding:10px 2px;border-bottom:1px solid var(--line)}
+#famCard .fm-opt{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+#famCard .fm-opt input{margin-top:4px}
+#famCard .fm-opt span{display:flex;flex-direction:column}#famCard .fm-opt small,#famCard .fm-comm>small{color:var(--muted);font-size:12.5px;line-height:1.35}
 #famCard .fm-msg{font-size:13px;color:var(--muted);min-height:1em}
 `;
 function mountUI(){
@@ -141,10 +145,11 @@ function screenNoFamily(inv){
   show(head("Ny familie","Opret jeres familie","Du er logget ind som <b>"+esc(mail)+"</b>. Opret familien, og invitér resten bagefter under Opsætning.")+
     '<label for="auFam">Familiens navn</label><input id="auFam" placeholder="fx Familien Riksted"><label for="auName">Dit navn</label><input id="auName" placeholder="fx Anders">'+
     '<fieldset class="au-start"><legend>Hvordan vil I starte?</legend>'+
-    '<label class="au-opt"><input type="radio" name="auStart" value="lib" checked><span><b>Med opskrifter fra andre familier</b><small id="auLibN">Få en kogebog med det samme, som I selv kan rette i</small></span></label>'+
-    '<label class="au-opt"><input type="radio" name="auStart" value="empty"><span><b>Med en helt tom kogebog</b><small>I lægger selv jeres opskrifter ind</small></span></label></fieldset>'+
+    '<label class="au-opt"><input type="radio" name="auStart" value="lib" checked><span><b>Vær med i fællesskabet</b><small id="auLibN">Start med opskrifter fra andre familier, og del jeres egne</small></span></label>'+
+    '<label class="au-opt"><input type="radio" name="auStart" value="empty"><span><b>Lukket kogebog</b><small>Start helt tomt. Intet deles med andre</small></span></label>'+
+    '<small style="color:var(--muted,#666)">Det kan altid ændres under Opsætning.</small></fieldset>'+
     '<button class="au-btn" type="button" id="auCreate">Opret familie</button><div class="au-msg"></div><p style="font-size:13px">Er du blevet inviteret? Så skal du logge ind med præcis den mail, invitationen blev sendt til.</p><button class="au-link" type="button" id="auOut">Log ud</button>',
-  box=>{libraryCount().then(n=>{const el=box.querySelector("#auLibN");if(!el)return;if(n>0)el.textContent=n+" opskrifter, som I selv kan rette i og tilføje til";else{el.textContent="Der er ingen delte opskrifter endnu";const r=box.querySelector('input[value="empty"]');if(r)r.checked=true;}});
+  box=>{libraryCount().then(n=>{const el=box.querySelector("#auLibN");if(!el)return;el.textContent=n>0?"Start med "+n+" opskrifter fra andre familier, og del jeres egne":"Del jeres opskrifter med andre familier, og hent deres, når der kommer nogle";});
     box.querySelector("#auCreate").onclick=async()=>{const fn=box.querySelector("#auFam").value.trim(),nm=box.querySelector("#auName").value.trim();
       if(!fn||!nm){msg(box,"Skriv både familiens og dit navn.");return;}msg(box,"Opretter…",true);
       const useLib=(box.querySelector('input[name="auStart"]:checked')||{}).value==="lib";
@@ -155,7 +160,7 @@ function screenNoFamily(inv){
 /* ---------- family data ---------- */
 async function createFamily(famName,myName,useLib,progress){
   const uid=S.user.uid,fid="f"+rid(),pid="p"+rid();
-  await fs.doc("families/"+fid).set({name:famName,createdAt:Date.now(),createdBy:uid,members:{[uid]:{name:myName,email:low(S.user.email),role:"admin",personId:pid,joinedAt:Date.now()}}});
+  await fs.doc("families/"+fid).set({name:famName,community:!!useLib,createdAt:Date.now(),createdBy:uid,members:{[uid]:{name:myName,email:low(S.user.email),role:"admin",personId:pid,joinedAt:Date.now()}}});
   await fs.doc("families/"+fid+"/meta/settings").set({kids:[{id:pid,name:myName}],stores:["Netto","Rema 1000"],primary:"Netto",maxStores:2},{merge:true});
   await fs.doc("users/"+uid).set({familyId:fid});
   S.fid=fid;S.family={name:famName,members:{}};
@@ -174,13 +179,29 @@ async function copyLibrary(progress,onlyNew){
   let ix=0;const worker=async()=>{while(ix<jobs.length){const r=Object.assign({},jobs[ix++]);["familyId","ownerUid","sharedBy","sharedAt","libId"].forEach(f=>delete r[f]);r.createdAt=Date.now();r.fromLibrary=true;
       await famCol("recipes").doc("lib"+rid()).set(r);n++;if(progress)progress("Henter opskrifter… "+n+" af "+jobs.length);}};
   await Promise.all(Array.from({length:6},worker));return n;}
-async function shareRecipes(progress){
-  const mine=await famCol("recipes").get();let n=0;const docs=mine.docs.filter(d=>!d.data().fromLibrary);let ix=0;
-  const worker=async()=>{while(ix<docs.length){const d=docs[ix++];const r=Object.assign({},d.data());STRIP.forEach(f=>delete r[f]);
-      Object.assign(r,{familyId:S.fid,ownerUid:S.user.uid,sharedBy:S.family.name,sharedAt:Date.now(),libId:S.fid+"_"+d.id});
-      await fs.collection("library").doc(S.fid+"_"+d.id).set(r);n++;if(progress)progress("Deler… "+n+" af "+docs.length);}};
-  await Promise.all(Array.from({length:6},worker));return n;}
-async function unshareRecipes(){const s=await fs.collection("library").where("ownerUid","==",S.user.uid).get();for(const d of s.docs)await d.ref.delete();return s.docs.length;}
+/* community on: the family's own recipes (not copies from others) are mirrored to the library; off: removed again */
+function libCopy(id,data){const r=Object.assign({},data);STRIP.forEach(f=>delete r[f]);delete r.id;
+  return Object.assign(r,{familyId:S.fid,ownerUid:S.user.uid,sharedBy:S.family.name,sharedAt:Date.now(),libId:S.fid+"_"+id});}
+const hash=s=>{let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return String(h);};
+let syncT=0,recSnap=null,recUnsub=null;
+function watchCommunity(){
+  if(recUnsub){recUnsub();recUnsub=null;}
+  if(!S.family||!S.family.community)return;
+  recUnsub=famCol("recipes").onSnapshot(sn=>{recSnap=sn;clearTimeout(syncT);syncT=setTimeout(syncLibrary,4000);},()=>{});
+}
+async function syncLibrary(){
+  if(!S.family||!S.family.community||!recSnap)return;
+  const key="mp_libsync_"+S.fid;let done={};try{done=JSON.parse(localStorage.getItem(key)||"{}");}catch(e){}
+  const want={};recSnap.docs.forEach(d=>{const r=d.data();if(!r.fromLibrary)want[S.fid+"_"+d.id]=[d.id,r];});
+  let lib;try{lib=await fs.collection("library").where("familyId","==",S.fid).get();}catch(e){return;}
+  const have=new Set(lib.docs.map(d=>d.id));
+  for(const d of lib.docs){if(!want[d.id]){try{await d.ref.delete();}catch(e){}delete done[d.id];}}
+  for(const [lid,[id,r]] of Object.entries(want)){const c=libCopy(id,r);const h=hash(JSON.stringify(Object.assign({},c,{sharedAt:0,ownerUid:""})));
+    if(have.has(lid)&&done[lid]===h)continue;try{await fs.collection("library").doc(lid).set(c);done[lid]=h;}catch(e){}}
+  try{localStorage.setItem(key,JSON.stringify(done));}catch(e){}
+}
+async function unshareRecipes(){const s=await fs.collection("library").where("familyId","==",S.fid).get();for(const d of s.docs){try{await d.ref.delete();}catch(e){}}try{localStorage.removeItem("mp_libsync_"+S.fid);}catch(e){}return s.docs.length;}
+async function setCommunity(on){await fs.doc("families/"+S.fid).update({community:!!on});if(!on)await unshareRecipes();}
 async function joinFamily(inv,myName){
   const uid=S.user.uid,fid=inv.familyId,mail=low(S.user.email);let pid=inv.personId||"";
   if(!pid)pid="p"+rid();
@@ -202,10 +223,10 @@ async function enterFamily(fid){
   const syncLock=()=>{const mine=S.me&&S.me.personId;window.__lockedPersons=new Set(Object.entries(S.family.members||{}).filter(([uid,m])=>uid!==S.user.uid&&m.personId&&m.personId!==mine).map(([,m])=>m.personId));};
   syncLock();
   const syncInv=()=>{S.invites=Object.values(S.family.invites||{}).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));};syncInv();
-  S.famUnsub=fs.doc("families/"+fid).onSnapshot(d=>{if(!d.exists)return;S.family=d.data();syncInv();S.me=S.family.members[S.user.uid]||S.me;if(S.me)window.__mePerson=S.me.personId;syncLock();drawFamCard();},()=>{});
+  S.famUnsub=fs.doc("families/"+fid).onSnapshot(d=>{if(!d.exists)return;const wasC=!!(S.family&&S.family.community);S.family=d.data();syncInv();S.me=S.family.members[S.user.uid]||S.me;if(S.me)window.__mePerson=S.me.personId;syncLock();if(wasC!==!!S.family.community)watchCommunity();drawFamCard();},()=>{});
   window.__onSettings=()=>drawFamCard();
   hide();ready();
-  watchImports();mountFamCard();setTimeout(offerHomeScreen,1500);
+  watchImports();mountFamCard();watchCommunity();setTimeout(offerHomeScreen,1500);
   return true;
 }
 const isAdmin=()=>S.me&&S.me.role==="admin";
@@ -232,9 +253,12 @@ function drawFamCard(){
       '<select id="invPerson"><option value="">Ny person i familien</option>'+free.map(p=>'<option value="'+esc(p.id)+'">Er '+esc(p.name)+' (overtager '+esc(p.name)+'s 👍)</option>').join("")+'</select>'+
       '<input id="invName" placeholder="Navn (fx Bettina)"><button class="btn small" type="submit" style="align-self:flex-start">Send invitation</button><div class="fm-msg" id="invMsg">'+esc(S.invMsg||"")+'</div></form>':'')+
     '<div class="fm-row"><div><b>Dig i tommel-vurderingen</b><small>Bruges som standard i Opskrift Tinder</small></div><select id="mePerson">'+ps.filter(p=>!(window.__lockedPersons&&window.__lockedPersons.has(p.id))).map(p=>'<option value="'+esc(p.id)+'"'+(S.me&&S.me.personId===p.id?' selected':'')+'>'+esc(p.name)+'</option>').join("")+'</select></div>'+
-    '<div class="fm-row"><div><b>Opskrifter fra andre familier</b><small>Hent dem, I ikke allerede har</small></div><button type="button" class="btn ghost small" id="libGet">Hent</button></div>'+
-    (isAdmin()?'<div class="fm-row"><div><b>Del jeres opskrifter</b><small>Andre familier kan hente en kopi. Jeres 👍 og madplaner deles ikke</small></div><div style="display:flex;gap:6px"><button type="button" class="btn ghost small" id="libShare">Del</button><button type="button" class="linkbtn" id="libUnshare">Fjern</button></div></div>':'')+
-    '<div class="fm-msg" id="libMsg">'+esc(S.libMsg||"")+'</div>'+
+    '<div class="fm-comm"><b>Opskriftsfællesskab</b>'+
+      '<label class="fm-opt"><input type="radio" name="comm" value="on"'+(S.family.community?' checked':'')+(isAdmin()?'':' disabled')+'><span><b>Del og hent opskrifter</b><small>Jeres egne opskrifter deles med andre familier i Madro, og I kan hente deres. Tommelvurderinger, madplaner og indkøbsliste deles aldrig.</small></span></label>'+
+      '<label class="fm-opt"><input type="radio" name="comm" value="off"'+(S.family.community?'':' checked')+(isAdmin()?'':' disabled')+'><span><b>Lukket kogebog</b><small>Intet deles. Kogebogen er kun jeres.</small></span></label>'+
+      (isAdmin()?'':'<small>Kun administratoren kan ændre det.</small>')+
+      (S.family.community?'<button type="button" class="btn ghost small" id="libGet" style="align-self:flex-start">Hent nye opskrifter fra fællesskabet</button>':'')+
+      '<div class="fm-msg" id="libMsg">'+esc(S.libMsg||"")+'</div></div>'+
     (isAdmin()?'<div class="fm-row"><div><b>Læs data ind fra Claude-appen</b><small>Vælg filen fra "Eksportér alle data"</small></div><label class="btn ghost small" style="cursor:pointer"><input type="file" accept="application/json,.json" id="impFile" hidden>Vælg fil</label></div><div class="fm-msg" id="impMsg">'+esc(S.impMsg||"")+'</div>':'')+
     '<button type="button" class="btn plain small" id="logOut" style="align-self:flex-start">Log ud ('+esc(S.user.email)+')</button>';
   const sel=c.querySelector("#invPerson"),nm=c.querySelector("#invName");
@@ -244,8 +268,9 @@ function drawFamCard(){
   const mp=c.querySelector("#mePerson");if(mp)mp.onchange=async()=>{try{await fs.doc("families/"+S.fid).update({["members."+S.user.uid+".personId"]:mp.value});try{localStorage.removeItem("mp_who");}catch(e){}}catch(err){alert(errText(err));}};
   const libSay=t=>{S.libMsg=t;const m=$("#libMsg");if(m)m.textContent=t;};
   const lg=c.querySelector("#libGet");if(lg)lg.onclick=async()=>{lg.disabled=true;try{const n=await copyLibrary(libSay,true);libSay(n?n+" nye opskrifter er lagt i Kogebogen.":"I har allerede alle de delte opskrifter.");}catch(err){libSay(errText(err));}lg.disabled=false;};
-  const ls=c.querySelector("#libShare");if(ls)ls.onclick=async()=>{if(!confirm("Del en kopi af jeres opskrifter med andre familier, der bruger Madro?"))return;ls.disabled=true;try{const n=await shareRecipes(libSay);libSay(n+" opskrifter er delt. Del igen, når I har lagt nye ind.");}catch(err){libSay(errText(err));}ls.disabled=false;};
-  const lu=c.querySelector("#libUnshare");if(lu)lu.onclick=async()=>{if(!confirm("Fjern jeres delte opskrifter? Familier, der allerede har hentet dem, beholder deres kopi."))return;try{const n=await unshareRecipes();libSay(n+" delte opskrifter er fjernet.");}catch(err){libSay(errText(err));}};
+  c.querySelectorAll('input[name="comm"]').forEach(r=>r.onchange=async()=>{const on=r.value==="on";
+    if(!on&&!confirm("Gøre kogebogen lukket? Jeres delte opskrifter fjernes fra fællesskabet. Familier, der allerede har hentet dem, beholder deres egen kopi.")){drawFamCard();return;}
+    try{libSay(on?"Deler jeres opskrifter…":"Fjerner jeres delte opskrifter…");await setCommunity(on);libSay(on?"I er med i fællesskabet. Jeres opskrifter deles automatisk.":"Kogebogen er nu lukket.");}catch(err){libSay(errText(err));}});
   const fi=c.querySelector("#impFile");if(fi)fi.onchange=()=>{if(fi.files[0])importFile(fi.files[0]);fi.value="";};
   c.querySelector("#logOut").onclick=async()=>{if(confirm("Log ud af Madro?")){await auth.signOut();location.reload();}};
 }

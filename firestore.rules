@@ -26,12 +26,12 @@ service cloud.firestore {
       allow delete: if signedIn() && (myMail() == mail || isAdmin(resource.data.familyId));
     }
 
-    // Opskrifter, som familier deler med hinanden. Alle med login kan læse og hente en kopi.
-    // Kun den, der har delt en opskrift, kan ændre eller fjerne den.
+    // Opskriftsfællesskab: familier, der er med, deler deres egne opskrifter her.
+    // Alle med login kan læse og hente en kopi. Kun familien bag en opskrift kan ændre eller fjerne den.
     match /library/{id} {
       allow read: if signedIn();
-      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
-      allow update, delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+      allow create: if isMember(request.resource.data.familyId);
+      allow update, delete: if isMember(resource.data.familyId);
     }
 
     match /families/{fid} {
