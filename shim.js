@@ -260,6 +260,7 @@ function drawFamCard(){
       (S.family.community?'<button type="button" class="btn ghost small" id="libGet" style="align-self:flex-start">Hent nye opskrifter fra fællesskabet</button>':'')+
       '<div class="fm-msg" id="libMsg">'+esc(S.libMsg||"")+'</div></div>'+
     (isAdmin()?'<div class="fm-row"><div><b>Læs data ind fra Claude-appen</b><small>Vælg filen fra "Eksportér alle data"</small></div><label class="btn ghost small" style="cursor:pointer"><input type="file" accept="application/json,.json" id="impFile" hidden>Vælg fil</label></div><div class="fm-msg" id="impMsg">'+esc(S.impMsg||"")+'</div>':'')+
+    '<div class="fm-row"><div><b>Anbefal Madro til en anden familie</b><small>Send et link på mail eller besked. De opretter deres egen familie</small></div><button type="button" class="btn ghost small" id="tellFriend">Send</button></div>'+
     '<button type="button" class="btn plain small" id="logOut" style="align-self:flex-start">Log ud ('+esc(S.user.email)+')</button>';
   const sel=c.querySelector("#invPerson"),nm=c.querySelector("#invName");
   if(sel)sel.onchange=()=>{const p=ps.find(x=>x.id===sel.value);nm.hidden=!!p;if(p)nm.value=p.name;else nm.value="";};
@@ -272,6 +273,10 @@ function drawFamCard(){
     if(!on&&!confirm("Gøre kogebogen lukket? Jeres delte opskrifter fjernes fra fællesskabet. Familier, der allerede har hentet dem, beholder deres egen kopi.")){drawFamCard();return;}
     try{libSay(on?"Deler jeres opskrifter…":"Fjerner jeres delte opskrifter…");await setCommunity(on);libSay(on?"I er med i fællesskabet. Jeres opskrifter deles automatisk.":"Kogebogen er nu lukket.");}catch(err){libSay(errText(err));}});
   const fi=c.querySelector("#impFile");if(fi)fi.onchange=()=>{if(fi.files[0])importFile(fi.files[0]);fi.value="";};
+  c.querySelector("#tellFriend").onclick=async()=>{const url=linkURL();const me=(S.me&&S.me.name)||"";
+    const text="Hej! Jeg bruger Madro til madplan, kogebog og indkøbsliste. Prøv den her: "+url+"\n\nSkriv din mail, få et login-link, og opret jeres egen familie."+(me?"\n\nHilsen "+me:"");
+    try{if(navigator.share){await navigator.share({title:"Madro",text});return;}}catch(e){if(e&&e.name==="AbortError")return;}
+    location.href="mailto:?subject="+encodeURIComponent("Prøv Madro – madplan, kogebog og indkøbsliste")+"&body="+encodeURIComponent(text);};
   c.querySelector("#logOut").onclick=async()=>{if(confirm("Log ud af Madro?")){await auth.signOut();location.reload();}};
 }
 async function sendInvite(mail,personId,name){
