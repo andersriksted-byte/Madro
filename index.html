@@ -12,10 +12,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795009870";</script>
-<script src="config.js?v=1795009870"></script>
-<script src="importer.js?v=1795009870"></script>
-<script src="shim.js?v=1795009870"></script>
+<script>window.__appVersion="1795010239";</script>
+<script src="config.js?v=1795010239"></script>
+<script src="importer.js?v=1795010239"></script>
+<script src="shim.js?v=1795010239"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1825,11 +1825,24 @@ function quickOk(r,q){if(!q)return true;if(q==="stars")return rateOf(r)>=Math.ma
 const MEALS=["Morgenmad","Brunch","Frokost","Aftensmad","Dessert","Snacks","Drinks"];
 const MEAL_TAG={morgenmad:"Morgenmad",brunch:"Brunch",frokost:"Frokost",aftensmad:"Aftensmad",middag:"Aftensmad",dessert:"Dessert",kage:"Snacks",bagværk:"Snacks",snack:"Snacks",snacks:"Snacks",drikke:"Drinks",drink:"Drinks",drinks:"Drinks",cocktail:"Drinks"};
 function recipeMeals(r){if(Array.isArray(r.meals))return r.meals;return [...new Set((r.tags||[]).map(t=>MEAL_TAG[String(t).toLowerCase()]).filter(Boolean))];}
+/* "På tilbud": the recipe's main ingredients (not salt, oil and the like) that are on offer right now in your shops */
+const OFFER_SKIP=/^(salt|peber|vand|olie|olivenolie|rapsolie|smør|margarine|sukker|mel|hvedemel|bouillon|fond|eddike|krydderi|paprika|karry|spidskommen|kanel|oregano|timian|basilikum|persille|hvidløg|bagepulver|natron|gær|honning|sennep|ketchup|soja|sojasauce|citronsaft)/i;
+const OFFER_MAIN=/okse|kalv|svin|gris|kylling|kalkun|lam|hakket|bacon|pølse|skinke|fisk|laks|torsk|rejer|tun|sej|ost|fløde|mælk|yoghurt|æg|pasta|ris|kartof/i;
+let _offMemo={key:null,m:new Map()};
+function recipeOfferHits(r){const all=allOffers();const key=all.length+":"+((state.offers&&state.offers.updatedAt)||"")+":"+((state.settings.stores||[]).join(","));
+  if(_offMemo.key!==key)_offMemo={key,m:new Map()};const k=r.id||r.title;if(_offMemo.m.has(k))return _offMemo.m.get(k);
+  const hits=[];const seen=new Set();
+  for(const i of (r.ingredients||[])){const n=String(i.name||"").trim();if(!n||OFFER_SKIP.test(n)||seen.has(n.toLowerCase()))continue;seen.add(n.toLowerCase());
+    let o=null;try{o=offersFor(n,state.settings.stores);}catch(e){}
+    if(o&&o.length)hits.push({name:n,store:o[0].store,price:o[0].price,main:OFFER_MAIN.test(n)});}
+  _offMemo.m.set(k,hits);return hits;}
+function offerScore(r){return recipeOfferHits(r).reduce((a,h)=>a+(h.main?3:1),0);}
 function matchesFilter(r,f){
   if(f.dinner&&!f.meal){const m=recipeMeals(r);if(m.length&&!m.includes("Aftensmad"))return false;}/* default view: dinner dishes (and dishes with no meal set) */
   if(f.meal){const m=recipeMeals(r);if(!(m.includes(f.meal)||(f.meal==="Aftensmad"&&!m.length)))return false;}/* dishes with no meal set count as dinner */
   if(!quickOk(r,f.quick))return false;
   if(f.leftOnly){const los=allLeftovers();if(!los.length||!recipeUses(r,los).length)return false;}
+  if(f.offerOnly&&!recipeOfferHits(r).length)return false;
   if(f.kidsFav){const ks=kidsList();if(!ks.every(k=>kidLikes(r,k.id)===true))return false;}/* family favourite: everybody likes it */
   if(f.kid){const ks=kidsList();if(f.kid==="all"?!ks.every(k=>kidLikes(r,k.id)===true):kidLikes(r,f.kid)!==true)return false;}
   if(f.type){const ts=recipeTypes(r);if(f.type==="Vegetar"?!(ts.includes("Vegetar")||ts.includes("Vegansk")):!ts.includes(f.type))return false;}
@@ -1858,6 +1871,7 @@ function safeScore(r){const h=recipeHistory(r.id);return h.count*3+kidsList().fi
 function sortRecipes(list,mode,get,ctx){get=get||(x=>x);if(!mode||mode==="new")return list;
   if(mode==="newest"||mode==="oldest"){const c=x=>+(get(x).createdAt||0);return list.sort(mode==="newest"?(a,b)=>c(b)-c(a):(a,b)=>c(a)-c(b));}
   if(mode==="left"){const los=allLeftovers();const S=new Map();list.forEach(x=>S.set(x,los.length?recipeUses(get(x),los).length:0));return list.sort((a,b)=>S.get(b)-S.get(a)||String(get(a).title).localeCompare(String(get(b).title),"da"));}
+  if(mode==="offers"){const S=new Map();list.forEach(x=>S.set(x,offerScore(get(x))));return list.sort((a,b)=>S.get(b)-S.get(a)||String(get(a).title).localeCompare(String(get(b).title),"da"));}
   if(mode==="insp"){ctx=ctx||inspCtx();const S=new Map();list.forEach(x=>S.set(x,inspScore(get(x),ctx)));return list.sort((a,b)=>S.get(b)-S.get(a));}
   if(mode==="kids"){const K=x=>{const r=get(x);return kidsList().filter(k=>kidLikes(r,k.id)===true).length*5-dislikeOf(r)*3+Math.min(3,recipeHistory(r.id).count);};return list.sort((a,b)=>K(b)-K(a));}
   if(mode==="safe"){const S=new Map();list.forEach(x=>S.set(x,safeScore(get(x))));return list.sort((a,b)=>S.get(b)-S.get(a)||String(get(a).title).localeCompare(String(get(b).title),"da"));}const H={};list.forEach(x=>{const r=get(x);H[r.id]=recipeHistory(r.id);});const t=x=>String(get(x).title||"");
@@ -1902,7 +1916,8 @@ function magCardHTML(r,u,attr){const im=r.image&&isImg(r.image)?r.image:"";
   return '<button type="button" class="pick-item pick-mag" '+attr+'="'+esc(r.id)+'" style="--rc:'+catColor("r"+r.title)+'">'+(im?'<img class="pm-img" src="'+im+'" alt="" loading="lazy">':'<span class="pm-emo" aria-hidden="true">'+dishEmoji(r)+'</span>')+
     '<span class="pm-ov">'+(kick?'<span class="pm-k">'+esc(kick)+'</span>':'')+'<span class="pt">'+esc(r.title)+'</span>'+
     '<span class="pm-m">'+(kid?'<span class="pm-kid">'+esc(kid)+'</span>':'')+(kidNoText(r)?'<span class="pm-kid no">'+esc(kidNoText(r))+'</span>':'')+'<span>'+esc(histText(r.id))+'</span></span>'+
-    (u&&u.length?'<span class="pm-left">♻️ Bruger rester: '+esc(u.map(x=>x.l.e.k).join(", "))+'</span>':'')+'</span></button>';}
+    (u&&u.length?'<span class="pm-left">♻️ Bruger rester: '+esc(u.map(x=>x.l.e.k).join(", "))+'</span>':'')+
+    ((attr==="data-r"&&recFilter.offerOnly)?(()=>{const h=recipeOfferHits(r);return h.length?'<span class="pm-left">🏷️ På tilbud: '+esc(h.slice(0,3).map(x=>x.name+" ("+x.store+")").join(", "))+(h.length>3?" +"+(h.length-3):"")+'</span>':'';})():'')+'</span></button>';}
 /* one filter at a time on the recipes page; the three quick buttons are the most used choices */
 const DEF_CHOICES=["insp","safe","kids"];
 function choiceList(){const out=[{k:"insp",l:"✨ Inspiration"},{k:"safe",l:"De sikre"},{k:"kids",l:"Familiens favoritter"},{k:"left",l:"🥕 Rester"}];
@@ -1929,7 +1944,7 @@ function quickBarHTML(f,moreId){/* the three most used choices + Flere */
   return top.map(c=>'<button type="button" data-qs="'+esc(c.k)+'"'+(f.choice===c.k?' class="on"':'')+'>'+esc(c.l)+'</button>').join("")+
     '<button type="button" data-qs="more" id="'+moreId+'" aria-expanded="'+(!!f.moreOpen)+'"'+(inTop?'':' class="has-n"')+'>Flere'+(inTop?'':'<b class="fold-n">1</b>')+'<i class="fold-car" aria-hidden="true">▾</i></button>';}
 /* four dropdowns: Visning (sort + kids), Måltid, Type, Tema */
-const DD_VIEW=[["insp","✨ Inspiration"],["newest","🆕 Nyeste retter"],["stars","👍 Flest tommel op"],["often","Oftest valgt"],["rare","Sjældne valg"],["az","A–Å"],["left","🥕 Brug rester"]];
+const DD_VIEW=[["insp","✨ Inspiration"],["newest","🆕 Nyeste retter"],["stars","👍 Flest tommel op"],["often","Oftest valgt"],["rare","Sjældne valg"],["az","A–Å"],["left","🥕 Brug rester"],["offers","🏷️ På tilbud"]];
 /* tap the chosen one again to flip it */
 const DD_PAIR={newest:"oldest",oldest:"newest",stars:"fewstars",fewstars:"stars",az:"za",za:"az",last:"forgot",forgot:"last"};
 const DD_ALT={oldest:"Ældste retter",fewstars:"👍 Færrest tommel op",za:"Å–A",forgot:"Længst siden"};
@@ -1940,7 +1955,7 @@ function ddOpts(f,which){
   if(which==="type")return [{v:"",l:"Alle typer"}].concat(TYPE_ORDER.filter(t=>state.recipes.some(r=>t==="Vegetar"?recipeTypes(r).some(x=>x==="Vegetar"||x==="Vegansk"):recipeTypes(r).includes(t))).map(t=>({v:t,l:t})));
   return [{v:"",l:"Alle temaer"}].concat([...new Set(state.recipes.flatMap(r=>r.themes||[]))].sort((a,b)=>a.localeCompare(b,"da")).map(t=>({v:t,l:t})));}
 function ddVal(f,which){return which==="view"?(f.view||"insp"):which==="src"?(f.src||"mine"):(f[which]||"");}
-const DD_SHORT={newest:"🆕 Nyeste",oldest:"Ældste",left:"🥕 Rester",insp:"✨ Inspiration",stars:"👍 Flest",fewstars:"👍 Færrest",often:"Oftest",rare:"Sjældne",az:"A–Å",za:"Å–A",forgot:"Længst siden",last:"Senest",kids:"❤️ Favoritter",Morgenmad:"Morgen",Aftensmad:"Aften",Dessert:"Dessert"};
+const DD_SHORT={offers:"🏷️ Tilbud",newest:"🆕 Nyeste",oldest:"Ældste",left:"🥕 Rester",insp:"✨ Inspiration",stars:"👍 Flest",fewstars:"👍 Færrest",often:"Oftest",rare:"Sjældne",az:"A–Å",za:"Å–A",forgot:"Længst siden",last:"Senest",kids:"❤️ Favoritter",Morgenmad:"Morgen",Aftensmad:"Aften",Dessert:"Dessert"};
 function ddLabel(f,which){const v=ddVal(f,which);if(which==="src")return v==="community"?"🌍":v==="all"?"🏠🌍":"🏠";if(!v)return {meal:"Måltid",type:"Type",theme:"Tema"}[which];if(DD_SHORT[v])return DD_SHORT[v];if(v.startsWith("kid:")){const k=kidsList().find(x=>x.id===v.slice(4));return "👍 "+(k?k.name:"");}const o=ddOpts(f,which).find(x=>x.v===v);return o?o.l:v;}
 function ddBarHTML(f){const B=w=>{const on=w==="view"?false:w==="src"?(f.src&&f.src!=="mine"):!!f[w];return '<button type="button" class="dd-btn dd-'+w+(on?' on':'')+(f.ddOpen===w?' open':'')+'" data-dd="'+w+'"'+(w==="src"?' aria-label="Hvis opskrifter"':'')+' aria-haspopup="listbox" aria-expanded="'+(f.ddOpen===w)+'"><span>'+esc(ddLabel(f,w))+'</span><i aria-hidden="true">▾</i></button>';};
   let menu="";if(f.ddOpen){const cur=ddVal(f,f.ddOpen);menu='<div class="dd-menu dd-m-'+f.ddOpen+'" role="listbox">'+ddOpts(f,f.ddOpen).map(o=>o.sep?'<hr>':'<button type="button" role="option" data-ddv="'+esc(o.v)+'" aria-selected="'+(o.v===cur)+'"'+(o.v===cur?' class="on"':'')+'><span>'+esc(o.l)+'</span>'+(o.v===cur?'<b aria-hidden="true">'+(o.flip?'⇅':'✓')+'</b>':'')+'</button>').join("")+'</div>';}
@@ -1950,8 +1965,8 @@ function ddBarHTML(f){const B=w=>{const on=w==="view"?false:w==="src"?(f.src&&f.
     html=html.replace(/(<button[^>]*data-dd="view"[^>]*><span>)([^<]*)(<\/span>)/,(m,a,t,b)=>{const em=(t.match(/^\p{Extended_Pictographic}\uFE0F?/u)||[""])[0];return a+(em||t.slice(0,3))+b;});}
   return html+menu;}
 function ddSet(f,which,v){
-  if(which==="view"){if(v==="last"||v==="forgot")v="insp";f.view=v||"insp";f.kid="";f.kidsFav=false;f.leftOnly=false;
-    if(v==="kids"){f.kidsFav=true;f.sort="kids";}else if(v==="left"){f.leftOnly=true;f.sort="left";}else if(v.startsWith("kid:")){f.kid=v.slice(4);f.sort="kids";}else f.sort=v||"insp";
+  if(which==="view"){if(v==="last"||v==="forgot")v="insp";f.view=v||"insp";f.kid="";f.kidsFav=false;f.leftOnly=false;f.offerOnly=false;
+    if(v==="kids"){f.kidsFav=true;f.sort="kids";}else if(v==="left"){f.leftOnly=true;f.sort="left";}else if(v==="offers"){f.offerOnly=true;f.sort="offers";}else if(v.startsWith("kid:")){f.kid=v.slice(4);f.sort="kids";}else f.sort=v||"insp";
     try{if(f===recFilter)localStorage.setItem("mp_recSort",f.view);}catch(e){}}
   else if(which==="src"){f.src=v||"mine";try{localStorage.setItem("mp_recSrc",f.src);}catch(e){}}
   else f[which]=v;}
@@ -1979,7 +1994,7 @@ function renderRecipes(){
     list.sort(recFilter.quick==="stars"?(a,b)=>rateOf(b)-rateOf(a):recFilter.quick==="often"?(a,b)=>H[b.id].count-H[a.id].count:(a,b)=>(H[a.id].last?H[a.id].last.getTime():0)-(H[b.id].last?H[b.id].last.getTime():0));}
   $("#rcount").textContent=state.loaded||!db?(state.recipes.length+" opskrift"+(state.recipes.length===1?"":"er")):"Indlæser…";
   const el=$("#recipeList");
-  if(!list.length){const nfh=notFoundHTML(recFilter.q);if(nfh){el.innerHTML=nfh;return;}el.innerHTML='<div class="empty">'+(state.recipes.length?(recFilter.leftOnly?(allLeftovers().length?"Ingen opskrifter bruger de rester, der bliver til overs fra indkøbslisten.":"Ingen rester lige nu: der bliver ikke noget til overs fra indkøbslisten."):"Ingen opskrifter matcher søgningen eller filtrene."):"Ingen opskrifter endnu. Tryk <b>+ Tilføj</b> for at lægge den første ind.")+'</div>'+notFoundHTML(recFilter.q);return;}
+  if(!list.length){const nfh=notFoundHTML(recFilter.q);if(nfh){el.innerHTML=nfh;return;}el.innerHTML='<div class="empty">'+(state.recipes.length?(recFilter.offerOnly?(allOffers().length?"Ingen af jeres opskrifter har hovedingredienser på tilbud i jeres butikker lige nu.":"Der er ikke hentet nogen tilbud endnu."):recFilter.leftOnly?(allLeftovers().length?"Ingen opskrifter bruger de rester, der bliver til overs fra indkøbslisten.":"Ingen rester lige nu: der bliver ikke noget til overs fra indkøbslisten."):"Ingen opskrifter matcher søgningen eller filtrene."):"Ingen opskrifter endnu. Tryk <b>+ Tilføj</b> for at lægge den første ind.")+'</div>'+notFoundHTML(recFilter.q);return;}
   const gal=recView()==="gallery";el.classList.toggle("gal-grid",gal);el.classList.toggle("kids-mode",!!(recFilter.kidsFav||recFilter.kid));
   if(gal){el.innerHTML=list.map((r,i)=>{const has=r.image&&isImg(r.image);
       const kick=[(r.themes||[])[0],recipeMeals(r)[0]||recipeTypes(r)[0]].filter(Boolean).join(" · ");
