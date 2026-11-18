@@ -12,9 +12,9 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script src="config.js?v=1795009503"></script>
-<script src="importer.js?v=1795009503"></script>
-<script src="shim.js?v=1795009503"></script>
+<script src="config.js?v=1795009718"></script>
+<script src="importer.js?v=1795009718"></script>
+<script src="shim.js?v=1795009718"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1539,7 +1539,7 @@ function drawSwipe(box){
     (left>0?'<div class="deck" id="deck">'+game.deck.slice(game.idx,game.idx+3).map((cd,i)=>{const im=imgOf(cd.r);
       return '<div class="sw-card'+(im?"":" no-img")+(i===1?" back1":i===2?" back2":"")+'" style="--rc:'+catColor("r"+cd.r.title)+';z-index:'+(10-i)+'" data-i="'+i+'" data-rid="'+esc(cd.r.id)+'">'+(im?'<img src="'+im+'" alt="">':'')+
         (i===0?'<button type="button" class="sw-info" aria-label="Se opskriften på '+esc(cd.r.title)+'">ⓘ Se opskrift</button><div class="sw-stamp yes" style="'+(yl?'right':'left')+':22px">👍</div><div class="sw-stamp no" style="'+(yl?'left':'right')+':22px">👎</div>':'')+
-        '<div class="sw-ov"><div class="sw-t">'+esc(cd.r.title)+'</div>'+(cd.why.length||kidPills(cd.r)?'<div class="sw-why">'+cd.why.map(w=>'<span>'+esc(w)+'</span>').join("")+kidPills(cd.r)+'</div>':'')+'</div></div>';}).join("")+'</div>'+
+        '<div class="sw-ov"><div class="sw-t">'+esc(cd.r.title)+'</div>'+((()=>{const wy=cd.why.filter(w=>!/ på tilbud /.test(w));return wy.length||kidPills(cd.r)?'<div class="sw-why">'+wy.map(w=>'<span>'+esc(w)+'</span>').join("")+kidPills(cd.r)+'</div>':'';})())+'</div></div>';}).join("")+'</div>'+
       '<div class="sw-btns">'+(yl?'<button class="sw-btn yes" id="swYes" aria-label="Tommel op">👍</button><button class="sw-btn today" id="swSkip" aria-label="Ved ikke – spring over">🤷</button><button class="sw-btn no" id="swNo" aria-label="Tommel ned">👎</button><button class="sw-btn undo" id="swUndo" aria-label="Fortryd seneste svar"'+(mmCanUndo()?'':' disabled')+'>↶</button>'
         :'<button class="sw-btn undo" id="swUndo" aria-label="Fortryd seneste svar"'+(mmCanUndo()?'':' disabled')+'>↶</button><button class="sw-btn no" id="swNo" aria-label="Tommel ned">👎</button><button class="sw-btn today" id="swSkip" aria-label="Ved ikke – spring over">🤷</button><button class="sw-btn yes" id="swYes" aria-label="Tommel op">👍</button>')+'</div>'+
       '<div class="sw-foot">'+res+'<div class="sw-hint">'+(yl?'← 👍 · 👎 →':'← 👎 · 👍 →')+' · 🤷 ved ikke<br>'+left+' tilbage · <button type="button" class="linkbtn" id="swFlip">Byt retning</button></div></div>'
