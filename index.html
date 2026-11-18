@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795025130";</script>
-<script src="config.js?v=1795025130"></script>
-<script src="importer.js?v=1795025130"></script>
-<script src="shim.js?v=1795025130"></script>
+<script>window.__appVersion="1795025264";</script>
+<script src="config.js?v=1795025264"></script>
+<script src="importer.js?v=1795025264"></script>
+<script src="shim.js?v=1795025264"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -3594,7 +3594,7 @@ function openPackSheet(it){
 /* ---------- categories ---------- */
 /* categories in the order you walk through a typical Danish supermarket */
 const CATS=["Frugt & grønt","Brød & bager","Kød & fisk","Pålæg","Mejeri","Ost","Frost","Kolonial","Morgenmad","Snacks & slik","Drikkevarer","Vin & øl","Baby & børn","Husholdning","Personlig pleje","Apotek","Kæledyr","Andet"];
-const CAT_EMO={"Frugt & grønt":"🥕","Brød & bager":"🥖","Kød & fisk":"🥩","Pålæg":"🥪","Mejeri":"🥛","Ost":"🧀","Frost":"❄️","Kolonial":"🫙","Morgenmad":"🥣","Snacks & slik":"🍫","Drikkevarer":"🥤","Vin & øl":"🍷","Baby & børn":"🍼","Husholdning":"🧻","Personlig pleje":"🧴","Apotek":"💊","Kæledyr":"🐾","Andet":"🛒","Øvrige":"🛒","Fundet":"✓"};
+const CAT_EMO={"Frugt & grønt":"🥕","Brød & bager":"🥖","Kød & fisk":"🥩","Pålæg":"🥪","Mejeri":"🥛","Ost":"🧀","Frost":"❄️","Kolonial":"🫙","Morgenmad":"🥣","Snacks & slik":"🍫","Drikkevarer":"🥤","Vin & øl":"🍷","Baby & børn":"🍼","Husholdning":"🧻","Personlig pleje":"🧴","Apotek":"💊","Kæledyr":"🐾","Andet":"🛒","Øvrige":"🛒","Øvrige indkøb":"🛒","Fundet":"✓"};
 /* old names from earlier versions of the app */
 const CAT_OLD={"Brød":"Brød & bager","Mejeri & æg":"Mejeri","Krydderier & bagning":"Kolonial"};
 // first matching rule wins; "=" means whole word only
@@ -3681,7 +3681,7 @@ function renderShop(){
   };
   const active=state.shopping.filter(x=>!done(x));// just-found items keep their place for a few seconds
   const shown=showFound?active.concat(found.filter(done)):active;
-  const OTHER="Øvrige";
+  const OTHER="Øvrige indkøb";
   // dish groups: an item shared by several dishes is shown under each of them
   const keysOf=it=>group==="cat"?[catOf(it)]:group==="store"?[(smap[it.id]||{}).store||"Butik"]:(()=>{const f=(it.from||[]).filter(t=>state.recipes.some(r=>r.title===t)||true);return f.length?f:[OTHER];})();
   const groups={};shown.forEach(it=>keysOf(it).forEach(k=>(groups[k]=groups[k]||[]).push(it)));
