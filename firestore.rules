@@ -1,0 +1,63 @@
+rules_version = '2';
+// Madplan: hver familie har sine egne data under families/{fid}.
+// Kun medlemmer kan læse og skrive dem. Administratoren inviterer via mail.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function myMail() { return request.auth.token.email.lower(); }
+    function famDoc(fid) { return get(/databases/$(database)/documents/families/$(fid)).data; }
+    function isMember(fid) { return signedIn() && request.auth.uid in famDoc(fid).members; }
+    function isAdmin(fid) { return isMember(fid) && famDoc(fid).members[request.auth.uid].role == 'admin'; }
+    function inviteFor(fid) {
+      return exists(/databases/$(database)/documents/invites/$(myMail()))
+        && get(/databases/$(database)/documents/invites/$(myMail())).data.familyId == fid;
+    }
+
+    // Hvilken familie man hører til.
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // Invitationer slås op på modtagerens mail.
+    match /invites/{mail} {
+      allow read: if signedIn() && (myMail() == mail || isAdmin(resource.data.familyId));
+      allow create, update: if signedIn() && isAdmin(request.resource.data.familyId);
+      allow delete: if signedIn() && (myMail() == mail || isAdmin(resource.data.familyId));
+    }
+
+    match /families/{fid} {
+      // Opret en ny familie med dig selv som eneste medlem og administrator.
+      allow create: if signedIn()
+        && request.resource.data.members.keys().hasOnly([request.auth.uid])
+        && request.resource.data.members[request.auth.uid].role == 'admin';
+      allow read: if isMember(fid);
+      // Administratoren må ændre alt. Et inviteret medlem må kun skrive sig selv ind.
+      allow update: if isAdmin(fid)
+        || (signedIn() && inviteFor(fid)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'invites'])
+            && request.resource.data.members.diff(resource.data.members).affectedKeys().hasOnly([request.auth.uid])
+            && request.resource.data.members[request.auth.uid].role == 'member')
+        // et medlem må skifte sin egen person i tommel-vurderingen
+        || (isMember(fid)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members'])
+            && request.resource.data.members.diff(resource.data.members).affectedKeys().hasOnly([request.auth.uid])
+            && request.resource.data.members[request.auth.uid].role == resource.data.members[request.auth.uid].role);
+      allow delete: if false;
+
+      // Ventende opskrifts-links kan læses af Claudes import-opgave (kun links, ingen personlige data).
+      match /imports/{id} {
+        allow read: if true;
+        allow write: if isMember(fid);
+      }
+      // Kogebog, madplaner, indkøbsliste, indstillinger osv.
+      match /{col}/{id} {
+        allow read, write: if isMember(fid);
+      }
+      // Et nyt medlem må tilføje sig selv som person, mens det melder sig ind.
+      match /meta/settings {
+        allow read, write: if isMember(fid) || (signedIn() && inviteFor(fid));
+      }
+    }
+  }
+}
