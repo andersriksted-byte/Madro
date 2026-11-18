@@ -12,10 +12,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795010239";</script>
-<script src="config.js?v=1795010239"></script>
-<script src="importer.js?v=1795010239"></script>
-<script src="shim.js?v=1795010239"></script>
+<script>window.__appVersion="1795010319";</script>
+<script src="config.js?v=1795010319"></script>
+<script src="importer.js?v=1795010319"></script>
+<script src="shim.js?v=1795010319"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1510,7 +1510,7 @@ function mmComm(){return !!window.__communityOn&&game.src==="comm";}
 function commNo(w){try{return new Set(JSON.parse(localStorage.getItem("mp_commNo_"+w)||"[]"));}catch(e){return new Set();}}
 function commNoSave(w,set){try{localStorage.setItem("mp_commNo_"+w,JSON.stringify([...set]));}catch(e){}}
 function mmSrcHTML(){if(!window.__communityOn)return "";const n=state.community.length;
-  return '<div class="mm-src seg" role="group" aria-label="Hvilke opskrifter"><button type="button" data-mmsrc="mine"'+(mmComm()?'':' class="on"')+'>🏠 Vores</button><button type="button" data-mmsrc="comm"'+(mmComm()?' class="on"':'')+'>🌍 Fællesskabet'+(n?' ('+n+')':'')+'</button></div>';}
+  return '<div class="mm-src seg" role="group" aria-label="Hvilke opskrifter"><button type="button" data-mmsrc="mine"'+(mmComm()?'':' class="on"')+'>🏠 Min kogebog</button><button type="button" data-mmsrc="comm"'+(mmComm()?' class="on"':'')+'>🌍 Fællesskabets'+(n?' ('+n+')':'')+'</button></div>';}
 function wireSrc(box){box.querySelectorAll("[data-mmsrc]").forEach(b=>b.onclick=()=>{game.src=b.dataset.mmsrc;try{localStorage.setItem("mp_mmSrc",game.src);}catch(e){}startSwipe();game.mode="swipe";renderGames();});}
 try{game.src=localStorage.getItem("mp_mmSrc")||"mine";}catch(e){}
 function startSwipe(){const w=mmWho();game.skip=game.skip||{};const sk=game.skip[w]||(game.skip[w]=new Set());
@@ -1950,7 +1950,7 @@ const DD_PAIR={newest:"oldest",oldest:"newest",stars:"fewstars",fewstars:"stars"
 const DD_ALT={oldest:"Ældste retter",fewstars:"👍 Færrest tommel op",za:"Å–A",forgot:"Længst siden"};
 function ddOpts(f,which){
   if(which==="view"){const ks=kidsList(),cur=f.view||"insp";return DD_VIEW.map(o=>{const alt=DD_PAIR[o[0]];return alt&&cur===alt?{v:alt,l:DD_ALT[alt],flip:1}:{v:o[0],l:o[1],flip:!!alt};}).concat([{sep:1},{v:"kids",l:"❤️ Familiens favoritter"}],ks.map(k=>({v:"kid:"+k.id,l:"👍 "+k.name})));}
-  if(which==="src")return [{v:"mine",l:"🏠 Vores opskrifter"},{v:"community",l:"🌍 Fællesskabets"+(state.community.length?" ("+state.community.length+")":"")},{v:"all",l:"🏠🌍 Begge"}];
+  if(which==="src")return [{v:"mine",l:"🏠 Min kogebog"},{v:"community",l:"🌍 Fællesskabets kogebog"+(state.community.length?" ("+state.community.length+")":"")},{v:"all",l:"🏠🌍 Begge"}];
   if(which==="meal")return [{v:"",l:"Alle måltider"}].concat(MEALS.map(m=>({v:m,l:m})));
   if(which==="type")return [{v:"",l:"Alle typer"}].concat(TYPE_ORDER.filter(t=>state.recipes.some(r=>t==="Vegetar"?recipeTypes(r).some(x=>x==="Vegetar"||x==="Vegansk"):recipeTypes(r).includes(t))).map(t=>({v:t,l:t})));
   return [{v:"",l:"Alle temaer"}].concat([...new Set(state.recipes.flatMap(r=>r.themes||[]))].sort((a,b)=>a.localeCompare(b,"da")).map(t=>({v:t,l:t})));}
