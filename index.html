@@ -489,6 +489,11 @@ html.wheel #recipeList.gal-grid{padding-bottom:22vh}
 /* magazine week plan */
 #v-madplan #days{gap:0}
 html:not(.web-app) .web-only{display:none}html.web-app .claude-only{display:none}
+.clr-wrap{position:relative;display:block;flex:1 1 auto;min-width:0}
+.clr-wrap>input{width:100%;padding-right:40px!important;box-sizing:border-box}
+.clr-x{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:28px;height:28px;border:0;border-radius:999px;background:var(--line);color:var(--ink);font:inherit;font-size:16px;line-height:1;cursor:pointer;display:none;align-items:center;justify-content:center;padding:0}
+.clr-wrap.has>.clr-x{display:flex}
+.clr-wrap>input[hidden]+.clr-x{display:none!important}
 #pickBtn:disabled{opacity:.35;cursor:default}
 #v-madplan>.top>.row{gap:6px!important}
 #v-madplan #days .day.mag-day{display:grid;grid-template-columns:1fr 40px;grid-template-areas:"name add" "meals meals";gap:8px 6px;background:none!important;border:0;border-top:1px solid var(--ink);border-radius:0;box-shadow:none!important;outline:0;padding:14px 0 18px}
@@ -1116,7 +1121,7 @@ body.wv-on .toast{z-index:210}
       </div>
       <div id="impStatus" class="small"></div>
     </div>
-    <div class="stack" style="margin:10px 0;gap:8px"><div class="qs-row"><div class="dd-bar" id="qsBar" role="group" aria-label="Sortér og filtrér"></div><button type="button" class="icon-btn" id="rSearchTg" aria-label="Søg" aria-expanded="false"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div><div id="rSearchBox" hidden><input type="text" id="rsearch" placeholder="Søg i opskrifter" enterkeyhint="search" autocomplete="off" style="width:100%"></div><div id="rfilters" hidden></div></div>
+    <div class="stack" style="margin:10px 0;gap:8px"><div class="qs-row"><div class="dd-bar" id="qsBar" role="group" aria-label="Sortér og filtrér"></div><button type="button" class="icon-btn" id="rSearchTg" aria-label="Søg" aria-expanded="false"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div><div id="rSearchBox" hidden><input type="text" data-clear id="rsearch" placeholder="Søg i opskrifter" enterkeyhint="search" autocomplete="off" style="width:100%"></div><div id="rfilters" hidden></div></div>
     <div class="stack" id="importList" style="margin-bottom:12px"></div>
     <div class="stack" id="recipeList"></div>
   </section>
@@ -1339,6 +1344,17 @@ function pickOffers(){
 async function loadOfferFile(){
   try{const res=await fetch("offers.json",{cache:"no-store"});if(!res.ok)return;fileOffers=await res.json();pickOffers();renderStores();renderShop();}catch(e){}
 }
+/* a × in search fields that empties them */
+(function(){const wrap=inp=>{if(inp._clr)return;inp._clr=1;const w=document.createElement("span");w.className="clr-wrap";inp.parentNode.insertBefore(w,inp);w.appendChild(inp);
+    const b=document.createElement("button");b.type="button";b.className="clr-x";b.setAttribute("aria-label","Ryd søgning");b.textContent="×";w.appendChild(b);
+    const sync=()=>w.classList.toggle("has",!!inp.value);sync();inp.addEventListener("input",sync);
+    b.addEventListener("pointerdown",e=>e.preventDefault());
+    b.addEventListener("click",()=>{inp.value="";inp.dispatchEvent(new Event("input",{bubbles:true}));inp.dispatchEvent(new Event("change",{bubbles:true}));sync();inp.focus();});};
+  const scan=root=>{(root.querySelectorAll?root:document).querySelectorAll("input[data-clear]").forEach(wrap);};
+  const go=()=>{scan(document);new MutationObserver(ms=>{for(const m of ms)m.addedNodes.forEach(n=>{if(n.nodeType!==1)return;if(n.matches&&n.matches("input[data-clear]"))wrap(n);else if(n.querySelectorAll)scan(n);});}).observe(document.body,{childList:true,subtree:true});};
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",go);else go();
+  /* programmatic value changes (e.g. search reset) */
+  setInterval(()=>document.querySelectorAll(".clr-wrap").forEach(w=>{const i=w.querySelector("input");if(i)w.classList.toggle("has",!!i.value);}),600);})();
 window.__appState=()=>state;if(window.__webApp)document.documentElement.classList.add("web-app");
 async function init(){
   route();loadOfferFile();
@@ -1390,7 +1406,7 @@ function gamePool(){const list=state.recipes.filter(r=>matchesFilter(r,game.f));
 function gameChoice(k,fromPanel){setChoice(game.f,k);if(k!=="insp"||!fromPanel)countChoice(k);game.wheel=null;if(game.mode==="swipe")startSwipe();renderGames();}
 function gameFilterHTML(){return '<div class="g-head"><div class="qs-row"><div class="dd-bar" id="gqBar" role="group" aria-label="Sortér og filtrér">'+ddBarHTML(game.f)+'</div>'+
   '<button type="button" class="icon-btn" id="gSearchTg" aria-label="Søg" aria-expanded="'+(!!game.searchOpen)+'"'+(game.f.q?' data-q="1"':'')+'><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>'+
-  (game.searchOpen?'<input type="text" id="gIngr" placeholder="Søg, fx kylling" value="'+esc(game.f.q||"")+'" enterkeyhint="search" autocomplete="off">':'')+
+  (game.searchOpen?'<input type="text" data-clear id="gIngr" placeholder="Søg, fx kylling" value="'+esc(game.f.q||"")+'" enterkeyhint="search" autocomplete="off">':'')+
   '</div>';}
 function wireGameFilter(){const bar=$("#gqBar");
   if(bar)wireDD(bar,game.f,ch=>{if(ch){game.wheel=null;if(game.mode==="swipe")startSwipe();}if(ch||game.mode!=="swipe"||true){const y=window.scrollY;renderGames();window.scrollTo(0,y);}});
@@ -2708,7 +2724,7 @@ function openDayAdd(day){
     </div>
     ${los.length?'<div class="left-box"><div class="row" style="justify-content:space-between"><b>Du har til overs</b><button type="button" class="btn plain small" id="leftIdeas">Idéer fra Claude</button></div><div class="row" style="gap:6px" id="leftChips">'+los.map(l=>'<button type="button" class="chip lchip" data-left="'+esc(l.e.k)+'" title="'+esc(l.src)+'">'+esc(l.e.k)+': '+esc(l.text.replace(" til overs",""))+'</button>').join("")+'</div><div class="small muted">Tryk på en rest for kun at se retter, der bruger den.</div></div>':''}
     <div class="qs-row pick-qs"><div class="dd-bar" id="pickDD" role="group" aria-label="Sortér og filtrér"></div><button type="button" class="icon-btn" id="pickSearchTg" aria-label="Søg" aria-expanded="false"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
-    <input type="text" id="pickSearch" placeholder="Søg, fx kylling" aria-label="Søg i opskrifter" enterkeyhint="search" autocomplete="off" hidden>
+    <input type="text" data-clear id="pickSearch" placeholder="Søg, fx kylling" aria-label="Søg i opskrifter" enterkeyhint="search" autocomplete="off" hidden>
     <div class="pick-list" id="pickList"></div>
 
   </div>`,s=>{
@@ -3789,7 +3805,7 @@ function openOfferBrowser(){
   };
   let s;
   openSheet(`<div class="sheet-head"><div><h2>Alle tilbud</h2><div class="sub" id="obCount"></div></div>${closeBtn}</div>
-    <div class="stack"><input type="text" id="obQ" placeholder="Søg, fx kylling, kaffe, æg" aria-label="Søg i tilbud">
+    <div class="stack"><input type="text" data-clear id="obQ" placeholder="Søg, fx kylling, kaffe, æg" aria-label="Søg i tilbud">
     <div class="row">${['<button type="button" class="chip on" data-obst="">Alle</button>'].concat(stores.map(x=>'<button type="button" class="chip" data-obst="'+esc(x)+'">'+esc(x)+'</button>')).join("")}</div>
     <div id="obLink"></div>
     <p class="small muted" style="margin:0">Tilbud uden slutdato regnes som gældende i 1 uge fra de blev hentet. Tryk + for at lægge en vare på indkøbslisten i den butik.</p>
