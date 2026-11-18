@@ -12,10 +12,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795013349";</script>
-<script src="config.js?v=1795013349"></script>
-<script src="importer.js?v=1795013349"></script>
-<script src="shim.js?v=1795013349"></script>
+<script>window.__appVersion="1795013470";</script>
+<script src="config.js?v=1795013470"></script>
+<script src="importer.js?v=1795013470"></script>
+<script src="shim.js?v=1795013470"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1123,8 +1123,9 @@ body.wv-on .toast{z-index:210}
       <p class="small muted claude-only" style="margin:0"><b>Kun link:</b> Tryk <b>Sæt opskriften op</b>, så gemmes linket, og Claude henter opskriften fra hjemmesiden <span class="recWhen">automatisk kl. 7, 13 og 17</span>. <b>Link og tekst:</b> Opskriften sættes op med det samme.</p>
       <div class="row">
         <button class="btn" id="impGo" type="button">Sæt opskriften op</button>
-        <button class="btn plain small" id="impCopy" type="button">Kopiér besked til chatten</button>
+        <button class="btn plain small claude-only" id="impCopy" type="button">Kopiér besked til chatten</button>
         <button class="btn plain small" id="impManual" type="button">Skriv selv</button>
+        <button class="btn plain small" id="impCancel" type="button">Annuller</button>
       </div>
       <div id="impStatus" class="small"></div>
     </div>
@@ -2112,6 +2113,7 @@ async function swipeAdd(w,day){const id=w.querySelector("[data-r]").dataset.r;co
 })();
 $("#newBtn").addEventListener("click",()=>{const box=$("#importBox");const show=box.style.display==="none";box.style.display=show?"flex":"none";if(show)$("#impUrl").focus();});
 $("#impCopy").addEventListener("click",()=>{const u=$("#impUrl").value.trim();copy(u?"Læg denne opskrift ind i min madplan-app: "+u:"Hent mine opskrifter");});
+$("#impCancel").addEventListener("click",()=>{$("#impUrl").value="";$("#impText").value="";$("#impStatus").textContent="";impImage="";showImpImage();$("#importBox").style.display="none";$("#impGo").disabled=false;});
 $("#impManual").addEventListener("click",()=>openEditor(null,{source:$("#impUrl").value.trim()}));
 
 async function structureRecipe(url,text){
