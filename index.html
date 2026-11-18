@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795033572";</script>
-<script src="config.js?v=1795033572"></script>
-<script src="importer.js?v=1795033572"></script>
-<script src="shim.js?v=1795033572"></script>
+<script>window.__appVersion="1795033725";</script>
+<script src="config.js?v=1795033725"></script>
+<script src="importer.js?v=1795033725"></script>
+<script src="shim.js?v=1795033725"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -960,6 +960,11 @@ html.sheet-open .tabs{visibility:hidden}
 html.sheet-open .sheet{padding-bottom:calc(24px + env(safe-area-inset-bottom))}
 .sheet{max-height:calc(100dvh - 28px);overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}
 #addSel{position:sticky;bottom:calc(env(safe-area-inset-bottom) - 4px);z-index:3;box-shadow:0 -10px 18px 6px var(--bg)}
+
+/* hide what a person may not do (the administrator sets this per person) */
+html.no-plan #days .day-add,html.no-plan #days .meal .x,html.no-plan #days .meal .grip,html.no-plan .wv-empty,html.no-plan #toPlan,html.no-plan [data-swday],html.no-plan #wDayAdd{display:none!important}
+html.no-shop #addItemBtn,html.no-shop #toShop,html.no-shop #pickBtn,html.no-shop #addSel{display:none!important}
+html.no-pick #finishBtn{display:none!important}html.no-pick .sl-cb{opacity:.35;pointer-events:none}
 /* recipe actions: one tidy block — servings and share on top, two equal buttons, the main action full width */
 .rec-actions.ra{display:flex;flex-direction:column;gap:8px}
 .ra .ra-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -1519,7 +1524,8 @@ async function loadOfferFile(){
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",go);else go();
   /* programmatic value changes (e.g. search reset) */
   setInterval(()=>document.querySelectorAll(".clr-wrap").forEach(w=>{const i=w.querySelector("input");if(i)w.classList.toggle("has",!!i.value);}),600);})();
-window.__appState=()=>state;if(window.__webApp)document.documentElement.classList.add("web-app");
+window.__appState=()=>state;
+window.__setPerms=p=>{window.__perms=p||null;const h=document.documentElement;["plan","shop","pick"].forEach(k=>h.classList.toggle("no-"+k,!!p&&p[k]===false));try{renderPlan();renderShop();}catch(e){}};if(window.__perms)window.__setPerms(window.__perms);if(window.__webApp)document.documentElement.classList.add("web-app");
 async function init(){
   route();loadOfferFile();
   renderAll();
@@ -2529,7 +2535,7 @@ function openRecipe(id,fallback){
       ${r.description?'<p style="margin:0">'+esc(r.description)+'</p>':''}
       ${(window.__communityOn&&r.id)?(r.fromLibrary?'<p class="small muted" style="margin:0">🌍 Hentet fra fællesskabet</p>':''):''}
       ${nutriHTML(r.nutrition)||(sample&&r.id?'<div><button class="btn plain small" type="button" id="calcN">Beregn kcal, protein og kostfibre</button> <span class="small muted" id="calcNs"></span></div>':'')}
-      <div class="rec-actions ra"><div class="ra-top"><div class="stepper"><button type="button" id="sMinus" aria-label="Færre personer">−</button><span class="num">${serv} pers.</span><button type="button" id="sPlus" aria-label="Flere personer">+</button></div><div class="ra-icons">${(window.__communityOn&&r.id&&!r.fromLibrary)?'<button type="button" class="icon-btn lock-t'+(r.shared!==false?' open':'')+'" id="rShare" aria-pressed="'+(r.shared!==false)+'" aria-label="'+(r.shared!==false?'Delt med fællesskabet. Tryk for at gøre privat':'Privat. Tryk for at dele med fællesskabet')+'" title="'+(r.shared!==false?'Delt med fællesskabet':'Privat')+'">'+(r.shared!==false?'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.6-1.7"/></svg>':'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>')+'<small>'+(r.shared!==false?'Delt':'Privat')+'</small></button>':''}<button type="button" class="icon-btn" id="rSend" aria-label="Del opskriften" title="Del opskriften"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7.5 7.5 12 3l4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></button></div></div>
+      <div class="rec-actions ra"><div class="ra-top"><div class="stepper"><button type="button" id="sMinus" aria-label="Færre personer">−</button><span class="num">${serv} pers.</span><button type="button" id="sPlus" aria-label="Flere personer">+</button></div><div class="ra-icons">${(window.__communityOn&&r.id&&!r.fromLibrary&&window.__isAdmin!==false)?'<button type="button" class="icon-btn lock-t'+(r.shared!==false?' open':'')+'" id="rShare" aria-pressed="'+(r.shared!==false)+'" aria-label="'+(r.shared!==false?'Delt med fællesskabet. Tryk for at gøre privat':'Privat. Tryk for at dele med fællesskabet')+'" title="'+(r.shared!==false?'Delt med fællesskabet':'Privat')+'">'+(r.shared!==false?'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.6-1.7"/></svg>':'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>')+'<small>'+(r.shared!==false?'Delt':'Privat')+'</small></button>':''}<button type="button" class="icon-btn" id="rSend" aria-label="Del opskriften" title="Del opskriften"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7.5 7.5 12 3l4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></button></div></div>
       <div class="ra-grid${(r.steps||[]).length?'':' one'}">${(r.steps||[]).length?'<button type="button" class="btn plain" id="rCook">👩‍🍳 Trinvis</button>':''}<button class="btn plain" type="button" id="toShop">🛒 Indkøbsliste</button></div>
       <button class="btn wide" type="button" id="toPlan">Tilføj til madplan</button></div>
       <div class="card"><h3 style="margin-bottom:4px">Ingredienser</h3>${ingHTML(r.ingredients||[],f)||'<p class="muted">Ingen ingredienser.</p>'}</div>
@@ -2550,7 +2556,7 @@ function openRecipe(id,fallback){
       s.querySelector("#toShop").onclick=()=>openPicker([{r,servings:serv,label:""}],r.title);
       s.querySelector("#rSend").onclick=()=>shareRecipe(r,serv);
       s.querySelector("#rEdit").onclick=()=>openEditor(r.id,r);
-      const sh=s.querySelector("#rShare");if(sh)sh.onclick=async()=>{const on=r.shared===false;
+      const sh=s.querySelector("#rShare");if(sh)sh.onclick=async()=>{if(window.__isAdmin===false){toast("Kun familiens administrator kan dele eller gøre opskrifter private");return;}const on=r.shared===false;
         if(on&&!confirm("Del "+r.title+" med andre familier i Madro? De kan se og hente en kopi. Jeres 👍 deles ikke."))return;
         const cur=Object.assign({},getRecipe(r.id)||r,{shared:on});delete cur.id;r.shared=on;draw();
         try{await setDoc("recipes",r.id,cur);toast(on?r.title+" er delt med fællesskabet":r.title+" er nu privat");}catch(e){toast("Kunne ikke gemme");}};
@@ -2661,7 +2667,15 @@ function openEditor(id,r,onSaved){
 
 /* ---------- plan ---------- */
 function planOf(key){return (state.plans[key]&&state.plans[key].entries)||[];}
-async function savePlan(key,entries){await setDoc("plans",key,{entries});}
+/* family permissions (web): the administrator decides per person whether they may change the plan, add to the list and pick items */
+function can(k){const p=window.__perms;return !p||p[k]!==false;}
+const PERM_MSG={plan:"Du har ikke lov til at ændre madplanen. Spørg familiens administrator.",shop:"Du har ikke lov til at tilføje eller rette varer på indkøbslisten.",pick:"Du har ikke lov til at plukke varer og afslutte indkøb."};
+function noPerm(k){toast(PERM_MSG[k]);return false;}
+async function savePlan(key,entries){
+  if(!can("plan")){/* only shopping status may change without plan rights */
+    const strip=l=>JSON.stringify((l||[]).map(e=>{const x=Object.assign({},e);delete x.shopped;return x;}));
+    if(strip(planOf(key))!==strip(entries)){noPerm("plan");renderPlan();return;}}
+  await setDoc("plans",key,{entries});}
 function flyToPlan(r,from){try{
   const tab=document.querySelector('.tabs a[data-tab="madplan"] svg');if(!tab)return;const t=tab.getBoundingClientRect();
   const im=r?imgOf(r):"";
@@ -3391,7 +3405,15 @@ function openPicker(entries,subtitle,opts){
 }
 /* shopping list = ONE document (lists/shopping) so each action is one write */
 let shopChain=Promise.resolve(),shopPending=0,migrated=false;
+function shopChange(oldL,newL){const PICK=["checked","foundStore","foundAt","just"];const o=new Map(oldL.map(x=>[x.id,x]));const need={shop:false,pick:false};
+  newL.forEach(it=>{const p=o.get(it.id);if(!p){need.shop=true;return;}
+    const a=Object.assign({},p),b=Object.assign({},it);PICK.forEach(k=>{delete a[k];delete b[k];});if(JSON.stringify(a)!==JSON.stringify(b))need.shop=true;
+    if(!!p.checked!==!!it.checked)need.pick=true;o.delete(it.id);});
+  o.forEach(p=>{if(p.checked)need.pick=true;else need.shop=true;});return need;}
 function saveShopping(items){
+  if(window.__perms){const n=shopChange(state.shopping||[],items);
+    if(n.shop&&!can("shop")){noPerm("shop");renderShop();renderPlan();return Promise.resolve();}
+    if(n.pick&&!can("pick")){noPerm("pick");renderShop();renderPlan();return Promise.resolve();}}
   state.shopping=items;renderShop();renderPlan();
   const body={items:items.map(x=>Object.assign({},x)),updatedAt:Date.now()};
   shopPending++;
