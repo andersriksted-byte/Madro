@@ -82,6 +82,7 @@ const css=`
 #famCard .fm-sw::after{content:"";position:absolute;top:2.5px;left:2.5px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .15s}
 #famCard .fm-sw:checked{background:#1f9d55}#famCard .fm-sw:checked::after{transform:translateX(17px)}
 #famCard .fm-lim{color:#b4502a}
+#famCard .fm-perms-inv{margin:8px 0;padding:2px 12px}#famCard .fm-perms-h{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:8px 0 2px}
 #famCard .fm-acts{flex-wrap:wrap;justify-content:flex-end;row-gap:4px}
 #famCard .fm-inv,#famCard .fm-add{padding:8px 2px 12px;border-bottom:1px solid var(--line)}
 #famMore input,#famMore select{font:inherit;font-size:16px}
@@ -238,7 +239,7 @@ async function setCommunity(on){await fs.doc("families/"+S.fid).update({communit
 async function joinFamily(inv,myName){
   const uid=S.user.uid,fid=inv.familyId,mail=low(S.user.email);let pid=inv.personId||"";
   if(!pid)pid="p"+rid();
-  await fs.doc("families/"+fid).update({["members."+uid]:{name:myName,email:mail,role:"member",personId:pid,joinedAt:Date.now()},["invites."+ikey(mail)]:firebase.firestore.FieldValue.delete()});
+  await fs.doc("families/"+fid).update({["members."+uid]:Object.assign({name:myName,email:mail,role:"member",personId:pid,joinedAt:Date.now()},inv.perms?{perms:inv.perms}:{}),["invites."+ikey(mail)]:firebase.firestore.FieldValue.delete()});
   await fs.doc("users/"+uid).set({familyId:fid});
   const sref=fs.doc("families/"+fid+"/meta/settings");
   await fs.runTransaction(async t=>{const d=await t.get(sref);const kids=((d.exists&&d.data().kids)||[]).slice();
@@ -287,13 +288,15 @@ function famPeople(){
 function applyPerms(){const m=S.family&&S.user&&(S.family.members||{})[S.user.uid];const p=m&&m.role!=="admin"&&m.perms?m.perms:null;window.__isAdmin=!!(m&&m.role==="admin");
   window.__perms=p;if(window.__setPerms)window.__setPerms(p);}
 const PERMS=[["plan","Madplan","Tilføje og flytte retter"],["shop","Tilføje varer","Skrive på indkøbslisten"],["pick","Plukke varer","Krydse af og afslutte indkøb"]];
+const permSwitches=pre=>'<div class="fm-perms fm-perms-inv"><div class="fm-perms-h">Hvad må personen?</div>'+PERMS.map(([k,t,d])=>'<label class="fm-perm"><span><b>'+t+'</b><small>'+d+'</small></span><input type="checkbox" class="fm-sw" name="'+pre+k+'" checked></label>').join("")+'</div>';
+const readPerms=(form,pre)=>{const o={};PERMS.forEach(([k])=>{const i=form.querySelector('[name="'+pre+k+'"]');o[k]=!i||i.checked;});return o;};
 function drawFamCard(force){
   const c=$("#famCard"),more=$("#famMore");if(!c||!S.family)return;
   if(force===true){try{document.activeElement&&document.activeElement.blur();}catch(e){}}
   else if((c.contains(document.activeElement)||(more&&more.contains(document.activeElement)))&&!["BUTTON","SELECT"].includes(document.activeElement.tagName))return;
   const rows=famPeople(),me=S.me&&S.me.personId,adm=isAdmin();
   const limits=m=>{const no=PERMS.filter(([k])=>m.perms&&m.perms[k]===false).map(([,t])=>t.toLowerCase());return no.length?" · <span class=\"fm-lim\">Må ikke: "+no.join(", ")+"</span>":"";};
-  const status=r=>r.m?(r.m.role==="admin"?"Administrator":"Har login")+" · "+esc(r.m.email)+(r.m.role!=="admin"?limits(r.m):""):r.inv?"Inviteret · "+esc(r.inv.email)+" · har ikke logget ind endnu":"Uden login";
+  const status=r=>r.m?(r.m.role==="admin"?"Administrator":"Har login")+" · "+esc(r.m.email)+(r.m.role!=="admin"?limits(r.m):""):r.inv?"Inviteret · "+esc(r.inv.email)+" · har ikke logget ind endnu"+limits(r.inv):"Uden login";
   const acts=r=>{let a="";
     if(r.uid===S.user.uid)return '<span class="fm-tag">Dig</span>';
     if(r.m){if(adm)a+='<button type="button" class="linkbtn" data-popen="'+esc(r.uid)+'" aria-expanded="'+(S.permOpen===r.uid)+'">Rettigheder</button><button type="button" class="linkbtn" data-unmem="'+esc(r.uid)+'">Fjern</button>';}
@@ -304,10 +307,10 @@ function drawFamCard(force){
     '<div class="fm-list">'+rows.map(r=>'<div class="fm-row'+(r.id&&r.id===me?' me':'')+'"><div class="fm-who"><span class="fm-av'+(r.m?' on':'')+'">'+esc((r.name||"?").trim().charAt(0).toUpperCase())+'</span><div><b>'+esc(r.name)+'</b>'+
       (r.id&&!r.m&&!r.inv||r.uid===S.user.uid?' <button type="button" class="linkbtn fm-ren" data-ren="'+esc(r.id)+'" aria-label="Omdøb '+esc(r.name)+'">✎</button>':'')+'<small>'+status(r)+'</small></div></div>'+acts(r)+'</div>'+
       (adm&&r.m&&r.m.role!=="admin"&&S.permOpen===r.uid?'<div class="fm-perms" role="group" aria-label="Hvad må '+esc(r.name)+'">'+PERMS.map(([k,t,d])=>{const on=!(r.m.perms&&r.m.perms[k]===false);return '<label class="fm-perm"><span><b>'+t+'</b><small>'+d+'</small></span><input type="checkbox" class="fm-sw" data-perm="'+k+'" data-puid="'+esc(r.uid)+'"'+(on?' checked':'')+'></label>';}).join("")+'</div>':'')+
-      (S.invFor===r.id&&!r.m&&!r.inv?'<form class="fm-inv" data-invform="'+esc(r.id)+'"><input type="email" placeholder="'+esc(r.name)+'s mail" autocomplete="off" inputmode="email" required><div class="row" style="gap:8px"><button class="btn small" type="submit">Send login</button><button class="btn plain small" type="button" data-invcancel>Annuller</button></div></form>':'')).join("")+'</div>'+
+      (S.invFor===r.id&&!r.m&&!r.inv?'<form class="fm-inv" data-invform="'+esc(r.id)+'"><input type="email" placeholder="'+esc(r.name)+'s mail" autocomplete="off" inputmode="email" required>'+permSwitches("ip_")+'<div class="row" style="gap:8px"><button class="btn small" type="submit">Send login</button><button class="btn plain small" type="button" data-invcancel>Annuller</button></div></form>':'')).join("")+'</div>'+
     '<div class="fm-msg" id="invMsg">'+esc(S.invMsg||"")+'</div>'+
     (S.addOpen?'<form id="addForm" class="fm-add"><b>Ny person</b><input id="addName" placeholder="Navn, fx Bettina" autocomplete="off" autocapitalize="words" required>'+
-      (adm?'<input type="email" id="addMail" placeholder="Mail (valgfrit – så får personen et login)" autocomplete="off" inputmode="email">':'')+
+      (adm?'<input type="email" id="addMail" placeholder="Mail (valgfrit – så får personen et login)" autocomplete="off" inputmode="email"><div id="addPerms" hidden>'+permSwitches("ap_")+'</div>':'')+
       '<div class="row" style="gap:8px"><button class="btn small" type="submit">Tilføj</button><button class="btn plain small" type="button" id="addCancel">Annuller</button></div></form>'
       :'<button type="button" class="btn ghost small" id="addOpen" style="align-self:flex-start">+ Tilføj person</button>')+
     (rows.length>1?'<div class="fm-row" style="border-bottom:0"><div><b>Du swiper som</b><small>Standard i Opskrift Tinder</small></div><select id="mePerson">'+persons().filter(p=>!(window.__lockedPersons&&window.__lockedPersons.has(p.id))).map(p=>'<option value="'+esc(p.id)+'"'+(me===p.id?' selected':'')+'>'+esc(p.name)+'</option>').join("")+'</select></div>':'');
@@ -324,14 +327,15 @@ function drawFamCard(force){
   const ask=(q,t,ok)=>window.__confirmBox?window.__confirmBox(q,t,ok):Promise.resolve(confirm(q+"\n\n"+t));
   c.querySelector("#addOpen")&&(c.querySelector("#addOpen").onclick=()=>{S.addOpen=true;S.invMsg="";drawFamCard(true);const i=$("#addName");if(i)i.focus();});
   c.querySelector("#addCancel")&&(c.querySelector("#addCancel").onclick=()=>{S.addOpen=false;drawFamCard(true);});
+  const am=c.querySelector("#addMail"),ap=c.querySelector("#addPerms");if(am&&ap)am.oninput=()=>{ap.hidden=!am.value.trim();};
   const af=c.querySelector("#addForm");if(af)af.onsubmit=async e=>{e.preventDefault();const name=$("#addName").value.trim();const mail=low(($("#addMail")||{value:""}).value);if(!name)return;
     if(mail&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)){say("Skriv en gyldig mail, eller lad feltet stå tomt.");return;}
     if(mail&&Object.values(S.family.members||{}).some(x=>x.email===mail)){say("Den mail har allerede login i familien.");return;}
     const id=window.__addPerson?await window.__addPerson(name):"";S.addOpen=false;
-    if(mail)await sendInvite(mail,id,name);else{say(name+" er tilføjet.");}drawFamCard(true);};
+    if(mail)await sendInvite(mail,id,name,readPerms(af,"ap_"));else{say(name+" er tilføjet.");}drawFamCard(true);};
   c.querySelectorAll("[data-invp]").forEach(b=>b.onclick=()=>{S.invFor=b.dataset.invp;S.invMsg="";drawFamCard(true);const i=c.querySelector("[data-invform] input");if(i)i.focus();});
   c.querySelectorAll("[data-invcancel]").forEach(b=>b.onclick=()=>{S.invFor=null;drawFamCard(true);});
-  c.querySelectorAll("[data-invform]").forEach(f=>f.onsubmit=async e=>{e.preventDefault();const id=f.dataset.invform;S.invFor=null;await sendInvite(low(f.querySelector("input").value),id,"");drawFamCard(true);});
+  c.querySelectorAll("[data-invform]").forEach(f=>f.onsubmit=async e=>{e.preventDefault();const id=f.dataset.invform;const pr=readPerms(f,"ip_");S.invFor=null;await sendInvite(low(f.querySelector('input[type="email"]').value),id,"",pr);drawFamCard(true);});
   c.querySelectorAll("[data-ren]").forEach(b=>b.onclick=async()=>{const p=persons().find(x=>x.id===b.dataset.ren);if(!p)return;const v=(prompt("Nyt navn",p.name)||"").trim();
     if(v&&v!==p.name&&window.__renamePerson){await window.__renamePerson(p.id,v);
       if(S.me&&S.me.personId===p.id)try{await fs.doc("families/"+S.fid).update({["members."+S.user.uid+".name"]:v});}catch(e){}
@@ -373,14 +377,14 @@ function drawFamCard(force){
     location.href="mailto:?subject="+encodeURIComponent("Prøv Madro – madplan, kogebog og indkøbsliste")+"&body="+encodeURIComponent(text);};
   c2.querySelector("#logOut").onclick=async()=>{if(confirm("Log ud af Madro?")){await auth.signOut();location.reload();}};
 }
-async function sendInvite(mail,personId,name){
+async function sendInvite(mail,personId,name,perms){
   const say=t=>{S.invMsg=t;const m=$("#invMsg");if(m)m.textContent=t;};
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)){say("Skriv en gyldig mail.");return;}
   if(Object.values(S.family.members||{}).some(x=>x.email===mail)){say("Personen er allerede med i familien.");return;}
   const p=persons().find(x=>x.id===personId);name=p?p.name:name;if(!name){say("Skriv personens navn.");return;}
   say("Sender…");
   try{
-    const inv={email:mail,familyId:S.fid,familyName:S.family.name,invitedBy:S.user.uid,invitedByName:S.me.name,personId:personId||"",name,createdAt:Date.now()};
+    const inv={email:mail,familyId:S.fid,familyName:S.family.name,invitedBy:S.user.uid,invitedByName:S.me.name,personId:personId||"",name,createdAt:Date.now(),perms:Object.assign({plan:true,shop:true,pick:true},perms||{})};
     await fs.doc("families/"+S.fid).update({["invites."+ikey(mail)]:inv});
     await fs.doc("invites/"+mail).set(inv);
     let mailed=true;try{await auth.sendSignInLinkToEmail(mail,{url:linkURL(),handleCodeInApp:true});}catch(e){mailed=false;}

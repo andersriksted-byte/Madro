@@ -45,12 +45,14 @@ service cloud.firestore {
         || (signedIn() && inviteFor(fid)
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'invites'])
             && request.resource.data.members.diff(resource.data.members).affectedKeys().hasOnly([request.auth.uid])
-            && request.resource.data.members[request.auth.uid].role == 'member')
+            && request.resource.data.members[request.auth.uid].role == 'member'
+            && request.resource.data.members[request.auth.uid].get('perms', null) == get(/databases/$(database)/documents/invites/$(myMail())).data.get('perms', null))
         // et medlem må skifte sin egen person i tommel-vurderingen
         || (isMember(fid)
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members'])
             && request.resource.data.members.diff(resource.data.members).affectedKeys().hasOnly([request.auth.uid])
-            && request.resource.data.members[request.auth.uid].role == resource.data.members[request.auth.uid].role);
+            && request.resource.data.members[request.auth.uid].role == resource.data.members[request.auth.uid].role
+            && request.resource.data.members[request.auth.uid].get('perms', null) == resource.data.members[request.auth.uid].get('perms', null));
       allow delete: if false;
 
       // Ventende opskrifts-links kan læses af Claudes import-opgave (kun links, ingen personlige data).

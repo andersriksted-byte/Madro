@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795033873";</script>
-<script src="config.js?v=1795033873"></script>
-<script src="importer.js?v=1795033873"></script>
-<script src="shim.js?v=1795033873"></script>
+<script>window.__appVersion="1795034194";</script>
+<script src="config.js?v=1795034194"></script>
+<script src="importer.js?v=1795034194"></script>
+<script src="shim.js?v=1795034194"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1535,11 +1535,11 @@ async function init(){
     mem={};
     notice("Forhåndsvisning: dine ændringer gemmes ikke her. Åbn appen fra dit link for at gemme.");
   }
-  subscribeCol("recipes",docs=>{state.recipes=docs.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));state.loaded=true;renderRecipes();renderPlan();renderLeftovers();resolvePending();});
+  subscribeCol("recipes",docs=>{state.recipes=docs.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));state.loaded=true;window._recSoft=true;renderRecipes();window._recSoft=false;renderPlan();renderLeftovers();resolvePending();});
   subscribeCol("imports",docs=>{state.imports=docs.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));renderImports();renderPlan();});
   subscribeCol("discover",docs=>{state.discover=docs;if(game.mode==="disc")renderGames();});
   subscribeCol("archive",docs=>{state.archive=docs;renderShop();});
-  subscribeCol("plans",docs=>{state.plans={};docs.forEach(d=>state.plans[d.id]=d);renderPlan();renderLeftovers();renderRecipes();if(state.recipes.length)resolvePending();});
+  subscribeCol("plans",docs=>{state.plans={};docs.forEach(d=>state.plans[d.id]=d);renderPlan();renderLeftovers();window._recSoft=true;renderRecipes();window._recSoft=false;if(state.recipes.length)resolvePending();});
   subscribeCol("lists",docs=>{const d=docs.find(x=>x.id==="shopping");if(shopPending)return;state.shopping=(d&&Array.isArray(d.items))?d.items.slice():[];renderShop();renderPlan();if(!migrated)migrateOld();});
   subscribeCol("meta",docs=>{
     docs.forEach(d=>{
@@ -2188,10 +2188,26 @@ function wireDD(root,f,done){
 function drawQuick(){const bar=$("#qsBar");bar.innerHTML=ddBarHTML(recFilter);
   wireDD(bar,recFilter,ch=>{if(ch){renderRecipes();window.scrollTo({top:0,behavior:"smooth"});}else drawQuick();});}
 try{const v=localStorage.getItem("mp_recSort");if(v)ddSet(recFilter,"view",v);}catch(e){}
+/* when the data changes behind the scenes (someone in the family votes or plans), keep the cards where they are and only redraw the ones that changed — no flicker, no jumping */
+let _recKey="";
+function softPatch(el,list,cards){const key=JSON.stringify([recFilter,recView(),list.length]);const same=key===_recKey;_recKey=key;
+  if(!same||(recFilter.q||"").trim())return false;
+  const nodes=[...el.querySelectorAll("[data-r]")];if(!nodes.length||nodes.length!==list.length)return false;
+  const byId=new Map(list.map((r,i)=>[r.id,cards[i]]));if(nodes.some(n=>!byId.has(n.dataset.r)))return false;
+  const T=document.createElement("template");
+  nodes.forEach(n=>{const h=byId.get(n.dataset.r);if(n.__h===h)return;
+    if(n.closest(".sw-wrap.open,.sw-wrap.open-r,.sw-wrap.dragging"))return;
+    T.innerHTML=h;const nn=T.content.firstElementChild;if(!nn)return;nn.__h=h;
+    const oi=n.querySelector("img"),ni=nn.querySelector("img");if(oi&&ni&&oi.getAttribute("src")===ni.getAttribute("src")){ni.replaceWith(oi);}/* keep the loaded picture */
+    if(n.classList.contains("lead"))nn.classList.add("lead");else nn.classList.remove("lead");
+    const no=n.querySelector(".gal-no"),nno=nn.querySelector(".gal-no");if(no&&nno)nno.textContent=no.textContent;
+    n.replaceWith(nn);});
+  return true;}
+function markCards(el,list,cards){const nodes=el.querySelectorAll("[data-r]");const byId=new Map(list.map((r,i)=>[r.id,cards[i]]));nodes.forEach(n=>{n.__h=byId.get(n.dataset.r);});}
 function renderRecipes(){
   if(document.querySelector("#recipeList .sw-wrap.open-r")){window._recDeferred=true;return;}
   recFilter.q=$("#rsearch").value;
-  $("#rfilters").innerHTML=state.recipes.length?filterBarHTML(recFilter):"";wireFilterBar($("#rfilters"),recFilter,renderRecipes);
+  {const fh=state.recipes.length?filterBarHTML(recFilter):"";const fb=$("#rfilters");if(!window._recSoft||fb.__h!==fh){fb.innerHTML=fh;fb.__h=fh;wireFilterBar(fb,recFilter,renderRecipes);}}
   drawQuick();$("#rSearchTg").classList.toggle("has-q",!!$("#rsearch").value.trim());
   drawSrcSeg();
   const pool=recFilter.src==="community"?state.community:recFilter.src==="all"?state.recipes.concat(state.community):state.recipes;
@@ -2203,15 +2219,17 @@ function renderRecipes(){
   const el=$("#recipeList");
   if(!list.length){const nfh=notFoundHTML(recFilter.q);if(nfh){el.innerHTML=nfh;return;}el.innerHTML='<div class="empty">'+(state.recipes.length?(recFilter.offerOnly?(allOffers().length?"Ingen af jeres opskrifter har hovedingredienser på tilbud i jeres butikker lige nu.":"Der er ikke hentet nogen tilbud endnu."):recFilter.leftOnly?(allLeftovers().length?"Ingen opskrifter bruger de rester, der bliver til overs fra indkøbslisten.":"Ingen rester lige nu: der bliver ikke noget til overs fra indkøbslisten."):"Ingen opskrifter matcher søgningen eller filtrene."):"Ingen opskrifter endnu. Tryk <b>+ Tilføj</b> for at lægge den første ind.")+'</div>'+notFoundHTML(recFilter.q);return;}
   const gal=recView()==="gallery";el.classList.toggle("gal-grid",gal);el.classList.toggle("kids-mode",!!(recFilter.kidsFav||recFilter.kid));
-  if(gal){el.innerHTML=list.map((r,i)=>{const has=true;
+  if(gal){const cards=list.map((r,i)=>{const has=true;
       const kick=[(r.themes||[])[0],recipeMeals(r)[0]||recipeTypes(r)[0]].filter(Boolean).join(" · ");
       const meta=r.time||"";
       return '<button type="button" class="gal-card'+(has?"":" no-img")+(i===0?" lead":"")+'" style="--rc:'+catColor("r"+r.title)+'" data-r="'+esc(r.id)+'" aria-label="'+esc(r.title)+'">'+(has?'<img src="'+imgOf(r)+'" alt="" loading="lazy">':'')+
         '<span class="gal-no">Nº '+String(i+1).padStart(2,"0")+'</span>'+
         '<span class="gal-ov">'+(kick?'<span class="gal-k">'+esc(kick)+'</span>':'')+'<span class="gal-t">'+esc(r.title)+'</span><span class="gal-rule"></span>'+
-        '<span class="gal-m">'+(meta?'<span>'+esc(meta)+'</span>':'')+(recipeHistory(r.id).last?'<span>'+esc(useText(recipeHistory(r.id)))+'</span>':'')+(kidText(r)?'<span class="gal-kid">'+esc(kidText(r))+'</span>':'')+(kidNoText(r)?'<span class="gal-kid no">'+esc(kidNoText(r))+'</span>':'')+'</span></span></button>';}).join("");
+        '<span class="gal-m">'+(meta?'<span>'+esc(meta)+'</span>':'')+(recipeHistory(r.id).last?'<span>'+esc(useText(recipeHistory(r.id)))+'</span>':'')+(kidText(r)?'<span class="gal-kid">'+esc(kidText(r))+'</span>':'')+(kidNoText(r)?'<span class="gal-kid no">'+esc(kidNoText(r))+'</span>':'')+'</span></span></button>';});
+    if(softPatch(el,list,cards))return;el.innerHTML=cards.join("");markCards(el,list,cards);
     el.insertAdjacentHTML("beforeend",nearHTML(recFilter.q,list));wrapSwipe(el);return;}
-  {const los=recFilter.sort==="insp"||recFilter.sort==="left"?inspCtx().los:[];el.innerHTML=list.map(r=>magCardHTML(r,los.length?recipeUses(r,los):null,"data-r")).join("")+nearHTML(recFilter.q,list);}wrapSwipe(el);
+  {const los=recFilter.sort==="insp"||recFilter.sort==="left"?inspCtx().los:[];const cards=list.map(r=>magCardHTML(r,los.length?recipeUses(r,los):null,"data-r"));
+    if(softPatch(el,list,cards))return;el.innerHTML=cards.join("")+nearHTML(recFilter.q,list);markCards(el,list,cards);}wrapSwipe(el);
 }
 $("#rsearch").addEventListener("input",renderRecipes);
 /* the keyboard's search key closes the keyboard */
