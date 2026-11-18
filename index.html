@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795034916";</script>
-<script src="config.js?v=1795034916"></script>
-<script src="importer.js?v=1795034916"></script>
-<script src="shim.js?v=1795034916"></script>
+<script>window.__appVersion="1795035006";</script>
+<script src="config.js?v=1795035006"></script>
+<script src="importer.js?v=1795035006"></script>
+<script src="shim.js?v=1795035006"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -962,7 +962,7 @@ html.sheet-open .sheet{padding-bottom:calc(24px + env(safe-area-inset-bottom))}
 #addSel{position:sticky;bottom:calc(env(safe-area-inset-bottom) - 4px);z-index:3;box-shadow:0 -10px 18px 6px var(--bg)}
 
 /* hide what a person may not do (the administrator sets this per person) */
-html.no-recipe #newBtn,html.no-recipe #newRecToggle,html.no-recipe #rEdit,html.no-recipe #rDel,html.no-recipe [data-nf="rec"],html.no-recipe #importBox,html.no-recipe #crSave,html.no-recipe [data-cadd],html.no-recipe .paste-zone,html.no-recipe #calcN{display:none!important}
+html.no-recipe #newBtn,html.no-recipe #newRecToggle,html.no-recipe #rEdit,html.no-del #rDel,html.no-recipe [data-nf="rec"],html.no-recipe #importBox,html.no-recipe #crSave,html.no-recipe [data-cadd],html.no-recipe .paste-zone,html.no-recipe #calcN{display:none!important}
 html.no-plan #days .day-add,html.no-plan #days .meal .x,html.no-plan #days .meal .grip,html.no-plan .wv-empty,html.no-plan #toPlan,html.no-plan [data-swday],html.no-plan #wDayAdd{display:none!important}
 html.no-shop #addItemBtn,html.no-shop #toShop,html.no-shop #pickBtn,html.no-shop #addSel{display:none!important}
 html.no-pick #finishBtn{display:none!important}html.no-pick .sl-cb{opacity:.35;pointer-events:none}
@@ -1484,7 +1484,7 @@ async function setDoc(col,id,data){
   else{mem[col]=mem[col]||{};mem[col][id]=JSON.parse(JSON.stringify(data));emitMem(col);}
 }
 async function delDoc(col,id){
-  if(col==="recipes"&&!can("recipe")){noPerm("recipe");return;}
+  if(col==="recipes"&&!can("del")){noPerm("del");return;}
   if(db){try{await db.collection(col).doc(id).delete();}catch(e){handleErr(e);}}
   else{if(mem[col])delete mem[col][id];emitMem(col);}
 }
@@ -1530,7 +1530,7 @@ async function loadOfferFile(){
   /* programmatic value changes (e.g. search reset) */
   setInterval(()=>document.querySelectorAll(".clr-wrap").forEach(w=>{const i=w.querySelector("input");if(i)w.classList.toggle("has",!!i.value);}),600);})();
 window.__appState=()=>state;
-window.__setPerms=p=>{window.__perms=p||null;const h=document.documentElement;["recipe","plan","shop","pick"].forEach(k=>h.classList.toggle("no-"+k,!!p&&p[k]===false));try{renderPlan();renderShop();}catch(e){}};if(window.__perms)window.__setPerms(window.__perms);if(window.__webApp)document.documentElement.classList.add("web-app");
+window.__setPerms=p=>{window.__perms=p||null;const h=document.documentElement;["recipe","del","plan","shop","pick"].forEach(k=>h.classList.toggle("no-"+k,!!p&&p[k]===false));try{renderPlan();renderShop();}catch(e){}};if(window.__perms)window.__setPerms(window.__perms);if(window.__webApp)document.documentElement.classList.add("web-app");
 async function init(){
   route();loadOfferFile();
   renderAll();
@@ -2692,7 +2692,7 @@ function openEditor(id,r,onSaved){
 function planOf(key){return (state.plans[key]&&state.plans[key].entries)||[];}
 /* family permissions (web): the administrator decides per person whether they may change the plan, add to the list and pick items */
 function can(k){const p=window.__perms;return !p||p[k]!==false;}
-const PERM_MSG={recipe:"Du har ikke lov til at oprette eller rette opskrifter. Spørg familiens administrator.",plan:"Du har ikke lov til at ændre madplanen. Spørg familiens administrator.",shop:"Du har ikke lov til at tilføje eller rette varer på indkøbslisten.",pick:"Du har ikke lov til at plukke varer og afslutte indkøb."};
+const PERM_MSG={del:"Du har ikke lov til at slette opskrifter. Spørg familiens administrator.",recipe:"Du har ikke lov til at oprette eller rette opskrifter. Spørg familiens administrator.",plan:"Du har ikke lov til at ændre madplanen. Spørg familiens administrator.",shop:"Du har ikke lov til at tilføje eller rette varer på indkøbslisten.",pick:"Du har ikke lov til at plukke varer og afslutte indkøb."};
 function noPerm(k){toast(PERM_MSG[k]);return false;}
 async function savePlan(key,entries){
   if(!can("plan")){/* only shopping status may change without plan rights */
