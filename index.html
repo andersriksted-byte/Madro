@@ -12,10 +12,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795014835";</script>
-<script src="config.js?v=1795014835"></script>
-<script src="importer.js?v=1795014835"></script>
-<script src="shim.js?v=1795014835"></script>
+<script>window.__appVersion="1795014929";</script>
+<script src="config.js?v=1795014929"></script>
+<script src="importer.js?v=1795014929"></script>
+<script src="shim.js?v=1795014929"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -577,6 +577,7 @@ html:not(.web-app) .web-only{display:none}html.web-app .claude-only{display:none
 .sl-sub{display:block;font-size:calc(13px * var(--fs));color:var(--muted);margin-top:2px}
 .sl-badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
 .sl-badges b{font-size:calc(11px * var(--fs));font-weight:700;border-radius:999px;padding:1px 7px}
+.set-sec{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:14px;margin-top:4px}.set-sec h4{margin:0;font-size:calc(15px * var(--fs));font-weight:700}
 .b-offer{background:var(--offer-soft);color:var(--offer-ink)}.b-offer .b-offx{border:0;background:none;color:inherit;font:inherit;font-weight:700;font-size:1.15em;line-height:1;padding:0 2px 0 8px;margin:-4px 0;cursor:pointer;opacity:.7}
 .b-left{background:var(--good-soft);color:var(--good)}
 .b-recent{background:var(--note-soft);color:var(--note)}
@@ -1166,32 +1167,35 @@ body.wv-on .toast{z-index:210}
 
   <!-- BUTIKKER -->
   <section class="view" id="v-butikker">
-    <div class="top"><div><h1>Opsætning</h1><div class="sub">Familie, butikker og tilbud</div></div></div>
+    <div class="top"><div><h1>Opsætning</h1><div class="sub">Familie, indkøb og tilbud</div></div></div>
     <div class="stack">
-      <div class="card stack">
-        <h3>Butikker du vil handle i</h3>
+      <div class="card stack" id="shopCard">
+        <h3>Indkøb</h3>
+        <div class="set-sec">
+        <h4>Butikker I handler i</h4>
         <p class="small muted" style="margin:0">Tryk for at vælge til og fra.</p>
         <div class="row" id="storeChips"></div>
         <form class="row" id="addStoreForm" style="flex-wrap:nowrap">
-          <input type="text" id="addStore" placeholder="Tilføj butik, fx Meny" maxlength="40" aria-label="Ny butik">
+          <input type="text" id="addStore" placeholder="Tilføj butik, fx Lokal købmand" maxlength="40" aria-label="Ny butik">
           <button class="btn small" type="submit">Tilføj</button>
         </form>
-      </div>
-      <div class="card stack">
-        <h3>Din faste butik</h3>
+        </div>
+        <div class="set-sec">
+        <h4>Din faste butik</h4>
         <p class="small muted" style="margin:0">Varer uden tilbud lægges her.</p>
         <select id="primary" aria-label="Fast butik"></select>
-      </div>
-      <div class="card stack">
-        <h3>Højst antal butikker pr. indkøbstur</h3>
+        </div>
+        <div class="set-sec">
+        <h4>Højst antal butikker pr. indkøbstur</h4>
         <div class="seg" id="maxSeg"><button type="button" data-v="1">1</button><button type="button" data-v="2">2</button><button type="button" data-v="3">3</button></div>
-      </div>
-      <div class="card stack">
-        <h3>Ugens tilbud</h3>
+        </div>
+        <div class="set-sec">
+        <h4>Ugens tilbud</h4>
         <div id="offerStatus" class="small"></div>
         <p class="small muted claude-only" style="margin:0">Tilbudsaviserne fra jeres butikker hentes automatisk og lægges ind i appen.</p>
         <p class="small muted web-only" style="margin:0" id="offInfo"></p>
         <div class="claude-only"><button class="btn plain small" id="copyOffer" type="button">Kopiér besked til chatten</button> <span class="small muted">hvis du vil opdatere dem med det samme</span></div>
+        </div>
       </div>
       <div class="card stack claude-only">
         <h3>Familien</h3>
