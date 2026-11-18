@@ -345,7 +345,7 @@ async function pullInbox(id){
     if(r.image&&/^inbox\//.test(r.image)){r.image=await toDataURL(r.image);}
     const cur=await ref.get();if(!cur.exists||cur.data().status!=="venter"){tried[id]="done";return;}
     if(!r.image&&cur.data().image)r.image=cur.data().image;
-    const nid="imp"+rid();await famCol("recipes").doc(nid).set(Object.assign({createdAt:Date.now()},r));await ref.delete();tried[id]="done";
+    const nid="imp"+rid();await famCol("recipes").doc(nid).set(Object.assign({createdAt:Date.now()},r,(S.family&&S.family.community&&r.shared===undefined)?{shared:true}:{}));await ref.delete();tried[id]="done";
   }catch(e){}
 }
 /* fetch the recipe straight away in the app; if the page can't be read, it stays in the queue for Claude */
@@ -361,6 +361,7 @@ async function autoImport(id,v,stale){
     let r;try{r=await window.MadroImporter.importRecipe(v.url);}
     catch(err){await ref.set({status:"venter",auto:"fejl",autoError:String((err&&err.message)||err).slice(0,120)},{merge:true});return;}
     if(!r.image&&v.image)r.image=v.image;
+    if(S.family&&S.family.community&&r.shared===undefined)r.shared=true;
     await famCol("recipes").doc("imp"+rid()).set(r);await ref.delete();
     try{const t=document.getElementById("toast");if(t){t.textContent="Lagt i Kogebogen: "+r.title;t.classList.add("on");setTimeout(()=>t.classList.remove("on"),3500);}}catch(e){}
   }catch(e){try{await ref.set({status:"venter",auto:"fejl",autoError:"Fejl: "+String((e&&(e.code||e.message))||e).slice(0,100)},{merge:true});}catch(e2){}}finally{delete autoBusy[id];}
