@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795023424";</script>
-<script src="config.js?v=1795023424"></script>
-<script src="importer.js?v=1795023424"></script>
-<script src="shim.js?v=1795023424"></script>
+<script>window.__appVersion="1795023595";</script>
+<script src="config.js?v=1795023595"></script>
+<script src="importer.js?v=1795023595"></script>
+<script src="shim.js?v=1795023595"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1553,12 +1553,16 @@ function mmCounts(){const w=mmWho(),c={yes:0,no:0,open:0};mmPool().forEach(r=>{c
 function mmComm(){return !!window.__communityOn&&game.src==="comm";}
 function commNo(w){try{return new Set(JSON.parse(localStorage.getItem("mp_commNo_"+w)||"[]"));}catch(e){return new Set();}}
 function commNoSave(w,set){try{localStorage.setItem("mp_commNo_"+w,JSON.stringify([...set]));}catch(e){}}
+/* community recipes a person gave 👍: kept as a list, from which each one can be added to the family's own cookbook */
+function commYes(w){try{return JSON.parse(localStorage.getItem("mp_commYes_"+w)||"[]");}catch(e){return [];}}
+function commYesSave(w,a){try{localStorage.setItem("mp_commYes_"+w,JSON.stringify(a));}catch(e){}}
+function commSaved(r){return state.recipes.some(x=>x.fromLib===r.libId||(x.fromLibrary&&x.title===r.title));}
 function mmSrcHTML(){if(!window.__communityOn)return "";const n=state.community.length;
   return '<div class="mm-src seg" role="group" aria-label="Hvilke opskrifter"><button type="button" data-mmsrc="mine"'+(mmComm()?'':' class="on"')+'>🏠 Min kogebog</button><button type="button" data-mmsrc="comm"'+(mmComm()?' class="on"':'')+'>🌍 Fællesskabets'+(n?' ('+n+')':'')+'</button></div>';}
 function wireSrc(box){box.querySelectorAll("[data-mmsrc]").forEach(b=>b.onclick=()=>{game.src=b.dataset.mmsrc;try{localStorage.setItem("mp_mmSrc",game.src);}catch(e){}startSwipe();game.mode="swipe";renderGames();});}
 try{game.src=localStorage.getItem("mp_mmSrc")||"mine";}catch(e){}
 function startSwipe(){const w=mmWho();game.skip=game.skip||{};const sk=game.skip[w]||(game.skip[w]=new Set());
-  if(mmComm()){const no=commNo(w);game.deck=state.community.filter(r=>!no.has(r.libId)&&!sk.has(r.id)).map(r=>Object.assign({r},gameReasons(r)));game.idx=0;return;}
+  if(mmComm()){const no=commNo(w);const yes=new Set(commYes(w));game.deck=state.community.filter(r=>!no.has(r.libId)&&!yes.has(r.libId)&&!sk.has(r.id)).map(r=>Object.assign({r},gameReasons(r)));game.idx=0;return;}
   game.deck=sortRecipes(mmPool().filter(r=>kidLikes(r,w)==null&&!sk.has(r.id)),"newest",x=>x).map(r=>Object.assign({r},gameReasons(r)));game.idx=0;}
 async function setMemberVote(id,kid,v){if(!canVote(kid))return;const r=getRecipe(id);if(!r)return;
   const kids=Object.assign({},r.kids||{});kidsList().forEach(k=>{if(!(k.id in kids)&&(k.id==="c1"||k.id==="c2")&&legacyKids(r))kids[k.id]=true;});
@@ -1567,7 +1571,7 @@ async function setMemberVote(id,kid,v){if(!canVote(kid))return;const r=getRecipe
 function mmCanUndo(){const w=mmWho();return (game.hist||[]).some(h=>h.who===w);}
 function mmUndo(){const w=mmWho(),hs=game.hist||[];let i=-1;for(let j=hs.length-1;j>=0;j--)if(hs[j].who===w){i=j;break;}if(i<0)return;
   const h=hs.splice(i,1)[0];
-  if(h.comm){const r=h.r;if(h.skip){game.skip[w]&&game.skip[w].delete(h.id);}else if(h.v===true){if(h.savedId)delDoc("recipes",h.savedId);}else{const no=commNo(w);no.delete(r.libId);commNoSave(w,no);}
+  if(h.comm){const r=h.r;if(h.skip){game.skip[w]&&game.skip[w].delete(h.id);}else if(h.v===true){commYesSave(w,commYes(w).filter(x=>x!==r.libId));}else{const no=commNo(w);no.delete(r.libId);commNoSave(w,no);}
     if(game.idx>0&&game.deck[game.idx-1]&&game.deck[game.idx-1].r.id===h.id)game.idx--;else game.deck.splice(game.idx,0,Object.assign({r},gameReasons(r)));
     game.mode="swipe";gHaptic();renderGames();toast("Fortrudt: "+r.title);return;}
   const r=getRecipe(h.id);if(!r)return;
@@ -1602,7 +1606,7 @@ function drawSwipe(box){
     const w=mmWho();
     if(mmComm()){const h={comm:true,id:cd.r.id,r:cd.r,who:w,skip,v};(game.hist||(game.hist=[])).push(h);if(game.hist.length>50)game.hist.shift();
       if(skip)game.skip[w].add(cd.r.id);
-      else if(v===true){saveCommunityCopy(cd.r,{[w]:true}).then(nid=>{h.savedId=nid;if(nid)toast(cd.r.title+" er gemt i jeres kogebog");});}
+      else if(v===true){const y=commYes(w).filter(x=>x!==cd.r.libId);y.push(cd.r.libId);commYesSave(w,y);}
       else{const no=commNo(w);no.add(cd.r.libId);commNoSave(w,no);}}
     else{(game.hist||(game.hist=[])).push({id:cd.r.id,who:w,skip,prev:kidLikes(cd.r,w)});if(game.hist.length>50)game.hist.shift();
     if(skip){game.skip[w].add(cd.r.id);}else setMemberVote(cd.r.id,w,v);}
@@ -1622,10 +1626,10 @@ function drawSwipe(box){
 function drawSwipeEnd(box){
   const w=mmWho(),c=mmCounts();const sk=(game.skip&&game.skip[w])?game.skip[w].size:0;
   if(mmComm()){box.innerHTML=gBar("Opskrift Tinder")+mmWhoHTML()+mmSrcHTML()+
-    '<div class="mm-end"><div class="ic" aria-hidden="true">🌍</div><h2>Ikke flere opskrifter fra fællesskabet</h2><p>Dem, '+esc(mmName())+' gav 👍, ligger nu i jeres kogebog. Når andre familier deler nye opskrifter, kommer de med her.</p>'+
-    '<button class="btn wide" type="button" id="swBook">Gå til Kogebogen</button>'+(sk?'<button class="btn plain wide" type="button" id="swSk" style="margin-top:8px">Tag de '+sk+' sprungne igen</button>':'')+
+    '<div class="mm-end"><div class="ic" aria-hidden="true">🌍</div><h2>Ikke flere opskrifter fra fællesskabet</h2><p>Når andre familier deler nye opskrifter, kommer de med her. Dem, '+esc(mmName())+' gav 👍, kan du lægge i jeres kogebog.</p>'+
+    '<button class="btn wide" type="button" id="swBook">Se dem med 👍</button>'+(sk?'<button class="btn plain wide" type="button" id="swSk" style="margin-top:8px">Tag de '+sk+' sprungne igen</button>':'')+
     (mmCanUndo()?'<button class="btn plain wide" type="button" id="swUndoE" style="margin-top:8px">↶ Fortryd seneste svar</button>':'')+'</div>';
-    wireBack(box);wireWho(box);wireSrc(box);$("#swBook").onclick=()=>{location.hash="opskrifter";};
+    wireBack(box);wireWho(box);wireSrc(box);$("#swBook").onclick=()=>{game.mode="swipeDone";renderGames();};
     const k=$("#swSk");if(k)k.onclick=()=>{game.skip[w]=new Set();startSwipe();game.mode="swipe";renderGames();};
     const u=$("#swUndoE");if(u)u.onclick=()=>mmUndo();return;}
   box.innerHTML=gBar("Opskrift Tinder")+mmWhoHTML()+mmSrcHTML()+
@@ -1640,7 +1644,25 @@ function drawSwipeEnd(box){
   const k=$("#swSk");if(k)k.onclick=()=>{game.skip[w]=new Set();startSwipe();game.mode="swipe";renderGames();};
   const u=$("#swUndoE");if(u)u.onclick=()=>mmUndo();
 }
+function drawCommDone(box){
+  const w=mmWho(),by=new Map(state.community.map(r=>[r.libId,r]));
+  const list=commYes(w).map(id=>by.get(id)).filter(Boolean).reverse();
+  box.innerHTML=gBar("",null,esc(mmName())+"s 👍 fra fællesskabet")+mmWhoHTML()+mmSrcHTML()+
+    (list.length?'<div class="stack g-picks" style="gap:12px">'+list.map(r=>{const have=commSaved(r);
+      return '<div class="g-pick">'+magCardHTML(r,null,"data-csee")+(have?'<span class="g-pick-add done" aria-label="'+esc(r.title)+' er i din kogebog"><span class="pl" aria-hidden="true">✓</span><span class="lb">I kogebogen</span></span>':
+        '<button class="g-pick-add" type="button" data-cadd="'+esc(r.libId)+'" aria-label="Tilføj '+esc(r.title)+' til min kogebog"><span class="pl" aria-hidden="true">+</span><span class="lb">Min kogebog</span></button>')+'</div>';}).join("")+'</div>'
+    :'<div class="empty">Ingen 👍 til fællesskabets opskrifter endnu.</div>')+
+    '<div class="row" style="gap:8px;margin-top:16px;flex-wrap:wrap">'+(game.deck&&game.idx<game.deck.length?'<button class="btn" type="button" id="swMore">Swipe videre</button>':'')+'<button class="btn plain" type="button" id="swUndoD"'+(mmCanUndo()?'':' hidden')+'>↶ Fortryd seneste</button></div>'+
+    '<p class="small muted" style="margin:8px 0 0">Tilføjer du en opskrift, får I jeres egen kopi med '+esc(mmName())+'s 👍, som I kan rette i og sætte på madplanen.</p>';
+  wireBack(box);wireWho(box);wireSrc(box);
+  box.querySelectorAll("[data-csee]").forEach(b=>b.onclick=()=>{const r=state.community.find(x=>x.id===b.dataset.csee);if(r)openCommunityRecipe(r);});
+  box.querySelectorAll("[data-cadd]").forEach(b=>b.onclick=async e=>{e.stopPropagation();const r=by.get(b.dataset.cadd);if(!r)return;b.disabled=true;b.querySelector(".lb").textContent="Gemmer…";
+    const nid=await saveCommunityCopy(r,{[w]:true});if(nid){toast(r.title+" er lagt i din kogebog");for(let i=0;i<20&&!getRecipe(nid);i++)await new Promise(res=>setTimeout(res,100));}renderGames();});
+  const ud=$("#swUndoD");if(ud)ud.onclick=()=>mmUndo();
+  const m=$("#swMore");if(m)m.onclick=()=>{game.mode="swipe";renderGames();};
+}
 function drawSwipeDone(box){
+  if(mmComm())return drawCommDone(box);
   const w=mmWho(),tab=game.mmTab||"yes";const pool=sortRecipes(mmPool(),"newest",x=>x);
   const lists={yes:pool.filter(r=>kidLikes(r,w)===true),no:pool.filter(r=>kidLikes(r,w)===false),open:pool.filter(r=>kidLikes(r,w)==null)};
   const T=[["yes","👍 Ja"],["no","👎 Nej"],["open","Ikke vurderet"]];
@@ -2320,7 +2342,7 @@ document.addEventListener("keydown",e=>{if(!cook.el||cook.el.hidden)return;
   else if(e.key==="Escape"){e.preventDefault();e.stopImmediatePropagation();const pn=cook.el.querySelector(".cook-panel");if(!pn.hidden)pn.hidden=true;else closeCook(false);}},true);
 /* copy a community recipe into our own book (optionally with someone's 👍); returns the new id */
 async function saveCommunityCopy(r,kids){const cp=Object.assign({},r);cp.author=r.author||r.sharedBy||"";["id","_community","familyId","ownerUid","sharedBy","sharedAt","libId","shared"].forEach(k=>delete cp[k]);
-  cp.fromLibrary=true;cp.createdAt=Date.now();if(kids)cp.kids=kids;const nid="lib"+uid();try{await setDoc("recipes",nid,cp);return nid;}catch(e){toast("Kunne ikke gemme");return "";}}
+  cp.fromLibrary=true;cp.fromLib=r.libId||"";cp.createdAt=Date.now();if(kids)cp.kids=kids;const nid="lib"+uid();try{await setDoc("recipes",nid,cp);return nid;}catch(e){toast("Kunne ikke gemme");return "";}}
 function openCommunityRecipe(r){
   openSheet('<div class="sheet-head"><div><h2>'+esc(r.title)+'</h2><div class="sub">Fra fællesskabet</div>'+creditHTML(r)+'</div>'+closeBtn+'</div><div class="stack">'+
     ((r.image&&isImg(r.image))?'<img class="hero" src="'+r.image+'" alt="'+esc(r.title)+'">':'')+
