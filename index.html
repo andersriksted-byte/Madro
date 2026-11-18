@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795036537";</script>
-<script src="config.js?v=1795036537"></script>
-<script src="importer.js?v=1795036537"></script>
-<script src="shim.js?v=1795036537"></script>
+<script>window.__appVersion="1795036644";</script>
+<script src="config.js?v=1795036644"></script>
+<script src="importer.js?v=1795036644"></script>
+<script src="shim.js?v=1795036644"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -974,6 +974,13 @@ html.no-recipe #newBtn,html.no-recipe #newRecToggle,html.no-recipe #rEdit,html.n
 html.no-plan #days .day-add,html.no-plan #days .meal .x,html.no-plan #days .meal .grip,html.no-plan .wv-empty,html.no-plan #toPlan,html.no-plan [data-swday],html.no-plan #wDayAdd{display:none!important}
 html.no-shop #addItemBtn,html.no-shop #toShop,html.no-shop #pickBtn,html.no-shop #addSel{display:none!important}
 html.no-pick #finishBtn{display:none!important}html.no-pick .sl-cb{opacity:.35;pointer-events:none}
+
+/* Opsætning: every main area folds up; tap its heading */
+#v-butikker .stack>.card>h3{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;user-select:none;-webkit-user-select:none;margin:0}
+#v-butikker .stack>.card>h3::after{content:"";flex:none;width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg) translate(-2px,-2px);transition:transform .2s}
+#v-butikker .stack>.card.folded>h3::after{transform:rotate(-45deg)}
+#v-butikker .stack>.card.folded>:not(h3){display:none!important}
+#v-butikker .stack>.card.folded{padding-bottom:14px}
 /* recipe actions: one tidy block — servings and share on top, two equal buttons, the main action full width */
 .rec-actions.ra{display:flex;flex-direction:column;gap:8px}
 .ra .ra-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -1307,6 +1314,31 @@ body.wv-on .toast{z-index:210}
   <section class="view" id="v-butikker">
     <div class="top"><div><h1>Opsætning</h1><div class="sub">Familie, indkøb og tilbud</div></div></div>
     <div class="stack">
+      <div class="card stack" id="lookCard">
+        <h3>Udseende</h3>
+        <div class="set-sec" style="border-top:0;padding-top:0;margin-top:0">
+        <h4>Tema</h4>
+        <div class="seg" id="themeSeg" role="group" aria-label="Tema"><button type="button" data-th="light">☀️ Lys</button><button type="button" data-th="dark">🌙 Mørk</button><button type="button" data-th="system">Som systemet</button></div>
+        </div>
+        <div class="set-sec">
+        <h4>Tips til appen</h4>
+        <div class="seg" id="tipsSeg" role="group" aria-label="Tips"><button type="button" data-tips="on">Til</button><button type="button" data-tips="off">Fra</button></div>
+        <p class="small muted" style="margin:0">Når tips er slået til, viser hver side kort, hvordan du bruger den: tryk, langt tryk, swipe og træk.</p>
+        <div><button type="button" class="btn plain small" id="tipsAgain">Vis alle tips igen</button></div>
+        </div>
+        <div class="set-sec">
+        <h4>Madplanen</h4>
+        <div class="seg" id="planStyleSeg" role="group" aria-label="Visning af madplanen"><button type="button" data-ps="img">🖼️ Store billeder</button><button type="button" data-ps="menu">📜 Menukort</button></div>
+        <p class="small muted" style="margin:0">Menukort viser ugen kompakt og enkelt, som et menukort på en bistro.</p>
+        </div>
+        <div class="set-sec">
+        <h4>Tekststørrelse</h4>
+        <div class="fs-seg" id="fsSeg" role="group" aria-label="Tekststørrelse">
+          <button type="button" data-fs="0" aria-label="Meget lille" style="font-size:13px">A</button><button type="button" data-fs="1" aria-label="Lille" style="font-size:16px">A</button><button type="button" data-fs="2" aria-label="Normal" style="font-size:19px">A</button><button type="button" data-fs="3" aria-label="Stor" style="font-size:22px">A</button><button type="button" data-fs="4" aria-label="Meget stor" style="font-size:25px">A</button>
+        </div>
+        <p class="small muted" style="margin:0" id="fsLabel"></p>
+        </div>
+      </div>
       <div class="card stack" id="shopCard">
         <h3>Indkøb</h3>
         <div class="set-sec">
@@ -1345,7 +1377,7 @@ body.wv-on .toast{z-index:210}
         <form class="row" id="srcForm" style="flex-wrap:nowrap"><input type="text" id="srcUrl" placeholder="fx valdemarsro.dk" aria-label="Ny opskriftskilde" autocomplete="off" autocapitalize="off" inputmode="url"><button class="btn" type="submit">Tilføj</button></form>
         </div>
       </div>
-      <div class="card stack claude-only">
+      <div class="card stack claude-only" id="kidsCard">
         <h3>Familien</h3>
         <p class="small muted" style="margin:0">Alle i familien kan give en ret 👍 eller 👎. Antallet af 👍 er rettens vurdering, og når alle kan li' den, er den en familiefavorit.</p>
         <div id="kidsEdit" class="stack" style="gap:8px"></div>
@@ -1359,38 +1391,13 @@ body.wv-on .toast{z-index:210}
         <span class="small muted" id="exportMsg"></span>
         <div id="impSlot" class="web-only"></div>
       </div>
-      <div class="card stack claude-only">
+      <div class="card stack claude-only" id="schedCard">
         <h3>Automatisk opdatering</h3>
         <div class="claude-only"><label class="lbl" for="schedOffers">Søg efter nye tilbud i dine butikker</label>
           <select id="schedOffers"><option value="daily">Hver dag kl. 7</option><option value="twice">Søndag og torsdag kl. 7</option><option value="weekly">Søndag kl. 7</option><option value="manual">Kun når jeg beder om det</option></select></div>
         <div class="claude-only"><label class="lbl" for="schedRecipes">Hent opskrifter fra gemte links</label>
           <select id="schedRecipes"><option value="2h">Hver 2. time (kl. 7–21)</option><option value="3x">3 gange dagligt (kl. 7, 13 og 17)</option><option value="1x">1 gang dagligt (kl. 7)</option><option value="manual">Kun når jeg beder om det</option></select></div>
         <div id="runlog" class="small muted claude-only"></div>
-      </div>
-      <div class="card stack">
-        <h3>Udseende</h3>
-        <div class="set-sec" style="border-top:0;padding-top:0;margin-top:0">
-        <h4>Tema</h4>
-        <div class="seg" id="themeSeg" role="group" aria-label="Tema"><button type="button" data-th="light">☀️ Lys</button><button type="button" data-th="dark">🌙 Mørk</button><button type="button" data-th="system">Som systemet</button></div>
-        </div>
-        <div class="set-sec">
-        <h4>Tips til appen</h4>
-        <div class="seg" id="tipsSeg" role="group" aria-label="Tips"><button type="button" data-tips="on">Til</button><button type="button" data-tips="off">Fra</button></div>
-        <p class="small muted" style="margin:0">Når tips er slået til, viser hver side kort, hvordan du bruger den: tryk, langt tryk, swipe og træk.</p>
-        <div><button type="button" class="btn plain small" id="tipsAgain">Vis alle tips igen</button></div>
-        </div>
-        <div class="set-sec">
-        <h4>Madplanen</h4>
-        <div class="seg" id="planStyleSeg" role="group" aria-label="Visning af madplanen"><button type="button" data-ps="img">🖼️ Store billeder</button><button type="button" data-ps="menu">📜 Menukort</button></div>
-        <p class="small muted" style="margin:0">Menukort viser ugen kompakt og enkelt, som et menukort på en bistro.</p>
-        </div>
-        <div class="set-sec">
-        <h4>Tekststørrelse</h4>
-        <div class="fs-seg" id="fsSeg" role="group" aria-label="Tekststørrelse">
-          <button type="button" data-fs="0" aria-label="Meget lille" style="font-size:13px">A</button><button type="button" data-fs="1" aria-label="Lille" style="font-size:16px">A</button><button type="button" data-fs="2" aria-label="Normal" style="font-size:19px">A</button><button type="button" data-fs="3" aria-label="Stor" style="font-size:22px">A</button><button type="button" data-fs="4" aria-label="Meget stor" style="font-size:25px">A</button>
-        </div>
-        <p class="small muted" style="margin:0" id="fsLabel"></p>
-        </div>
       </div>
     </div>
   </section>
@@ -4545,6 +4552,18 @@ init();
   const go=()=>{if(!raf)raf=requestAnimationFrame(fit);};
   new MutationObserver(go).observe(L,{childList:true});addEventListener("resize",go);addEventListener("hashchange",()=>setTimeout(go,60));
   if(document.fonts&&document.fonts.ready)document.fonts.ready.then(go);go();})();
+</script>
+<script>
+/* fold/unfold the main areas in Opsætning; remembered on this device */
+(function(){const host=document.getElementById("v-butikker");if(!host)return;
+  const get=()=>{try{return JSON.parse(localStorage.getItem("mp_setFold")||"{}");}catch(e){return {};}};
+  const put=o=>{try{localStorage.setItem("mp_setFold",JSON.stringify(o));}catch(e){}};
+  function apply(){const f=get();host.querySelectorAll(".stack>.card").forEach(c=>{if(!c.id)return;const h=c.querySelector(":scope>h3");if(!h)return;
+    c.classList.toggle("folded",!!f[c.id]);h.setAttribute("role","button");h.setAttribute("tabindex","0");h.setAttribute("aria-expanded",String(!f[c.id]));});}
+  host.addEventListener("click",e=>{const h=e.target.closest(".stack>.card>h3");if(!h||!host.contains(h))return;const c=h.parentElement;if(!c.id)return;
+    const f=get();f[c.id]=!f[c.id];put(f);apply();});
+  host.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.matches(".stack>.card>h3")){e.preventDefault();e.target.click();}});
+  new MutationObserver(()=>apply()).observe(host,{childList:true,subtree:true});apply();})();
 </script>
 </body>
 </html>

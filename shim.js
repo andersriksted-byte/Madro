@@ -271,7 +271,7 @@ function mountFamCard(){
   const host=$("#v-butikker");if(!host||$("#famCard"))return;
   const c=document.createElement("div");c.className="card stack";c.id="famCard";
   const m=document.createElement("div");m.className="card stack";m.id="famMore";
-  const first=host.querySelector(".card");if(first)first.parentNode.insertBefore(c,first);else host.appendChild(c);
+  const first=host.querySelector("#shopCard")||host.querySelector(".card");if(first)first.parentNode.insertBefore(c,first);else host.appendChild(c);
   const ex=$("#exportCard");if(ex)ex.parentNode.insertBefore(m,ex.nextSibling);else host.appendChild(m);
   drawFamCard();
   window.addEventListener("hashchange",()=>{if(/butikker/.test(location.hash))drawFamCard();});
