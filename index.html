@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795029443";</script>
-<script src="config.js?v=1795029443"></script>
-<script src="importer.js?v=1795029443"></script>
-<script src="shim.js?v=1795029443"></script>
+<script>window.__appVersion="1795029584";</script>
+<script src="config.js?v=1795029584"></script>
+<script src="importer.js?v=1795029584"></script>
+<script src="shim.js?v=1795029584"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1218,7 +1218,7 @@ body.wv-on .toast{z-index:210}
 
   <!-- INDKØB -->
   <section class="view" id="v-indkob">
-    <div class="top"><div><h1>Indkøbsliste</h1><div class="sub" id="shopSub"></div></div><button class="btn small" id="addItemBtn" type="button">+ Tilføj</button></div>
+    <div class="top"><div><h1>Indkøbsliste</h1><div class="sub" id="shopSub"></div></div><div class="row" style="gap:8px;flex-wrap:nowrap;align-items:center"><button class="icon-btn" style="flex:none" id="smsBtn" type="button" aria-label="Send indkøbslisten som sms" title="Send som sms"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3 10 14"/><path d="M21 3l-6.5 18-4.5-7-7-4.5z"/></svg></button><button class="btn small" id="addItemBtn" type="button">+ Tilføj</button></div></div>
     <select id="addStore2" aria-label="Butik" hidden></select><input type="text" id="kbProxy" aria-hidden="true" tabindex="-1" class="kb-proxy">
     <div class="sl-bar">
       <div class="seg" id="groupSeg" role="group" aria-label="Sortér efter"><button type="button" data-g="cat">Kategori</button><button type="button" data-g="store">Butik</button><button type="button" data-g="dish">Ret</button></div>
@@ -1228,7 +1228,7 @@ body.wv-on .toast{z-index:210}
     <div class="sl-grid" id="shopList"></div>
     <button type="button" class="sl-found" id="foundToggle"></button>
     <div class="row" style="margin-top:12px;justify-content:space-between">
-      <div class="row" style="gap:8px;align-items:center"><button class="btn plain small" id="archiveBtn" type="button">Arkiv</button><button class="icon-btn" id="smsBtn" type="button" aria-label="Send indkøbslisten som sms" title="Send som sms"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3 10 14"/><path d="M21 3l-6.5 18-4.5-7-7-4.5z"/></svg></button></div>
+      <button class="btn plain small" id="archiveBtn" type="button">Arkiv</button>
       <button class="btn" id="finishBtn" type="button">Afslut indkøb</button>
     </div>
     <p class="small muted" id="finishHint" style="margin:6px 0 0;text-align:right"></p>
