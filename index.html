@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795031157";</script>
-<script src="config.js?v=1795031157"></script>
-<script src="importer.js?v=1795031157"></script>
-<script src="shim.js?v=1795031157"></script>
+<script>window.__appVersion="1795031211";</script>
+<script src="config.js?v=1795031211"></script>
+<script src="importer.js?v=1795031211"></script>
+<script src="shim.js?v=1795031211"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -954,8 +954,12 @@ h1,h2,h3{font-family:var(--serif);letter-spacing:-.01em}
 
 /* sheets scroll on their own (iPhone included): the page behind is locked while one is open, and the main button stays in view */
 html.sheet-open,html.sheet-open body{overflow:hidden;scroll-snap-type:none!important;overscroll-behavior:none}
-.sheet{max-height:calc(100dvh - var(--tabh,0px) - 28px);overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}
-#addSel{position:sticky;bottom:-4px;z-index:3;box-shadow:0 -10px 18px 6px var(--bg)}
+/* an open sheet covers the tab bar (as on iOS), so nothing — not even the M seal — can sit on top of its buttons */
+html.sheet-open .sheet-wrap{bottom:0!important;z-index:95}
+html.sheet-open .tabs{visibility:hidden}
+html.sheet-open .sheet{padding-bottom:calc(24px + env(safe-area-inset-bottom))}
+.sheet{max-height:calc(100dvh - 28px);overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+#addSel{position:sticky;bottom:calc(env(safe-area-inset-bottom) - 4px);z-index:3;box-shadow:0 -10px 18px 6px var(--bg)}
 /* recipe actions: one tidy block — servings and share on top, two equal buttons, the main action full width */
 .rec-actions.ra{display:flex;flex-direction:column;gap:8px}
 .ra .ra-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
