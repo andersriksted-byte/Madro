@@ -89,11 +89,13 @@ function screenLogin(prefill){
     '<form id="auLogin" style="display:contents"><label for="auMail">Mail</label><input id="auMail" type="email" autocomplete="email" inputmode="email" value="'+esc(prefill||"")+'">'+
     '<label for="auPw">Adgangskode</label><input id="auPw" type="password" autocomplete="current-password">'+
     '<button class="au-btn" type="submit">Log ind</button></form><div class="au-msg" role="status"></div><div class="au-hr"></div>'+
-    '<p>Første gang, inviteret eller glemt koden?</p><button class="au-btn plain" type="button" id="auSendLink">Send mig et login-link på mail</button>',
+    '<p>Første gang, inviteret eller glemt koden?</p><button class="au-btn plain" type="button" id="auSendLink">Send mig et login-link på mail</button><button class="au-link" type="button" id="auReset">Vælg eller nulstil adgangskode</button>',
   box=>{
     box.querySelector("#auLogin").onsubmit=async e=>{e.preventDefault();const m=low(box.querySelector("#auMail").value),p=box.querySelector("#auPw").value;
       if(!m||!p){msg(box,"Skriv mail og adgangskode.");return;}msg(box,"Logger ind…",true);
       try{await auth.signInWithEmailAndPassword(m,p);}catch(err){msg(box,errText(err));}};
+    box.querySelector("#auReset").onclick=async()=>{const m=low(box.querySelector("#auMail").value);if(!m){msg(box,"Skriv din mail først.");box.querySelector("#auMail").focus();return;}
+      try{await auth.sendPasswordResetEmail(m);msg(box,"Vi har sendt en mail til "+m+", hvor du kan vælge en kode.",true);}catch(err){msg(box,errText(err));}};
     box.querySelector("#auSendLink").onclick=async()=>{const m=low(box.querySelector("#auMail").value);if(!m){msg(box,"Skriv din mail først.");box.querySelector("#auMail").focus();return;}
       msg(box,"Sender…",true);
       try{await auth.sendSignInLinkToEmail(m,{url:linkURL(),handleCodeInApp:true});try{localStorage.setItem("mp_loginMail",m);}catch(e){}
@@ -115,8 +117,10 @@ function screenPassword(next){
     '<form id="auF" style="display:contents"><input id="auPw" type="password" autocomplete="new-password" placeholder="Mindst 6 tegn"><button class="au-btn" type="submit">Gem kode</button></form><div class="au-msg"></div><button class="au-link" type="button" id="auSkip">Spring over</button>',
   box=>{box.querySelector("#auF").onsubmit=async e=>{e.preventDefault();const p=box.querySelector("#auPw").value;if(p.length<6){msg(box,"Mindst 6 tegn.");return;}
       try{await auth.currentUser.updatePassword(p);try{sessionStorage.removeItem("mp_viaLink");}catch(e){}next();}
-      catch(err){const c=err&&err.code;if(c==="auth/user-token-expired"||c==="auth/requires-recent-login"||c==="auth/user-disabled"){try{sessionStorage.removeItem("mp_viaLink");}catch(e){}
-        const m=low(auth.currentUser&&auth.currentUser.email);await auth.signOut();screenLogin(m);return;}msg(box,errText(err));}};
+      catch(err){/* Firebase sometimes refuses a new password right after a link login: send the "choose password" mail instead */
+        const m=low(auth.currentUser&&auth.currentUser.email);try{sessionStorage.removeItem("mp_viaLink");}catch(e){}
+        try{await auth.sendPasswordResetEmail(m);}catch(e2){msg(box,errText(err));return;}
+        show(head("Madro","Tjek din mail","Koden kunne ikke gemmes direkte, så vi har sendt en mail til <b>"+esc(m)+"</b>, hvor du vælger din kode. Du kan bruge Madro imens.")+'<button class="au-btn" type="button" id="auGo">Fortsæt til Madro</button>',b=>{b.querySelector("#auGo").onclick=()=>next();});}};
     box.querySelector("#auSkip").onclick=()=>{try{sessionStorage.removeItem("mp_viaLink");}catch(e){}next();};});
 }
 function screenNoFamily(inv){
