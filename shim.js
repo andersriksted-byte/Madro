@@ -398,6 +398,27 @@ function offerHomeScreen(){
   const ib=w.querySelector("#a2Install");if(ib)ib.onclick=async()=>{try{installEvt.prompt();await installEvt.userChoice;}catch(e){}close();};
 }
 
+/* ---------- new version available: a small banner with "Opdater" ---------- */
+let verShown=false;
+async function checkVersion(){
+  if(verShown||!window.__appVersion)return;
+  try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;const j=await r.json();
+    if(j&&j.v&&String(j.v)!==String(window.__appVersion))showUpdate();}catch(e){}
+}
+function showUpdate(){if(verShown)return;verShown=true;
+  const st=document.createElement("style");st.textContent=`#mdUpd{position:fixed;left:12px;right:12px;bottom:calc(88px + env(safe-area-inset-bottom));z-index:2147482000;display:flex;align-items:center;gap:12px;
+    background:var(--ink,#221d33);color:var(--bg,#fff);border-radius:16px;padding:12px 12px 12px 16px;box-shadow:0 10px 30px rgba(0,0,0,.25);max-width:520px;margin:0 auto}
+    #mdUpd span{flex:1;font-weight:600;line-height:1.3}#mdUpd button{font:inherit;font-weight:800;border:0;border-radius:999px;padding:9px 16px;cursor:pointer;background:var(--bg,#fff);color:var(--ink,#221d33)}
+    #mdUpd .x{background:transparent;color:inherit;opacity:.7;padding:6px 8px;font-size:18px}`;document.head.appendChild(st);
+  const b=document.createElement("div");b.id="mdUpd";b.setAttribute("role","status");
+  b.innerHTML='<span>Der er en ny version af Madro</span><button type="button" id="mdUpdGo">Opdater</button><button type="button" class="x" aria-label="Senere">×</button>';
+  document.body.appendChild(b);
+  b.querySelector("#mdUpdGo").onclick=()=>{const u=location.pathname+"?u="+Date.now()+location.hash;location.replace(u);};
+  b.querySelector(".x").onclick=()=>{b.remove();verShown=false;setTimeout(checkVersion,30*60000);};
+}
+setTimeout(checkVersion,8000);setInterval(checkVersion,5*60000);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")checkVersion();});
+
 /* ---------- boot ---------- */
 function boot(){
   mountUI();
