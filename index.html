@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795023595";</script>
-<script src="config.js?v=1795023595"></script>
-<script src="importer.js?v=1795023595"></script>
-<script src="shim.js?v=1795023595"></script>
+<script>window.__appVersion="1795024524";</script>
+<script src="config.js?v=1795024524"></script>
+<script src="importer.js?v=1795024524"></script>
+<script src="shim.js?v=1795024524"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -820,7 +820,14 @@ h1,h2,h3{font-family:var(--serif);letter-spacing:-.01em}
 .masthead{display:flex;align-items:center;gap:12px;margin:0 0 14px;color:#c8452a}
 .masthead::before,.masthead::after{content:"";flex:1;height:1px;background:currentColor;opacity:.35}
 .masthead span{font-family:var(--serif);font-style:italic;font-weight:700;font-size:calc(22px * var(--fs));letter-spacing:.02em;line-height:1}
-.app:has(#v-spil.playing.on) .masthead{display:none}
+.app:has(#v-spil.playing.on) .masthead-w{display:none}
+/* a clearer wordmark: bigger name between double rules, with what the app is underneath */
+.masthead-w{margin:0 0 16px}
+.masthead-w .masthead{margin:0;gap:14px}
+.masthead-w .masthead::before,.masthead-w .masthead::after{height:0;background:none;border-top:3px double currentColor;opacity:.7}
+.masthead-w .masthead span{font-size:calc(34px * var(--fs));font-weight:700;letter-spacing:.01em}
+.mast-sub{text-align:center;margin-top:5px;font-family:var(--body);font-size:calc(10.5px * var(--fs));font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
+:root[data-theme="dark"] .masthead{color:#ff8a6a}
 #v-madplan{--kick:"Ugens menu"}#v-indkob{--kick:"Til butikken"}#v-spil{--kick:"Leg med maden"}#v-opskrifter{--kick:"Opskrifter"}#v-butikker{--kick:"Indstillinger"}
 /* tabs */
 .tabs{background:var(--bg);border-top:1px solid var(--ink);box-shadow:none}
@@ -862,6 +869,9 @@ h1,h2,h3{font-family:var(--serif);letter-spacing:-.01em}
 .tabs a[data-tab="madplan"].on svg{background:#c8452a;stroke:#fff;color:#fff}
 .tabs a[data-tab="madplan"].on::after{display:none}
 .tabs a[data-tab="madplan"]:active svg{transform:scale(.94)}
+/* the Madro seal: always the red M */
+.tabs a[data-tab="madplan"] svg.seal{background:#c8452a;stroke:none}
+.tabs a[data-tab="madplan"].on svg.seal{background:#a8341c;box-shadow:0 0 0 2px #c8452a,0 6px 16px rgba(0,0,0,.22)}
 /* magazine-style recipe picker (slim cards) */
 .pick-item.pick-mag{flex:none;position:relative;display:block;width:100%;min-height:84px;height:auto;padding:0;border:0;border-radius:6px;overflow:hidden;text-align:left;
   background:radial-gradient(circle at 25% 30%,rgba(255,255,255,.16) 0 7%,transparent 8%) 0 0/48px 48px,var(--rc,#666);box-shadow:0 4px 12px rgba(0,0,0,.12);margin-bottom:8px;color:#fff}
@@ -1119,7 +1129,7 @@ body.wv-on .toast{z-index:210}
 </head>
 <body>
 <div class="app">
-  <div class="masthead" aria-label="Madro"><span>Madro</span></div>
+  <div class="masthead-w"><div class="masthead" aria-label="Madro"><span>Madro</span></div><div class="mast-sub" aria-hidden="true">Madplan · Kogebog · Indkøb</div></div>
   <div id="notice" class="notice hide"></div>
 
   <!-- OPSKRIFTER -->
@@ -1276,7 +1286,7 @@ body.wv-on .toast{z-index:210}
 <nav class="tabs" aria-label="Faner">
   <a href="#indkob" data-tab="indkob"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2.2 11h10.6L20 7H6.2"/><circle cx="9" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/></svg>Indkøb</a>
   <a href="#opskrifter" data-tab="opskrifter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg>Kogebog</a>
-  <a href="#madplan" data-tab="madplan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span class="mp-lbl">Madplan</span></a>
+  <a href="#madplan" data-tab="madplan"><svg class="seal" viewBox="0 0 24 24" aria-hidden="true"><text x="12" y="18.2" text-anchor="middle" font-family="Playfair Display,Georgia,serif" font-style="italic" font-weight="700" font-size="20" fill="#fff" stroke="none">M</text></svg><span class="mp-lbl">Madplan</span></a>
   <a href="#spil" data-tab="spil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="11" rx="4"/><path d="M8 11v3M6.5 12.5h3"/><circle cx="15.5" cy="11.5" r=".6" fill="currentColor"/><circle cx="17.5" cy="13.5" r=".6" fill="currentColor"/></svg>Spil</a>
   <a href="#butikker" data-tab="butikker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Opsætning</a>
 </nav>
