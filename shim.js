@@ -75,7 +75,14 @@ const css=`
 #famCard .fm-av.on{background:var(--accent);color:#fff}
 #famCard .fm-acts{display:flex;gap:12px;flex:none}
 #famCard .fm-ren{font-size:14px;color:var(--muted)}
-#famCard .fm-perms{display:flex;flex-wrap:wrap;gap:6px;padding:0 0 10px 44px;border-bottom:1px solid var(--line)}#famCard .fm-perm{font:inherit;font-size:12.5px;font-weight:700;padding:5px 11px;border-radius:999px;border:1px dashed var(--line);background:none;color:var(--muted);cursor:pointer}#famCard .fm-perm.on{border:1px solid #1f7a4a;color:#1f7a4a;background:color-mix(in srgb,#1f9d55 10%,transparent)}
+#famCard .fm-perms{margin:0 0 10px 44px;padding:4px 12px;border-radius:12px;background:var(--accent-soft,#efe8dc)}
+#famCard .fm-perm{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;cursor:pointer}#famCard .fm-perm+.fm-perm{border-top:1px solid var(--line)}
+#famCard .fm-perm b{display:block;font-size:14px}#famCard .fm-perm small{display:block;font-size:12px;color:var(--muted)}
+#famCard .fm-sw{appearance:none;-webkit-appearance:none;flex:none;width:42px;height:25px;border-radius:13px;background:var(--line);position:relative;cursor:pointer;transition:background .15s;margin:0}
+#famCard .fm-sw::after{content:"";position:absolute;top:2.5px;left:2.5px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .15s}
+#famCard .fm-sw:checked{background:#1f9d55}#famCard .fm-sw:checked::after{transform:translateX(17px)}
+#famCard .fm-lim{color:#b4502a}
+#famCard .fm-acts{flex-wrap:wrap;justify-content:flex-end;row-gap:4px}
 #famCard .fm-inv,#famCard .fm-add{padding:8px 2px 12px;border-bottom:1px solid var(--line)}
 #famMore input,#famMore select{font:inherit;font-size:16px}
 #commSlot .fm-comm{display:flex;flex-direction:column;gap:8px}#commSlot .fm-msg{font-size:13px;color:var(--muted)}
@@ -285,17 +292,18 @@ function drawFamCard(force){
   if(force===true){try{document.activeElement&&document.activeElement.blur();}catch(e){}}
   else if((c.contains(document.activeElement)||(more&&more.contains(document.activeElement)))&&!["BUTTON","SELECT"].includes(document.activeElement.tagName))return;
   const rows=famPeople(),me=S.me&&S.me.personId,adm=isAdmin();
-  const status=r=>r.m?(r.m.role==="admin"?"Administrator":"Har login")+" · "+esc(r.m.email):r.inv?"Inviteret · "+esc(r.inv.email)+" · har ikke logget ind endnu":"Uden login";
+  const limits=m=>{const no=PERMS.filter(([k])=>m.perms&&m.perms[k]===false).map(([,t])=>t.toLowerCase());return no.length?" · <span class=\"fm-lim\">Må ikke: "+no.join(", ")+"</span>":"";};
+  const status=r=>r.m?(r.m.role==="admin"?"Administrator":"Har login")+" · "+esc(r.m.email)+(r.m.role!=="admin"?limits(r.m):""):r.inv?"Inviteret · "+esc(r.inv.email)+" · har ikke logget ind endnu":"Uden login";
   const acts=r=>{let a="";
     if(r.uid===S.user.uid)return '<span class="fm-tag">Dig</span>';
-    if(r.m){if(adm)a+='<button type="button" class="linkbtn" data-unmem="'+esc(r.uid)+'">Fjern</button>';}
+    if(r.m){if(adm)a+='<button type="button" class="linkbtn" data-popen="'+esc(r.uid)+'" aria-expanded="'+(S.permOpen===r.uid)+'">Rettigheder</button><button type="button" class="linkbtn" data-unmem="'+esc(r.uid)+'">Fjern</button>';}
     else if(r.inv){if(adm)a+='<button type="button" class="linkbtn" data-uninv="'+esc(r.inv.email)+'">Træk tilbage</button>';}
     else{if(adm)a+='<button type="button" class="linkbtn" data-invp="'+esc(r.id)+'">Invitér</button>';a+='<button type="button" class="linkbtn" data-delp="'+esc(r.id)+'">Fjern</button>';}
     return '<span class="fm-acts">'+a+'</span>';};
   c.innerHTML='<h3>Familien</h3><p class="small muted" style="margin:0">'+esc(S.family.name)+'. Alle her kan give opskrifterne 👍 og 👎. Med login kan de også selv bruge Madro, og I deler kogebog, madplan og indkøbsliste.'+(adm?' Under hver person med login vælger du, hvad de må.':'')+'</p>'+
     '<div class="fm-list">'+rows.map(r=>'<div class="fm-row'+(r.id&&r.id===me?' me':'')+'"><div class="fm-who"><span class="fm-av'+(r.m?' on':'')+'">'+esc((r.name||"?").trim().charAt(0).toUpperCase())+'</span><div><b>'+esc(r.name)+'</b>'+
       (r.id&&!r.m&&!r.inv||r.uid===S.user.uid?' <button type="button" class="linkbtn fm-ren" data-ren="'+esc(r.id)+'" aria-label="Omdøb '+esc(r.name)+'">✎</button>':'')+'<small>'+status(r)+'</small></div></div>'+acts(r)+'</div>'+
-      (adm&&r.m&&r.m.role!=="admin"?'<div class="fm-perms" role="group" aria-label="Hvad må '+esc(r.name)+'">'+PERMS.map(([k,t,d])=>{const on=!(r.m.perms&&r.m.perms[k]===false);return '<button type="button" class="fm-perm'+(on?' on':'')+'" data-perm="'+k+'" data-puid="'+esc(r.uid)+'" aria-pressed="'+on+'" title="'+d+'">'+(on?'✓ ':'')+t+'</button>';}).join("")+'</div>':'')+
+      (adm&&r.m&&r.m.role!=="admin"&&S.permOpen===r.uid?'<div class="fm-perms" role="group" aria-label="Hvad må '+esc(r.name)+'">'+PERMS.map(([k,t,d])=>{const on=!(r.m.perms&&r.m.perms[k]===false);return '<label class="fm-perm"><span><b>'+t+'</b><small>'+d+'</small></span><input type="checkbox" class="fm-sw" data-perm="'+k+'" data-puid="'+esc(r.uid)+'"'+(on?' checked':'')+'></label>';}).join("")+'</div>':'')+
       (S.invFor===r.id&&!r.m&&!r.inv?'<form class="fm-inv" data-invform="'+esc(r.id)+'"><input type="email" placeholder="'+esc(r.name)+'s mail" autocomplete="off" inputmode="email" required><div class="row" style="gap:8px"><button class="btn small" type="submit">Send login</button><button class="btn plain small" type="button" data-invcancel>Annuller</button></div></form>':'')).join("")+'</div>'+
     '<div class="fm-msg" id="invMsg">'+esc(S.invMsg||"")+'</div>'+
     (S.addOpen?'<form id="addForm" class="fm-add"><b>Ny person</b><input id="addName" placeholder="Navn, fx Bettina" autocomplete="off" autocapitalize="words" required>'+
@@ -332,9 +340,10 @@ function drawFamCard(force){
     if(persons().length<2){say("Der skal være mindst én person i familien.");return;}
     if(!await ask("Fjern "+p.name+"?",p.name+"s 👍 og 👎 på opskrifterne bliver ikke vist mere.","Fjern "+p.name))return;
     if(window.__removePerson)await window.__removePerson(p.id);drawFamCard(true);});
-  c.querySelectorAll("[data-perm]").forEach(b=>b.onclick=async()=>{const uid=b.dataset.puid,k=b.dataset.perm,m=(S.family.members||{})[uid];if(!m)return;
-    const cur=Object.assign({plan:true,shop:true,pick:true},m.perms||{});cur[k]=!cur[k];b.disabled=true;
-    try{await fs.doc("families/"+S.fid).update({["members."+uid+".perms"]:cur});m.perms=cur;}catch(err){alert(errText(err));}drawFamCard(true);});
+  c.querySelectorAll("[data-popen]").forEach(b=>b.onclick=()=>{S.permOpen=S.permOpen===b.dataset.popen?null:b.dataset.popen;drawFamCard(true);});
+  c.querySelectorAll("[data-perm]").forEach(b=>b.onchange=async()=>{const uid=b.dataset.puid,k=b.dataset.perm,m=(S.family.members||{})[uid];if(!m)return;
+    const cur=Object.assign({plan:true,shop:true,pick:true},m.perms||{});cur[k]=b.checked;
+    try{await fs.doc("families/"+S.fid).update({["members."+uid+".perms"]:cur});m.perms=cur;}catch(err){alert(errText(err));b.checked=!b.checked;}drawFamCard(true);});
   c.querySelectorAll("[data-unmem]").forEach(b=>b.onclick=async()=>{const id=b.dataset.unmem,m=(S.family.members||{})[id];if(!m)return;
     const q="Fjern "+m.name+" fra familien?",t=m.name+" kan ikke længere logge ind i jeres Madro, og "+m.name+"s 👍 og 👎 fjernes fra tommelvurderingen. Det kan ikke fortrydes, men du kan invitere "+m.name+" igen. Kogebog, madplan og indkøbsliste er urørt.";
     if(!await ask(q,t,"Fjern "+m.name))return;
