@@ -12,10 +12,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795014929";</script>
-<script src="config.js?v=1795014929"></script>
-<script src="importer.js?v=1795014929"></script>
-<script src="shim.js?v=1795014929"></script>
+<script>window.__appVersion="1795015154";</script>
+<script src="config.js?v=1795015154"></script>
+<script src="importer.js?v=1795015154"></script>
+<script src="shim.js?v=1795015154"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1197,17 +1197,21 @@ body.wv-on .toast{z-index:210}
         <div class="claude-only"><button class="btn plain small" id="copyOffer" type="button">Kopiér besked til chatten</button> <span class="small muted">hvis du vil opdatere dem med det samme</span></div>
         </div>
       </div>
+      <div class="card stack" id="recipeCard">
+        <h3>Opskrifter</h3>
+        <div class="set-sec web-only" id="commSlot"></div>
+        <div class="set-sec">
+        <h4>Opskriftskilder</h4>
+        <p class="small muted" style="margin:0">Sider du gerne finder opskrifter på. Når en søgning i Kogebogen ikke finder noget, kan du søge efter retten her.</p>
+        <div id="srcEdit" class="stack" style="gap:6px"></div>
+        <form class="row" id="srcForm" style="flex-wrap:nowrap"><input type="text" id="srcUrl" placeholder="fx valdemarsro.dk" aria-label="Ny opskriftskilde" autocomplete="off" autocapitalize="off" inputmode="url"><button class="btn" type="submit">Tilføj</button></form>
+        </div>
+      </div>
       <div class="card stack claude-only">
         <h3>Familien</h3>
         <p class="small muted" style="margin:0">Alle i familien kan give en ret 👍 eller 👎. Antallet af 👍 er rettens vurdering, og når alle kan li' den, er den en familiefavorit.</p>
         <div id="kidsEdit" class="stack" style="gap:8px"></div>
         <button type="button" class="btn ghost small" id="kidAdd" style="align-self:flex-start">+ Tilføj person</button>
-      </div>
-      <div class="card stack">
-        <h3>Opskriftskilder</h3>
-        <p class="small muted" style="margin:0">Sider du gerne finder opskrifter på. Når en søgning i Kogebogen ikke finder noget, kan du søge efter retten her.</p>
-        <div id="srcEdit" class="stack" style="gap:6px"></div>
-        <form class="row" id="srcForm" style="flex-wrap:nowrap"><input type="text" id="srcUrl" placeholder="fx valdemarsro.dk" aria-label="Ny opskriftskilde" autocomplete="off" autocapitalize="off" inputmode="url"><button class="btn" type="submit">Tilføj</button></form>
       </div>
       <div class="card stack" id="exportCard">
         <h3><span class="claude-only">Data eksport</span><span class="web-only">Import / eksport</span></h3>
@@ -3223,11 +3227,11 @@ function offerText(o){return o.product+" "+fmtKr(o.price)+(o.unitText?" / "+o.un
 const SYN={"svinekød":"grisekød","svin":"gris","flæsk":"gris","kyllingefilet":"kyllingebryst","creme":"fraiche","cremefraiche":"fraiche","piskefløde":"fløde","madlavningsfløde":"fløde","minimælk":"mælk","letmælk":"mælk","sødmælk":"mælk"};
 const SKIP=new Set(["frisk","friske","økologisk","økologiske","øko","dansk","danske","stor","store","lille","små","stk","g","kg","l","dl","ml","fx","og","med","m","i","til","a","à","eller","evt","pakke","bundt","fed","dåse","ca"]);
 // compound words that end like the item but are something else
-const SHORT_HEADS=["æg","ost","løg","ris","kål","bær","øl","vin","mel","olie"];
+const SHORT_HEADS=["æg","ost","løg","ris","kål","bær","øl","vin","mel","olie","salt"];
 const CLASSW=["sodavand","læskedrik","lemonade","cola","tonic","vand","te","urtete","sauce","dressing","is","mælkeis","flødeis","isvafler","proteinbar","bar","drik","energidrik","skyrdrik","juice","saft","suppe","salat","shot","likør","kiks","snack","chips","kapsler","kaffekapsler","pulver","kit","cookies","cookie","småkager","kage","kager","sild","karrysild","chokolade","slik","yoghurt","marmelade","syltetøj"];
 const CUTS=["side","filet","fileter","portioner","stykker","bryst","brystfilet","lår","overlår","underlår","kød","steg","skiver","tern","strimler","bøffer","koteletter","mørbrad","inderlår","culotte"];
-const NOT={"mælk":["kokos","kakao","mandel","havre","soja","ris","skyr","kærne","kondens","choko","banan","jordbær","laktosefri"],"æg":["pål","spejl"],"ris":["blomkål","grød"],"løg":["hvid"],"smør":["jordnød","peanut"],"ost":["hytte","fløde","tærte","æblem","m"],"is":[]};
-const MODS=["laktosefri","glutenfri","sukkerfri","fedtfri","vegansk","vegan","plantebase","plantebaseret","protein","kakao","chokolade","choko","jordbær","vanilje","hindbær","banan","kærne","kondens","kokos","mandel","havre","soja","barista","light","diæt","zero","koffeinfri","alkoholfri","baby","børne"];
+const NOT={"mælk":["kokos","kakao","mandel","havre","soja","ris","skyr","kærne","kondens","choko","banan","jordbær","laktosefri"],"sukker":["dan"],"mel":["gam","kara","sem"],"salat":["pålægs","hønse","kartoffel","italiensk","pasta"],"kartofler":["fløde","pommes"],"salt":["smør"],"æg":["pål","spejl"],"ris":["blomkål","grød","g","p"],"løg":["hvid"],"smør":["jordnød","peanut"],"ost":["hytte","fløde","tærte","æblem","m"],"is":[]};
+const MODS=["laktosefri","lactofree","laktose","glutenfri","sukkerfri","fedtfri","vegansk","vegan","plantebase","plantebaseret","protein","kakao","chokolade","choko","jordbær","vanilje","hindbær","banan","kærne","kondens","kokos","mandel","havre","soja","barista","light","diæt","zero","koffeinfri","alkoholfri","baby","børne"];
 function itemWords(name){return norm(name).split(" ").filter(w=>w&&!/^\d/.test(w)&&!SKIP.has(w)).map(w=>SYN[w]||w);}
 function wordHit(w,prodWords,prod){
   const bad=NOT[w]||[];
@@ -3235,7 +3239,7 @@ function wordHit(w,prodWords,prod){
     if(p.endsWith(w)&&p.length>w.length+1&&(w.length>=5||SHORT_HEADS.includes(w)))return true;
     if(p.startsWith(w)){const rest=p.slice(w.length);
       // inflections (æbler, pølserne) and cuts of the same thing (lakseside, kyllingebryst)
-      if(["e","r","s","n","t","er","en","et","ne","rne","erne"].includes(rest))return true;
+      if(["e","r","s","n","er","en","ne","rne","erne"].includes(rest))return true;
       const cut=rest.replace(/^[es]/,"");return CUTS.some(c=>cut===c);}
     return false;});
 }
@@ -3257,6 +3261,9 @@ function matchesOffer(name,o){
   const ws=itemWords(name);if(!ws.length)return false;
   const prod=norm(prodCore(o.product)).split(" ").map(w=>SYN[w]||w).join(" ");const pw=prod.split(" ").filter(Boolean);
   if(!ws.every(w=>wordHit(w,pw,prod)))return false;
+  // "Dumplings med kylling", "Boller i karry", "Gouda med chili": what comes after med/i is an ingredient or flavour, not the product
+  if(!/ (med|i) /.test(" "+norm(name)+" ")){const head=(" "+prod+" ").split(/ (?:med|i) /)[0].trim();
+    if(head&&head!==prod.trim()){const hw=head.split(" ").filter(Boolean);if(!ws.every(w=>wordHit(w,hw,head)))return false;}}
   // a special kind the item didn't ask for: "laktosefri mælk" is not "mælk", "kærnemælk" is not "mælk"
   const iw=" "+norm(name)+" ";
   if(MODS.some(m=>pw.some(p=>p.startsWith(m))&&!iw.includes(m)))return false;

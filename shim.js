@@ -77,9 +77,9 @@ const css=`
 #famCard .fm-ren{font-size:14px;color:var(--muted)}
 #famCard .fm-inv,#famCard .fm-add{padding:8px 2px 12px;border-bottom:1px solid var(--line)}
 #famMore input,#famMore select{font:inherit;font-size:16px}
-#famMore .fm-comm{display:flex;flex-direction:column;gap:8px;padding:10px 2px}
-#famMore .fm-opt{display:flex;gap:10px;align-items:flex-start;cursor:pointer}#famMore .fm-opt input{margin-top:4px}
-#famMore .fm-opt span{display:flex;flex-direction:column}#famMore .fm-opt small,#famMore .fm-comm>small{color:var(--muted);font-size:12.5px;line-height:1.35}
+#commSlot .fm-comm{display:flex;flex-direction:column;gap:8px}#commSlot .fm-msg{font-size:13px;color:var(--muted)}
+#commSlot .fm-opt{display:flex;gap:10px;align-items:flex-start;cursor:pointer}#commSlot .fm-opt input{margin-top:4px}
+#commSlot .fm-opt span{display:flex;flex-direction:column}#commSlot .fm-opt small,#commSlot .fm-comm>small{color:var(--muted);font-size:12.5px;line-height:1.35}
 #impSlot .imp-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0 4px;border-top:1px solid var(--line)}#impSlot small{display:block;color:var(--muted);font-size:12px}#impSlot .fm-msg{font-size:13px;color:var(--muted)}
 #famMore .fm-msg{font-size:13px;color:var(--muted);min-height:1em}
 `;
@@ -261,7 +261,8 @@ function mountFamCard(){
   const host=$("#v-butikker");if(!host||$("#famCard"))return;
   const c=document.createElement("div");c.className="card stack";c.id="famCard";
   const m=document.createElement("div");m.className="card stack";m.id="famMore";
-  const first=host.querySelector(".card");if(first){first.parentNode.insertBefore(c,first);first.parentNode.insertBefore(m,first);}else{host.appendChild(c);host.appendChild(m);}
+  const first=host.querySelector(".card");if(first)first.parentNode.insertBefore(c,first);else host.appendChild(c);
+  const ex=$("#exportCard");if(ex)ex.parentNode.insertBefore(m,ex.nextSibling);else host.appendChild(m);
   drawFamCard();
   window.addEventListener("hashchange",()=>{if(/butikker/.test(location.hash))drawFamCard();});
 }
@@ -296,12 +297,12 @@ function drawFamCard(force){
       '<div class="row" style="gap:8px"><button class="btn small" type="submit">Tilføj</button><button class="btn plain small" type="button" id="addCancel">Annuller</button></div></form>'
       :'<button type="button" class="btn ghost small" id="addOpen" style="align-self:flex-start">+ Tilføj person</button>')+
     (rows.length>1?'<div class="fm-row" style="border-bottom:0"><div><b>Du swiper som</b><small>Standard i Opskrift Tinder</small></div><select id="mePerson">'+persons().filter(p=>!(window.__lockedPersons&&window.__lockedPersons.has(p.id))).map(p=>'<option value="'+esc(p.id)+'"'+(me===p.id?' selected':'')+'>'+esc(p.name)+'</option>').join("")+'</select></div>':'');
-  if(more)more.innerHTML='<h3>Opskriftsfællesskab</h3><div class="fm-comm" style="border-bottom:0;padding-top:0">'+
+  const comm=$("#commSlot");if(comm)comm.innerHTML='<h4>Opskriftsfællesskab</h4><div class="fm-comm">'+
       '<label class="fm-opt"><input type="radio" name="comm" value="on"'+(S.family.community?' checked':'')+(adm?'':' disabled')+'><span><b>Med i fællesskabet</b><small>Fællesskabets opskrifter dukker automatisk op i Kogebogen og Opskrift Tinder. Nye opskrifter, I laver, deles også, men hver opskrift kan gøres privat med knappen 🔒 i opskriften. Tommelvurderinger, madplaner og indkøbsliste deles aldrig.</small></span></label>'+
       '<label class="fm-opt"><input type="radio" name="comm" value="off"'+(S.family.community?'':' checked')+(adm?'':' disabled')+'><span><b>Lukket kogebog</b><small>Intet deles, og I ser kun jeres egne opskrifter.</small></span></label>'+
       (adm?'':'<small>Kun administratoren kan ændre det.</small>')+
-      '<div class="fm-msg" id="libMsg">'+esc(S.libMsg||"")+'</div></div>'+
-    '<h3 style="margin-top:6px">Konto</h3>'+
+      '<div class="fm-msg" id="libMsg">'+esc(S.libMsg||"")+'</div></div>';
+  if(more)more.innerHTML='<h3>Konto</h3>'+
     '<div class="fm-row"><div><b>Anbefal Madro til en anden familie</b><small>Send et link på mail eller besked. De opretter deres egen familie</small></div><button type="button" class="btn ghost small" id="tellFriend">Send</button></div>'+
     '<button type="button" class="btn plain small" id="logOut" style="align-self:flex-start">Log ud ('+esc(S.user.email)+')</button>';
   const say=t=>{S.invMsg=t;const m=$("#invMsg");if(m)m.textContent=t;};
@@ -340,7 +341,7 @@ function drawFamCard(force){
   if(!more)return;const c2=more;
   const libSay=t=>{S.libMsg=t;const m=$("#libMsg");if(m)m.textContent=t;};
   const lg=c2.querySelector("#libGet");if(lg)lg.onclick=async()=>{lg.disabled=true;try{const n=await copyLibrary(libSay,true);libSay(n?n+" nye opskrifter er lagt i Kogebogen.":"I har allerede alle de delte opskrifter.");}catch(err){libSay(errText(err));}lg.disabled=false;};
-  c2.querySelectorAll('input[name="comm"]').forEach(r=>r.onchange=async()=>{const on=r.value==="on";
+  (comm||c2).querySelectorAll('input[name="comm"]').forEach(r=>r.onchange=async()=>{const on=r.value==="on";
     if(!on&&!confirm("Gøre kogebogen lukket? De opskrifter, I har delt, fjernes fra fællesskabet. Familier, der allerede har hentet dem, beholder deres egen kopi.")){drawFamCard();return;}
     try{libSay(on?"Melder jer ind…":"Fjerner jeres delte opskrifter…");await setCommunity(on);libSay(on?"I er med i fællesskabet. Del en opskrift med knappen 🌍 i opskriften.":"Kogebogen er nu lukket.");}catch(err){libSay(errText(err));}});
   c2.querySelector("#tellFriend").onclick=async()=>{const url=linkURL();const me=(S.me&&S.me.name)||"";
