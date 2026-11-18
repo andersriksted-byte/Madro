@@ -287,7 +287,7 @@ function famPeople(){
 }
 function applyPerms(){const m=S.family&&S.user&&(S.family.members||{})[S.user.uid];const p=m&&m.role!=="admin"&&m.perms?m.perms:null;window.__isAdmin=!!(m&&m.role==="admin");
   window.__perms=p;if(window.__setPerms)window.__setPerms(p);}
-const PERMS=[["plan","Madplan","Tilføje og flytte retter"],["shop","Tilføje varer","Skrive på indkøbslisten"],["pick","Plukke varer","Krydse af og afslutte indkøb"]];
+const PERMS=[["recipe","Opskrifter","Oprette og rette opskrifter"],["plan","Madplan","Tilføje og flytte retter"],["shop","Tilføje varer","Skrive på indkøbslisten"],["pick","Plukke varer","Krydse af og afslutte indkøb"]];
 const permSwitches=pre=>'<div class="fm-perms fm-perms-inv"><div class="fm-perms-h">Hvad må personen?</div>'+PERMS.map(([k,t,d])=>'<label class="fm-perm"><span><b>'+t+'</b><small>'+d+'</small></span><input type="checkbox" class="fm-sw" name="'+pre+k+'" checked></label>').join("")+'</div>';
 const readPerms=(form,pre)=>{const o={};PERMS.forEach(([k])=>{const i=form.querySelector('[name="'+pre+k+'"]');o[k]=!i||i.checked;});return o;};
 function drawFamCard(force){
@@ -346,7 +346,7 @@ function drawFamCard(force){
     if(window.__removePerson)await window.__removePerson(p.id);drawFamCard(true);});
   c.querySelectorAll("[data-popen]").forEach(b=>b.onclick=()=>{S.permOpen=S.permOpen===b.dataset.popen?null:b.dataset.popen;drawFamCard(true);});
   c.querySelectorAll("[data-perm]").forEach(b=>b.onchange=async()=>{const uid=b.dataset.puid,k=b.dataset.perm,m=(S.family.members||{})[uid];if(!m)return;
-    const cur=Object.assign({plan:true,shop:true,pick:true},m.perms||{});cur[k]=b.checked;
+    const cur=Object.assign({recipe:true,plan:true,shop:true,pick:true},m.perms||{});cur[k]=b.checked;
     try{await fs.doc("families/"+S.fid).update({["members."+uid+".perms"]:cur});m.perms=cur;}catch(err){alert(errText(err));b.checked=!b.checked;}drawFamCard(true);});
   c.querySelectorAll("[data-unmem]").forEach(b=>b.onclick=async()=>{const id=b.dataset.unmem,m=(S.family.members||{})[id];if(!m)return;
     const q="Fjern "+m.name+" fra familien?",t=m.name+" kan ikke længere logge ind i jeres Madro, og "+m.name+"s 👍 og 👎 fjernes fra tommelvurderingen. Det kan ikke fortrydes, men du kan invitere "+m.name+" igen. Kogebog, madplan og indkøbsliste er urørt.";
@@ -384,7 +384,7 @@ async function sendInvite(mail,personId,name,perms){
   const p=persons().find(x=>x.id===personId);name=p?p.name:name;if(!name){say("Skriv personens navn.");return;}
   say("Sender…");
   try{
-    const inv={email:mail,familyId:S.fid,familyName:S.family.name,invitedBy:S.user.uid,invitedByName:S.me.name,personId:personId||"",name,createdAt:Date.now(),perms:Object.assign({plan:true,shop:true,pick:true},perms||{})};
+    const inv={email:mail,familyId:S.fid,familyName:S.family.name,invitedBy:S.user.uid,invitedByName:S.me.name,personId:personId||"",name,createdAt:Date.now(),perms:Object.assign({recipe:true,plan:true,shop:true,pick:true},perms||{})};
     await fs.doc("families/"+S.fid).update({["invites."+ikey(mail)]:inv});
     await fs.doc("invites/"+mail).set(inv);
     let mailed=true;try{await auth.sendSignInLinkToEmail(mail,{url:linkURL(),handleCodeInApp:true});}catch(e){mailed=false;}
