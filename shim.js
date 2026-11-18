@@ -184,10 +184,18 @@ function libCopy(id,data){const r=Object.assign({},data);STRIP.forEach(f=>delete
   return Object.assign(r,{familyId:S.fid,ownerUid:S.user.uid,sharedBy:S.family.name,sharedAt:Date.now(),libId:S.fid+"_"+id});}
 const hash=s=>{let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return String(h);};
 let syncT=0,recSnap=null,recUnsub=null;
+let libUnsub=null;
+function feedCommunity(sn){/* other families' recipes we don't already have */
+  const mine=((window.__appState&&window.__appState().recipes)||[]);const have=new Set(mine.map(r=>low(r.title)+"|"+(r.source||"")));const seen=new Set();
+  const list=[];sn.docs.forEach(d=>{const r=d.data();if(r.familyId===S.fid)return;const k=low(r.title)+"|"+(r.source||"");if(have.has(k)||seen.has(k))return;seen.add(k);list.push(Object.assign({},r,{libId:d.id}));});
+  if(window.__setCommunity)window.__setCommunity(list);}
 function watchCommunity(){
   if(recUnsub){recUnsub();recUnsub=null;}
-  if(!S.family||!S.family.community)return;
-  recUnsub=famCol("recipes").onSnapshot(sn=>{recSnap=sn;clearTimeout(syncT);syncT=setTimeout(syncLibrary,4000);},()=>{});
+  if(libUnsub){libUnsub();libUnsub=null;}
+  window.__communityOn=!!(S.family&&S.family.community);
+  if(!window.__communityOn){if(window.__setCommunity)window.__setCommunity([]);return;}
+  let lastLib=null;libUnsub=fs.collection("library").onSnapshot(sn=>{lastLib=sn;feedCommunity(sn);},()=>{});
+  recUnsub=famCol("recipes").onSnapshot(sn=>{recSnap=sn;clearTimeout(syncT);syncT=setTimeout(syncLibrary,4000);if(lastLib)setTimeout(()=>feedCommunity(lastLib),300);},()=>{});
 }
 async function syncLibrary(){
   if(!S.family||!S.family.community||!recSnap)return;
