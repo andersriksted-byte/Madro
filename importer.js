@@ -89,7 +89,10 @@ function microdata(doc){
   const val=el=>{if(!el)return "";if(el.hasAttribute("content"))return el.getAttribute("content");if(el.tagName==="META")return el.getAttribute("content")||"";
     if(el.tagName==="TIME")return el.getAttribute("datetime")||el.textContent;if(el.tagName==="IMG")return el.getAttribute("src")||el.getAttribute("data-src")||"";
     if(el.tagName==="LINK"||el.tagName==="A")return el.getAttribute("href")||"";return el.textContent;};
-  const all=p=>[...root.querySelectorAll('[itemprop~="'+p+'"]')];const one=p=>all(p)[0];
+  const all=p=>[...root.querySelectorAll('[itemprop~="'+p+'"]')];
+  /* prefer the recipe's own property over one inside a nested item (author, publisher …) */
+  const own=el=>{const sc=el.parentElement&&el.parentElement.closest("[itemscope]");return !sc||sc===root;};
+  const one=p=>{const l=all(p);return l.find(own)||l[0];};
   const ingr=all("recipeIngredient").concat(all("ingredients")).map(e=>val(e).replace(/\s+/g," ").trim()).filter(Boolean);
   let ins=all("recipeInstructions");let steps=[];
   ins.forEach(e=>{const li=e.querySelectorAll("li,p,[itemprop=text]");if(li.length)li.forEach(x=>{const t=x.textContent.replace(/\s+/g," ").trim();if(t)steps.push(t);});else{const t=val(e).replace(/\s+/g," ").trim();if(t)steps.push(t);}});
@@ -103,7 +106,14 @@ function recipeFromHTML(html,url){
   let r=null;for(const s of doc.querySelectorAll('script[type="application/ld+json"]')){try{r=findRecipe(JSON.parse(s.textContent));}catch(e){try{r=findRecipe(JSON.parse(s.textContent.replace(/[\u0000-\u001f]+/g," ")));}catch(e2){}}if(r)break;}
   if(!r)r=microdata(doc);
   if(!r)return null;
-  const title=txt(r.name)||txt(doc.querySelector('meta[property="og:title"]')&&doc.querySelector('meta[property="og:title"]').content);
+  const meta=q=>{const m=doc.querySelector(q);return m?txt(m.getAttribute("content")||""):"";};
+  const site=meta('meta[property="og:site_name"]');let host="";try{host=new URL(url).hostname.replace(/^www\./,"").split(".")[0];}catch(e){}
+  const isSite=t=>{const k=String(t||"").toLowerCase().replace(/[^a-zæøå0-9]/g,"");return !k||(site&&k===site.toLowerCase().replace(/[^a-zæøå0-9]/g,""))||(host&&k===host.toLowerCase().replace(/[^a-zæøå0-9]/g,""));};
+  const strip=t=>String(t||"").replace(/\s*[|\-–—]\s*[^|\-–—]*$/,"").trim();
+  const h1=doc.querySelector("h1");
+  let title=txt(r.name);
+  [meta('meta[property="og:title"]'),h1&&h1.textContent.replace(/\s+/g," ").trim(),strip(doc.title)].forEach(t=>{if(isSite(title)&&t&&!isSite(t))title=t;});
+  if(isSite(title)&&!isSite(strip(title)))title=strip(title);
   const ingr=[];const raw=r.recipeIngredient||r.ingredients||[];(Array.isArray(raw)?raw:[raw]).forEach(l=>{if(typeof l==="string"&&l.trim())ingr.push(parseIngredient(l));});
   const st=steps(r.recipeInstructions);
   if(!title||!ingr.length)return null;
