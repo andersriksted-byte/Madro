@@ -12,10 +12,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795022342";</script>
-<script src="config.js?v=1795022342"></script>
-<script src="importer.js?v=1795022342"></script>
-<script src="shim.js?v=1795022342"></script>
+<script>window.__appVersion="1795022453";</script>
+<script src="config.js?v=1795022453"></script>
+<script src="importer.js?v=1795022453"></script>
+<script src="shim.js?v=1795022453"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -237,6 +237,7 @@ a{color:var(--accent)}
 .sl-grid{columns:2;column-gap:10px}
 @media (max-width:340px){.sl-grid{columns:1}}
 .sl-grid>.empty{column-span:all}
+#shopList:not(.detail) .sl-head .sl-ht{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal}
 .sl-block{break-inside:avoid;display:inline-block;width:100%;margin:0 0 10px;background:var(--surface);border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(34,29,51,.10)}
 .sl-head{display:flex;justify-content:space-between;align-items:center;gap:6px;background:var(--cc,var(--accent));color:#fff;padding:7px 12px;font-family:var(--display);font-weight:700;font-size:calc(16px * var(--fs))}
 .sl-head span{font-family:var(--body);font-size:calc(12px * var(--fs));font-weight:700;opacity:.9}
@@ -4125,6 +4126,16 @@ init();
     ind.classList.add("spin");ind.querySelector(".ptr-ic").textContent="↻";ind.querySelector(".ptr-t").textContent="Opdaterer…";
     setTimeout(()=>{if(web){const u=new URL(location.href);u.searchParams.set("r",Date.now().toString(36));location.replace(u.toString());}else location.reload();},150);},{passive:true});
 })();
+</script>
+<script>
+/* two-column shopping list: shrink a long category name until it fits on one line */
+(function(){const L=document.getElementById("shopList");if(!L)return;let raf=0;
+  function fit(){raf=0;if(L.classList.contains("detail"))return;
+    L.querySelectorAll(".sl-head .sl-ht").forEach(el=>{el.style.fontSize="";let fs=parseFloat(getComputedStyle(el).fontSize)||17;
+      for(let i=0;i<14&&el.scrollWidth>el.clientWidth+1&&fs>12;i++){fs-=0.75;el.style.fontSize=fs+"px";}});}
+  const go=()=>{if(!raf)raf=requestAnimationFrame(fit);};
+  new MutationObserver(go).observe(L,{childList:true,subtree:true,attributes:true,attributeFilter:["class"]});addEventListener("resize",go);
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(go);go();})();
 </script>
 </body>
 </html>
