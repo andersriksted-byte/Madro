@@ -217,7 +217,7 @@ function watchCommunity(){
 async function syncLibrary(){
   if(!S.family||!S.family.community||!recSnap)return;
   const key="mp_libsync_"+S.fid;let done={};try{done=JSON.parse(localStorage.getItem(key)||"{}");}catch(e){}
-  const want={};recSnap.docs.forEach(d=>{const r=d.data();if(r.shared===true&&!r.fromLibrary)want[S.fid+"_"+d.id]=[d.id,r];});
+  const want={};recSnap.docs.forEach(d=>{const r=d.data();if(r.shared!==false&&!r.fromLibrary)want[S.fid+"_"+d.id]=[d.id,r];});
   let lib;try{lib=await fs.collection("library").where("familyId","==",S.fid).get();}catch(e){return;}
   const have=new Set(lib.docs.map(d=>d.id));
   for(const d of lib.docs){if(!want[d.id]){try{await d.ref.delete();}catch(e){}delete done[d.id];}}
@@ -299,7 +299,7 @@ function drawFamCard(force){
       :'<button type="button" class="btn ghost small" id="addOpen" style="align-self:flex-start">+ Tilføj person</button>')+
     (rows.length>1?'<div class="fm-row" style="border-bottom:0"><div><b>Du swiper som</b><small>Standard i Opskrift Tinder</small></div><select id="mePerson">'+persons().filter(p=>!(window.__lockedPersons&&window.__lockedPersons.has(p.id))).map(p=>'<option value="'+esc(p.id)+'"'+(me===p.id?' selected':'')+'>'+esc(p.name)+'</option>').join("")+'</select></div>':'');
   const comm=$("#commSlot");if(comm)comm.innerHTML='<h4>Opskriftsfællesskab</h4><div class="fm-comm">'+
-      '<label class="fm-opt"><input type="radio" name="comm" value="on"'+(S.family.community?' checked':'')+(adm?'':' disabled')+'><span><b>Med i fællesskabet</b><small>Fællesskabets opskrifter dukker automatisk op i Kogebogen og Opskrift Tinder. Nye opskrifter, I laver, deles også, men hver opskrift kan gøres privat med knappen 🔒 i opskriften. Tommelvurderinger, madplaner og indkøbsliste deles aldrig.</small></span></label>'+
+      '<label class="fm-opt"><input type="radio" name="comm" value="on"'+(S.family.community?' checked':'')+(adm?'':' disabled')+'><span><b>Med i fællesskabet</b><small>Fællesskabets opskrifter dukker automatisk op i Kogebogen og Opskrift Tinder. Hele jeres kogebog deles med de andre, men hver opskrift kan gøres privat med knappen 🔒 i opskriften. Tommelvurderinger, madplaner og indkøbsliste deles aldrig.</small></span></label>'+
       (S.family.community?'<label class="fm-opt fm-anon"><input type="checkbox" id="commAnon"'+(S.family.anonymous?' checked':'')+(adm?'':' disabled')+'><span><b>Del anonymt</b><small>Der står "Fra et anonymt køkken" i stedet for '+esc(S.family.name)+' på de opskrifter, I deler.</small></span></label>':'')+
       '<label class="fm-opt"><input type="radio" name="comm" value="off"'+(S.family.community?'':' checked')+(adm?'':' disabled')+'><span><b>Lukket kogebog</b><small>Intet deles, og I ser kun jeres egne opskrifter.</small></span></label>'+
       (adm?'':'<small>Kun administratoren kan ændre det.</small>')+

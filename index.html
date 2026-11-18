@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795028533";</script>
-<script src="config.js?v=1795028533"></script>
-<script src="importer.js?v=1795028533"></script>
-<script src="shim.js?v=1795028533"></script>
+<script>window.__appVersion="1795028628";</script>
+<script src="config.js?v=1795028628"></script>
+<script src="importer.js?v=1795028628"></script>
+<script src="shim.js?v=1795028628"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2446,7 +2446,7 @@ function openRecipe(id,fallback){
       ${r.id?'<div class="row" style="gap:8px;flex-wrap:wrap" role="group" aria-label="Hvem kan li\' den?">'+kidsList().map(k=>{const v=kidLikes(r,k.id);return '<button type="button" class="kids-t'+(v===true?' on':v===false?' no':'')+(canVote(k.id)?'':' locked')+'" data-kid="'+esc(k.id)+'"'+(canVote(k.id)?'':' aria-disabled="true" title="Kun '+esc(k.name)+' kan ændre sin egen tommel"')+' aria-label="'+esc(k.name)+(v===true?' kan li\' den':v===false?' kan ikke li\' den':' – ikke markeret')+'">'+(v===true?'👍 ':v===false?'👎 ':'👤 ')+esc(k.name)+(v===null?'?':'')+'</button>';}).join('')+'</div>':''}
       <div class="row" style="gap:6px">${typePills(r)}</div>
       ${r.description?'<p style="margin:0">'+esc(r.description)+'</p>':''}
-      ${(window.__communityOn&&r.id)?(r.fromLibrary?'<p class="small muted" style="margin:0">🌍 Hentet fra fællesskabet</p>':'<button type="button" class="share-t'+(r.shared?' on':'')+'" id="rShare" aria-pressed="'+(!!r.shared)+'">'+(r.shared?'🌍 Delt med fællesskabet · tryk for at gøre privat':'🔒 Privat · tryk for at dele med fællesskabet')+'</button>'):''}
+      ${(window.__communityOn&&r.id)?(r.fromLibrary?'<p class="small muted" style="margin:0">🌍 Hentet fra fællesskabet</p>':'<button type="button" class="share-t'+(r.shared!==false?' on':'')+'" id="rShare" aria-pressed="'+(r.shared!==false)+'">'+(r.shared!==false?'🌍 Delt med fællesskabet · tryk for at gøre privat':'🔒 Privat · tryk for at dele med fællesskabet')+'</button>'):''}
       ${nutriHTML(r.nutrition)||(sample&&r.id?'<div><button class="btn plain small" type="button" id="calcN">Beregn kcal, protein og kostfibre</button> <span class="small muted" id="calcNs"></span></div>':'')}
       <div class="row rec-actions" style="justify-content:space-between"><div class="stepper"><button type="button" id="sMinus" aria-label="Færre personer">−</button><span class="num">${serv} pers.</span><button type="button" id="sPlus" aria-label="Flere personer">+</button></div>
       <div class="row r-acts">${(r.steps||[]).length?'<button type="button" class="btn plain small" id="rCook">👩‍🍳 Trinvis forklaring</button>':''}<button class="btn plain small" type="button" id="toShop">Til indkøbslisten</button><button class="btn" type="button" id="toPlan">Tilføj til madplan</button></div></div>
@@ -2467,7 +2467,7 @@ function openRecipe(id,fallback){
       s.querySelector("#toPlan").onclick=()=>openAddToPlan(r,serv);
       s.querySelector("#toShop").onclick=()=>openPicker([{r,servings:serv,label:""}],r.title);
       s.querySelector("#rEdit").onclick=()=>openEditor(r.id,r);
-      const sh=s.querySelector("#rShare");if(sh)sh.onclick=async()=>{const on=!r.shared;
+      const sh=s.querySelector("#rShare");if(sh)sh.onclick=async()=>{const on=r.shared===false;
         if(on&&!confirm("Del "+r.title+" med andre familier i Madro? De kan se og hente en kopi. Jeres 👍 deles ikke."))return;
         const cur=Object.assign({},getRecipe(r.id)||r,{shared:on});delete cur.id;r.shared=on;draw();
         try{await setDoc("recipes",r.id,cur);toast(on?r.title+" er delt med fællesskabet":r.title+" er nu privat");}catch(e){toast("Kunne ikke gemme");}};
