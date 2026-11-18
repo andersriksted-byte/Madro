@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795031211";</script>
-<script src="config.js?v=1795031211"></script>
-<script src="importer.js?v=1795031211"></script>
-<script src="shim.js?v=1795031211"></script>
+<script>window.__appVersion="1795033572";</script>
+<script src="config.js?v=1795033572"></script>
+<script src="importer.js?v=1795033572"></script>
+<script src="shim.js?v=1795033572"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2125,7 +2125,11 @@ function choiceList(){const out=[{k:"insp",l:"✨ Inspiration"},{k:"safe",l:"De 
   const ks=kidsList();ks.forEach(k=>out.push({k:"kid:"+k.id,l:"👍 "+k.name}));if(ks.length>1)out.push({k:"kid:all",l:"👍 Alle"});
   return out;}
 let _qsOrder=null;addEventListener("hashchange",()=>{_qsOrder=null;});
-function topChoices(){if(_qsOrder)return _qsOrder;const use=(state.settings&&state.settings.filterUse)||{};const L=choiceList();
+/* personal view settings (filters, sorting, list layout) live on this device only — never in the family's shared settings */
+function myPref(k,def){try{const v=localStorage.getItem("mp_my_"+k);if(v!=null)return JSON.parse(v);}catch(e){}
+  const old=state.settings&&state.settings[k];return old!==undefined?old:def;}
+function setMyPref(k,v){try{localStorage.setItem("mp_my_"+k,JSON.stringify(v));}catch(e){}}
+function topChoices(){if(_qsOrder)return _qsOrder;const use=myPref("filterUse",{})||{};const L=choiceList();
   const rank=c=>DEF_CHOICES.indexOf(c.k)<0?99:DEF_CHOICES.indexOf(c.k);
   return (_qsOrder=L.slice().sort((a,b)=>(use[b.k]||0)-(use[a.k]||0)||rank(a)-rank(b)).slice(0,3));}
 let _useSave=0;
@@ -2133,7 +2137,7 @@ function setChoice(f,k){["quick","meal","type","theme","kid"].forEach(x=>f[x]=""
   if(k==="safe")f.sort="safe";else if(k==="kids"){f.kidsFav=true;f.sort="kids";}else if(k==="left")f.leftOnly=true;
   else if(k.startsWith("sort:"))f.sort=k.slice(5);
   else if(k!=="insp"){const i=k.indexOf(":");f[k.slice(0,i)]=k.slice(i+1);}}
-function countChoice(k){const st=state.settings;st.filterUse=Object.assign({},st.filterUse||{});st.filterUse[k]=(st.filterUse[k]||0)+1;clearTimeout(_useSave);_useSave=setTimeout(()=>saveSettings(),800);}
+function countChoice(k){const u=Object.assign({},myPref("filterUse",{})||{});u[k]=(u[k]||0)+1;setMyPref("filterUse",u);}
 function applyChoice(k,fromPanel){setChoice(recFilter,k);if(k!=="insp"||!fromPanel)countChoice(k);
   renderRecipes();window.scrollTo({top:0,behavior:"smooth"});}
 function quickBarHTML(f,moreId){/* the three most used choices + Flere */
@@ -3777,8 +3781,8 @@ function storeMap(){
   return map;
 }
 function renderShop(){
-  const st=state.settings,group=["store","dish"].includes(st.listGroup)?st.listGroup:"cat";
-  const detail=st.listView==="detail";$("#shopList").classList.toggle("detail",detail);drawViewBtn();
+  const st=state.settings,lg=myPref("listGroup","cat"),group=["store","dish"].includes(lg)?lg:"cat";
+  const detail=myPref("listView","simple")==="detail";$("#shopList").classList.toggle("detail",detail);drawViewBtn();
   document.querySelectorAll("#groupSeg button").forEach(b=>b.classList.toggle("on",b.dataset.g===group));
   $("#addStore2").innerHTML='<option value="">Automatisk</option>'+(st.stores.length?st.stores:allStores()).map(x=>'<option'+($("#addStore2").value===x?" selected":"")+'>'+esc(x)+'</option>').join("");
   const open=state.shopping.filter(x=>!x.checked),found=state.shopping.filter(x=>x.checked);
@@ -3839,7 +3843,7 @@ function renderShop(){
   $("#finishHint").textContent=found.length?(found.length+" fundne varer arkiveres"+(open.length?", "+open.length+" bliver på listen":"")):"Markér varer som fundet, mens du handler.";
   renderLeftovers();
 }
-$("#groupSeg").addEventListener("click",async e=>{const b=e.target.closest("[data-g]");if(!b)return;state.settings.listGroup=b.dataset.g;renderShop();await saveSettings();});
+$("#groupSeg").addEventListener("click",e=>{const b=e.target.closest("[data-g]");if(!b)return;setMyPref("listGroup",b.dataset.g);renderShop();});
 $("#foundToggle").addEventListener("click",()=>{$("#showFound").checked=!showFound;$("#showFound").dispatchEvent(new Event("change"));});
 $("#showFound").addEventListener("change",e=>{showFound=e.target.checked;try{localStorage.setItem("mp_showFound",showFound?"1":"0");}catch(x){}renderShop();});
 /* "+ Tilføj" opens the add sheet with the cursor in the search field.
@@ -4075,10 +4079,10 @@ function openAddSheet(){
 /* ---------- choose list view ---------- */
 const ICON_DETAIL='<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><rect x="3" y="4" width="13" height="3" rx="1"/><rect x="18" y="4" width="3" height="3" rx="1"/><rect x="3" y="9" width="13" height="3" rx="1"/><rect x="18" y="9" width="3" height="3" rx="1"/><rect x="3" y="14" width="13" height="3" rx="1"/><rect x="18" y="14" width="3" height="3" rx="1"/><rect x="3" y="19" width="13" height="2" rx="1"/><rect x="18" y="19" width="3" height="2" rx="1"/></svg>';
 const ICON_SIMPLE='<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><rect x="3" y="4" width="8" height="10" rx="1.5"/><rect x="3" y="16" width="8" height="4" rx="1.5"/><rect x="13" y="4" width="8" height="4" rx="1.5"/><rect x="13" y="10" width="8" height="10" rx="1.5"/></svg>';
-function drawViewBtn(){const det=state.settings.listView==="detail";const b=$("#viewBtn");
+function drawViewBtn(){const det=myPref("listView","simple")==="detail";const b=$("#viewBtn");
   // the button shows the layout you switch to
   b.innerHTML=det?ICON_SIMPLE:ICON_DETAIL;b.setAttribute("aria-label",det?"Skift til simpel visning":"Skift til detaljeret visning");b.title=det?"Simpel visning":"Detaljeret visning";}
-$("#viewBtn").addEventListener("click",async()=>{state.settings.listView=state.settings.listView==="detail"?"simple":"detail";renderShop();await saveSettings();});
+$("#viewBtn").addEventListener("click",()=>{setMyPref("listView",myPref("listView","simple")==="detail"?"simple":"detail");renderShop();});
 /* finish trip + archive */
 $("#finishBtn").addEventListener("click",async()=>{
   const fb=$("#finishBtn"),found=state.shopping.filter(x=>x.checked);if(!found.length)return;
