@@ -12,10 +12,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795022453";</script>
-<script src="config.js?v=1795022453"></script>
-<script src="importer.js?v=1795022453"></script>
-<script src="shim.js?v=1795022453"></script>
+<script>window.__appVersion="1795022629";</script>
+<script src="config.js?v=1795022629"></script>
+<script src="importer.js?v=1795022629"></script>
+<script src="shim.js?v=1795022629"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -4128,13 +4128,15 @@ init();
 })();
 </script>
 <script>
-/* two-column shopping list: shrink a long category name until it fits on one line */
+/* two-column shopping list: a category name that can't fit on one line gets its short name */
 (function(){const L=document.getElementById("shopList");if(!L)return;let raf=0;
-  function fit(){raf=0;if(L.classList.contains("detail"))return;
-    L.querySelectorAll(".sl-head .sl-ht").forEach(el=>{el.style.fontSize="";let fs=parseFloat(getComputedStyle(el).fontSize)||17;
-      for(let i=0;i<14&&el.scrollWidth>el.clientWidth+1&&fs>12;i++){fs-=0.75;el.style.fontSize=fs+"px";}});}
+  const SHORT={"Krydderier & bagning":"Krydderier","Frugt & grønt":"Grønt","Snacks & slik":"Slik","Mejeri & æg":"Mejeri","Kød & fisk":"Kød","Drikkevarer":"Drikke","Husholdning":"Husholdning"};
+  function fit(){raf=0;const two=!L.classList.contains("detail");
+    L.querySelectorAll(".sl-head .sl-ht").forEach(el=>{const full=el.dataset.full||el.textContent;el.dataset.full=full;
+      if(el.textContent!==full)el.textContent=full;
+      if(two&&SHORT[full]&&(full==="Krydderier & bagning"||el.scrollWidth>el.clientWidth+1))el.textContent=SHORT[full];});}
   const go=()=>{if(!raf)raf=requestAnimationFrame(fit);};
-  new MutationObserver(go).observe(L,{childList:true,subtree:true,attributes:true,attributeFilter:["class"]});addEventListener("resize",go);
+  new MutationObserver(m=>{if(m.some(x=>x.type==="childList"&&x.target===L||x.type==="attributes"))go();}).observe(L,{childList:true,attributes:true,attributeFilter:["class"]});addEventListener("resize",go);
   if(document.fonts&&document.fonts.ready)document.fonts.ready.then(go);go();})();
 </script>
 </body>
