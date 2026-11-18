@@ -12,10 +12,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795012958";</script>
-<script src="config.js?v=1795012958"></script>
-<script src="importer.js?v=1795012958"></script>
-<script src="shim.js?v=1795012958"></script>
+<script>window.__appVersion="1795013349";</script>
+<script src="config.js?v=1795013349"></script>
+<script src="importer.js?v=1795013349"></script>
+<script src="shim.js?v=1795013349"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1909,6 +1909,7 @@ try{const v=localStorage.getItem("mp_recSrc");if(v)recFilter.src=v;}catch(e){}
 state.community=[];
 window.__setCommunity=list=>{state.community=(list||[]).map(r=>Object.assign({},r,{id:"c_"+r.libId,_community:true}));try{renderRecipes();}catch(e){}
   try{if(typeof mmComm==="function"&&mmComm()&&(game.mode==="swipeEnd"||game.mode==="swipe")&&game.idx>=game.deck.length&&!(game.hist||[]).some(h=>h.comm)){startSwipe();game.mode="swipe";renderGames();}}catch(e){}};
+if(window.__communityList&&window.__communityList.length)setTimeout(()=>window.__setCommunity(window.__communityList),0);/* list may arrive before the app is ready */
 function drawSrcSeg(){if(!window.__communityOn&&recFilter.src!=="mine")recFilter.src="mine";}
 function recSort(){try{return localStorage.getItem("mp_recSort2")||"insp";}catch(e){return window._recSort||"insp";}}
 function kidNoText(r){const ks=kidsList().filter(k=>kidLikes(r,k.id)===false);return ks.length?(ks.length===kidsList().length&&ks.length>1?"👎 Alle":"👎 "+ks.map(k=>k.name).join(", ")):"";}
@@ -3955,7 +3956,9 @@ function confirmBox(title,text,ok){return new Promise(res=>{const o=document.cre
   const done=v=>{o.classList.remove("on");setTimeout(()=>o.remove(),180);res(v);};
   o.addEventListener("click",e=>{const b=e.target.closest("[data-cb]");if(b)done(b.dataset.cb==="1");else if(e.target===o)done(false);});
   o.querySelector('[data-cb="0"]').focus();});}
+window.__removePerson=pid=>saveKids(kidsList().filter(x=>x.id!==pid)).then(renderKidsEdit);
 $("#kidsEdit").addEventListener("click",async e=>{const d=e.target.closest("[data-kiddel]");if(!d)return;const k=kidsList().find(x=>x.id===d.dataset.kiddel);
+  if(window.__webApp&&window.__lockedPersons&&window.__lockedPersons.has(d.dataset.kiddel)){await confirmBox((k?k.name:"Personen")+" har sit eget login","Fjern "+(k?k.name:"personen")+" under Familie og login længere oppe. Så fjernes både login og 👍.","OK");return;}
   if(!await confirmBox("Fjern "+(k?k.name:"personen")+"?",(k?k.name+"s":"Personens")+" 👍 og 👎 på opskrifterne bliver ikke vist mere.","Fjern"))return;
   saveKids(kidsList().filter(x=>x.id!==d.dataset.kiddel)).then(renderKidsEdit);});
 $("#kidAdd").addEventListener("click",()=>{const l=kidsList();const id="c"+Date.now().toString(36);

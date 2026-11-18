@@ -189,12 +189,12 @@ let libUnsub=null;
 function feedCommunity(sn){/* other families' recipes we don't already have */
   const mine=((window.__appState&&window.__appState().recipes)||[]);const have=new Set(mine.map(r=>low(r.title)+"|"+(r.source||"")));const seen=new Set();
   const list=[];sn.docs.forEach(d=>{const r=d.data();if(r.familyId===S.fid)return;const k=low(r.title)+"|"+(r.source||"");if(have.has(k)||seen.has(k))return;seen.add(k);list.push(Object.assign({},r,{libId:d.id}));});
-  if(window.__setCommunity)window.__setCommunity(list);}
+  window.__communityList=list;if(window.__setCommunity)window.__setCommunity(list);}
 function watchCommunity(){
   if(recUnsub){recUnsub();recUnsub=null;}
   if(libUnsub){libUnsub();libUnsub=null;}
   window.__communityOn=!!(S.family&&S.family.community);
-  if(!window.__communityOn){if(window.__setCommunity)window.__setCommunity([]);return;}
+  if(!window.__communityOn){window.__communityList=[];if(window.__setCommunity)window.__setCommunity([]);return;}
   let lastLib=null;libUnsub=fs.collection("library").onSnapshot(sn=>{lastLib=sn;feedCommunity(sn);},()=>{});
   recUnsub=famCol("recipes").onSnapshot(sn=>{recSnap=sn;clearTimeout(syncT);syncT=setTimeout(syncLibrary,4000);if(lastLib)setTimeout(()=>feedCommunity(lastLib),300);},()=>{});
 }
@@ -232,7 +232,7 @@ async function enterFamily(fid){
   const syncLock=()=>{const mine=S.me&&S.me.personId;window.__lockedPersons=new Set(Object.entries(S.family.members||{}).filter(([uid,m])=>uid!==S.user.uid&&m.personId&&m.personId!==mine).map(([,m])=>m.personId));};
   syncLock();
   const syncInv=()=>{S.invites=Object.values(S.family.invites||{}).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));};syncInv();
-  S.famUnsub=fs.doc("families/"+fid).onSnapshot(d=>{if(!d.exists)return;const wasC=!!(S.family&&S.family.community);S.family=d.data();syncInv();S.me=S.family.members[S.user.uid]||S.me;if(S.me)window.__mePerson=S.me.personId;syncLock();if(wasC!==!!S.family.community)watchCommunity();drawFamCard();},()=>{});
+  S.famUnsub=fs.doc("families/"+fid).onSnapshot(d=>{if(!d.exists)return;if(!(d.data().members||{})[S.user.uid]){location.reload();return;}/* removed from the family */const wasC=!!(S.family&&S.family.community);S.family=d.data();syncInv();S.me=S.family.members[S.user.uid]||S.me;if(S.me)window.__mePerson=S.me.personId;syncLock();if(wasC!==!!S.family.community)watchCommunity();drawFamCard();},err=>{if(err&&err.code==="permission-denied")location.reload();});
   window.__onSettings=()=>drawFamCard();
   hide();ready();
   watchImports();mountFamCard();watchCommunity();setTimeout(offerHomeScreen,1500);
@@ -256,17 +256,16 @@ function drawFamCard(){
   const linked=new Set(mem.map(([,m])=>m.personId).concat(S.invites.map(i=>i.personId).filter(Boolean)));
   const free=ps.filter(p=>!linked.has(p.id));
   c.innerHTML='<h3>Familie og login</h3><p class="small muted" style="margin:0">'+esc(S.family.name)+'. Alle med login deler kogebog, madplan og indkøbsliste, og alle personer kan give 👍 og 👎.</p>'+
-    mem.map(([uid,m])=>'<div class="fm-row"><div><b>'+esc(m.name)+(uid===S.user.uid?' (dig)':'')+'</b><small>'+esc(m.email)+(pName(m.personId)&&pName(m.personId)!==m.name?' · vurderer som '+esc(pName(m.personId)):'')+'</small></div><span class="fm-tag">'+(m.role==="admin"?"Administrator":"Medlem")+'</span></div>').join("")+
+    mem.map(([uid,m])=>'<div class="fm-row"><div><b>'+esc(m.name)+(uid===S.user.uid?' (dig)':'')+'</b><small>'+esc(m.email)+(pName(m.personId)&&pName(m.personId)!==m.name?' · vurderer som '+esc(pName(m.personId)):'')+'</small></div><span class="fm-tag">'+(m.role==="admin"?"Administrator":"Medlem")+'</span>'+(isAdmin()&&uid!==S.user.uid?'<button type="button" class="linkbtn" data-unmem="'+esc(uid)+'" style="margin-left:8px">Fjern</button>':'')+'</div>').join("")+
     S.invites.map(i=>'<div class="fm-row"><div><b>'+esc(i.name||i.email)+'</b><small>'+esc(i.email)+' · inviteret, ikke logget ind endnu</small></div>'+(isAdmin()?'<button type="button" class="linkbtn" data-uninv="'+esc(i.email)+'">Træk tilbage</button>':'')+'</div>').join("")+
     (isAdmin()?'<form id="invForm"><b style="margin-top:6px">Invitér til familien</b><input type="email" id="invMail" placeholder="Mail" autocomplete="off" inputmode="email">'+
       '<select id="invPerson"><option value="">Ny person i familien</option>'+free.map(p=>'<option value="'+esc(p.id)+'">Er '+esc(p.name)+' (overtager '+esc(p.name)+'s 👍)</option>').join("")+'</select>'+
       '<input id="invName" placeholder="Navn (fx Bettina)"><button class="btn small" type="submit" style="align-self:flex-start">Send invitation</button><div class="fm-msg" id="invMsg">'+esc(S.invMsg||"")+'</div></form>':'')+
     '<div class="fm-row"><div><b>Dig i tommel-vurderingen</b><small>Bruges som standard i Opskrift Tinder</small></div><select id="mePerson">'+ps.filter(p=>!(window.__lockedPersons&&window.__lockedPersons.has(p.id))).map(p=>'<option value="'+esc(p.id)+'"'+(S.me&&S.me.personId===p.id?' selected':'')+'>'+esc(p.name)+'</option>').join("")+'</select></div>'+
     '<div class="fm-comm"><b>Opskriftsfællesskab</b>'+
-      '<label class="fm-opt"><input type="radio" name="comm" value="on"'+(S.family.community?' checked':'')+(isAdmin()?'':' disabled')+'><span><b>Med i fællesskabet</b><small>I kan se og hente andre familiers opskrifter, og dele de opskrifter, I selv vælger, med knappen 🌍 i opskriften. Tommelvurderinger, madplaner og indkøbsliste deles aldrig.</small></span></label>'+
+      '<label class="fm-opt"><input type="radio" name="comm" value="on"'+(S.family.community?' checked':'')+(isAdmin()?'':' disabled')+'><span><b>Med i fællesskabet</b><small>Fællesskabets opskrifter dukker automatisk op i Kogebogen og Opskrift Tinder. Nye opskrifter, I laver, deles også, men hver opskrift kan gøres privat med knappen 🔒 i opskriften. Tommelvurderinger, madplaner og indkøbsliste deles aldrig.</small></span></label>'+
       '<label class="fm-opt"><input type="radio" name="comm" value="off"'+(S.family.community?'':' checked')+(isAdmin()?'':' disabled')+'><span><b>Lukket kogebog</b><small>Intet deles, og I ser kun jeres egne opskrifter.</small></span></label>'+
       (isAdmin()?'':'<small>Kun administratoren kan ændre det.</small>')+
-      (S.family.community?'<button type="button" class="btn ghost small" id="libGet" style="align-self:flex-start">Hent nye opskrifter fra fællesskabet</button>':'')+
       '<div class="fm-msg" id="libMsg">'+esc(S.libMsg||"")+'</div></div>'+
     (isAdmin()?'<div class="fm-row"><div><b>Læs data ind fra Claude-appen</b><small>Vælg filen fra "Eksportér alle data"</small></div><label class="btn ghost small" style="cursor:pointer"><input type="file" accept="application/json,.json" id="impFile" hidden>Vælg fil</label></div><div class="fm-msg" id="impMsg">'+esc(S.impMsg||"")+'</div>':'')+
     '<div class="fm-row"><div><b>Anbefal Madro til en anden familie</b><small>Send et link på mail eller besked. De opretter deres egen familie</small></div><button type="button" class="btn ghost small" id="tellFriend">Send</button></div>'+
@@ -274,6 +273,14 @@ function drawFamCard(){
   const sel=c.querySelector("#invPerson"),nm=c.querySelector("#invName");
   if(sel)sel.onchange=()=>{const p=ps.find(x=>x.id===sel.value);nm.hidden=!!p;if(p)nm.value=p.name;else nm.value="";};
   const f=c.querySelector("#invForm");if(f)f.onsubmit=async e=>{e.preventDefault();await sendInvite(low(c.querySelector("#invMail").value),sel.value,nm.value.trim());};
+  c.querySelectorAll("[data-unmem]").forEach(b=>b.onclick=async()=>{const id=b.dataset.unmem,m=(S.family.members||{})[id];if(!m)return;
+    if(!confirm("Fjern "+m.name+" fra familien?\n\n"+m.name+" kan ikke længere logge ind i jeres Madro, og "+m.name+"s 👍 og 👎 fjernes fra tommelvurderingen. Kogebog, madplan og indkøbsliste er urørt."))return;
+    b.disabled=true;
+    try{await fs.doc("families/"+S.fid).update({["members."+id]:firebase.firestore.FieldValue.delete()});
+      try{await fs.doc("invites/"+low(m.email)).delete();}catch(e){}
+      const still=Object.entries(S.family.members||{}).some(([u,x])=>u!==id&&x.personId===m.personId);
+      if(m.personId&&!still&&window.__removePerson)await window.__removePerson(m.personId);
+    }catch(err){b.disabled=false;alert(errText(err));}});
   c.querySelectorAll("[data-uninv]").forEach(b=>b.onclick=async()=>{const em=b.dataset.uninv;try{await fs.doc("families/"+S.fid).update({["invites."+ikey(em)]:firebase.firestore.FieldValue.delete()});await fs.doc("invites/"+em).delete();}catch(err){alert(errText(err));}});
   const mp=c.querySelector("#mePerson");if(mp)mp.onchange=async()=>{try{await fs.doc("families/"+S.fid).update({["members."+S.user.uid+".personId"]:mp.value});try{localStorage.removeItem("mp_who");}catch(e){}}catch(err){alert(errText(err));}};
   const libSay=t=>{S.libMsg=t;const m=$("#libMsg");if(m)m.textContent=t;};
