@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795030050";</script>
-<script src="config.js?v=1795030050"></script>
-<script src="importer.js?v=1795030050"></script>
-<script src="shim.js?v=1795030050"></script>
+<script>window.__appVersion="1795030176";</script>
+<script src="config.js?v=1795030176"></script>
+<script src="importer.js?v=1795030176"></script>
+<script src="shim.js?v=1795030176"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -921,6 +921,9 @@ h1,h2,h3{font-family:var(--serif);letter-spacing:-.01em}
 .rec-actions.ra{display:flex;flex-direction:column;gap:8px}
 .ra .ra-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .ra .ra-top .icon-btn{flex:none;width:44px;height:44px}
+.ra .ra-icons{display:flex;gap:8px;align-items:center}.ra .ra-top:has(.lock-t){margin-bottom:12px}
+.ra .lock-t{position:relative;flex-direction:column;gap:0}.ra .lock-t small{position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.ra .lock-t.open{color:#1f7a4a;border-color:#1f7a4a}
 .ra .ra-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.ra .ra-grid.one{grid-template-columns:1fr}
 .ra .ra-grid .btn{width:100%;justify-content:center;white-space:nowrap}
 .ra .btn.wide{width:100%;justify-content:center}
@@ -2477,9 +2480,9 @@ function openRecipe(id,fallback){
       ${r.id?'<div class="row" style="gap:8px;flex-wrap:wrap" role="group" aria-label="Hvem kan li\' den?">'+kidsList().map(k=>{const v=kidLikes(r,k.id);return '<button type="button" class="kids-t'+(v===true?' on':v===false?' no':'')+(canVote(k.id)?'':' locked')+'" data-kid="'+esc(k.id)+'"'+(canVote(k.id)?'':' aria-disabled="true" title="Kun '+esc(k.name)+' kan ændre sin egen tommel"')+' aria-label="'+esc(k.name)+(v===true?' kan li\' den':v===false?' kan ikke li\' den':' – ikke markeret')+'">'+(v===true?'👍 ':v===false?'👎 ':'👤 ')+esc(k.name)+(v===null?'?':'')+'</button>';}).join('')+'</div>':''}
       <div class="row" style="gap:6px">${typePills(r)}</div>
       ${r.description?'<p style="margin:0">'+esc(r.description)+'</p>':''}
-      ${(window.__communityOn&&r.id)?(r.fromLibrary?'<p class="small muted" style="margin:0">🌍 Hentet fra fællesskabet</p>':'<button type="button" class="share-t'+(r.shared!==false?' on':'')+'" id="rShare" aria-pressed="'+(r.shared!==false)+'">'+(r.shared!==false?'🌍 Delt med fællesskabet · tryk for at gøre privat':'🔒 Privat · tryk for at dele med fællesskabet')+'</button>'):''}
+      ${(window.__communityOn&&r.id)?(r.fromLibrary?'<p class="small muted" style="margin:0">🌍 Hentet fra fællesskabet</p>':''):''}
       ${nutriHTML(r.nutrition)||(sample&&r.id?'<div><button class="btn plain small" type="button" id="calcN">Beregn kcal, protein og kostfibre</button> <span class="small muted" id="calcNs"></span></div>':'')}
-      <div class="rec-actions ra"><div class="ra-top"><div class="stepper"><button type="button" id="sMinus" aria-label="Færre personer">−</button><span class="num">${serv} pers.</span><button type="button" id="sPlus" aria-label="Flere personer">+</button></div><button type="button" class="icon-btn" id="rSend" aria-label="Del opskriften" title="Del opskriften"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7.5 7.5 12 3l4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></button></div>
+      <div class="rec-actions ra"><div class="ra-top"><div class="stepper"><button type="button" id="sMinus" aria-label="Færre personer">−</button><span class="num">${serv} pers.</span><button type="button" id="sPlus" aria-label="Flere personer">+</button></div><div class="ra-icons">${(window.__communityOn&&r.id&&!r.fromLibrary)?'<button type="button" class="icon-btn lock-t'+(r.shared!==false?' open':'')+'" id="rShare" aria-pressed="'+(r.shared!==false)+'" aria-label="'+(r.shared!==false?'Delt med fællesskabet. Tryk for at gøre privat':'Privat. Tryk for at dele med fællesskabet')+'" title="'+(r.shared!==false?'Delt med fællesskabet':'Privat')+'">'+(r.shared!==false?'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.6-1.7"/></svg>':'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>')+'<small>'+(r.shared!==false?'Delt':'Privat')+'</small></button>':''}<button type="button" class="icon-btn" id="rSend" aria-label="Del opskriften" title="Del opskriften"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7.5 7.5 12 3l4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></button></div></div>
       <div class="ra-grid${(r.steps||[]).length?'':' one'}">${(r.steps||[]).length?'<button type="button" class="btn plain" id="rCook">👩‍🍳 Trinvis</button>':''}<button class="btn plain" type="button" id="toShop">🛒 Indkøbsliste</button></div>
       <button class="btn wide" type="button" id="toPlan">Tilføj til madplan</button></div>
       <div class="card"><h3 style="margin-bottom:4px">Ingredienser</h3>${ingHTML(r.ingredients||[],f)||'<p class="muted">Ingen ingredienser.</p>'}</div>
