@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795028931";</script>
-<script src="config.js?v=1795028931"></script>
-<script src="importer.js?v=1795028931"></script>
-<script src="shim.js?v=1795028931"></script>
+<script>window.__appVersion="1795029365";</script>
+<script src="config.js?v=1795029365"></script>
+<script src="importer.js?v=1795029365"></script>
+<script src="shim.js?v=1795029365"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -323,7 +323,7 @@ a{color:var(--accent)}
 html.wheel{scroll-snap-type:y mandatory;scroll-padding-top:12px;scroll-padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 /* each picture card must fit between the top of the screen and the tab bar, so its bottom line (time, thumbs) is always visible */
 #recipeList.gal-grid .gal-card{max-height:calc(100svh - 84px - env(safe-area-inset-bottom) - 52px)}
-html.wheel #v-opskrifter>.top{scroll-snap-align:start}
+html.wheel .masthead-w{scroll-snap-align:start}
 html.wheel .gal-card{scroll-snap-align:center;scroll-snap-stop:always}
 html.wheel #recipeList.gal-grid{padding-bottom:22vh}
 .haptic-sw{position:fixed;left:-200px;top:0;opacity:0;pointer-events:none}
@@ -2137,10 +2137,10 @@ function renderRecipes(){
   const el=$("#recipeList");
   if(!list.length){const nfh=notFoundHTML(recFilter.q);if(nfh){el.innerHTML=nfh;return;}el.innerHTML='<div class="empty">'+(state.recipes.length?(recFilter.offerOnly?(allOffers().length?"Ingen af jeres opskrifter har hovedingredienser på tilbud i jeres butikker lige nu.":"Der er ikke hentet nogen tilbud endnu."):recFilter.leftOnly?(allLeftovers().length?"Ingen opskrifter bruger de rester, der bliver til overs fra indkøbslisten.":"Ingen rester lige nu: der bliver ikke noget til overs fra indkøbslisten."):"Ingen opskrifter matcher søgningen eller filtrene."):"Ingen opskrifter endnu. Tryk <b>+ Tilføj</b> for at lægge den første ind.")+'</div>'+notFoundHTML(recFilter.q);return;}
   const gal=recView()==="gallery";el.classList.toggle("gal-grid",gal);el.classList.toggle("kids-mode",!!(recFilter.kidsFav||recFilter.kid));
-  if(gal){el.innerHTML=list.map((r,i)=>{const has=r.image&&isImg(r.image);
+  if(gal){el.innerHTML=list.map((r,i)=>{const has=true;
       const kick=[(r.themes||[])[0],recipeMeals(r)[0]||recipeTypes(r)[0]].filter(Boolean).join(" · ");
       const meta=r.time||"";
-      return '<button type="button" class="gal-card'+(has?"":" no-img")+(i===0?" lead":"")+'" style="--rc:'+catColor("r"+r.title)+'" data-r="'+esc(r.id)+'" aria-label="'+esc(r.title)+'">'+(has?'<img src="'+r.image+'" alt="" loading="lazy">':'')+
+      return '<button type="button" class="gal-card'+(has?"":" no-img")+(i===0?" lead":"")+'" style="--rc:'+catColor("r"+r.title)+'" data-r="'+esc(r.id)+'" aria-label="'+esc(r.title)+'">'+(has?'<img src="'+imgOf(r)+'" alt="" loading="lazy">':'')+
         '<span class="gal-no">Nº '+String(i+1).padStart(2,"0")+'</span>'+
         '<span class="gal-ov">'+(kick?'<span class="gal-k">'+esc(kick)+'</span>':'')+'<span class="gal-t">'+esc(r.title)+'</span><span class="gal-rule"></span>'+
         '<span class="gal-m">'+(meta?'<span>'+esc(meta)+'</span>':'')+(recipeHistory(r.id).last?'<span>'+esc(useText(recipeHistory(r.id)))+'</span>':'')+(kidText(r)?'<span class="gal-kid">'+esc(kidText(r))+'</span>':'')+(kidNoText(r)?'<span class="gal-kid no">'+esc(kidNoText(r))+'</span>':'')+'</span></span></button>';}).join("");
