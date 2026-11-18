@@ -474,7 +474,7 @@ function showUpdate(){if(verShown)return;verShown=true;
     #mdUpd span{flex:1;font-weight:600;line-height:1.3}#mdUpd button{font:inherit;font-weight:800;border:0;border-radius:999px;padding:9px 16px;cursor:pointer;background:var(--bg,#fff);color:var(--ink,#221d33)}
     #mdUpd .x{background:transparent;color:inherit;opacity:.7;padding:6px 8px;font-size:18px}`;document.head.appendChild(st);
   const b=document.createElement("div");b.id="mdUpd";b.setAttribute("role","status");
-  b.innerHTML='<span>Der er en ny version af Madro</span><button type="button" id="mdUpdGo">Opdater</button><button type="button" class="x" aria-label="Senere">×</button>';
+  b.innerHTML='<span><b style="display:block;font-size:1.05em">Ny version af Madro 🎉</b><small style="display:block;font-weight:500;opacity:.85;margin-top:2px">Luk appen helt ned og åbn den igen. På iPhone: stryg op fra bunden og skub Madro væk.</small></span><button type="button" id="mdUpdGo">Opdater nu</button><button type="button" class="x" aria-label="Senere">×</button>';
   document.body.appendChild(b);
   b.querySelector("#mdUpdGo").onclick=()=>{const u=location.pathname+"?u="+Date.now()+location.hash;location.replace(u);};
   b.querySelector(".x").onclick=()=>{b.remove();verShown=false;setTimeout(checkVersion,30*60000);};
