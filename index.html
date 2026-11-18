@@ -3838,18 +3838,26 @@ $("#srcForm").addEventListener("submit",async e=>{e.preventDefault();let u=$("#s
   $("#srcUrl").value="";});
 $("#srcEdit").addEventListener("click",async e=>{const d=e.target.closest("[data-srcdel]");if(!d)return;const l=discSources().filter(x=>x.url!==d.dataset.srcdel);state.settings.discoverSources=l;renderSrcEdit();await saveSources(l);});
 /* export every collection to one JSON file; /_blob/ pictures are turned into data URLs so the file stands on its own */
-async function blobToData(u){try{const r=await fetch(u);if(!r.ok)return u;const b=await r.blob();return await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=()=>res(u);fr.readAsDataURL(b);});}catch(e){return u;}}
+/* picture → data URL, never waiting more than a few seconds: first via an <img> and a canvas (also shrinks it), then a plain fetch */
+function imgToData(u,ms){return new Promise(res=>{let done=false;const fin=v=>{if(!done){done=true;res(v);}};setTimeout(()=>fin(""),ms);
+  const im=new Image();im.onload=()=>{try{const sc=Math.min(1,720/Math.max(im.naturalWidth,im.naturalHeight));const cv=document.createElement("canvas");cv.width=Math.round(im.naturalWidth*sc);cv.height=Math.round(im.naturalHeight*sc);
+    cv.getContext("2d").drawImage(im,0,0,cv.width,cv.height);fin(cv.toDataURL("image/jpeg",.75));}catch(e){fin("");}};im.onerror=()=>fin("");im.src=u;});}
+async function fetchToData(u,ms){try{const ac=new AbortController();const t=setTimeout(()=>ac.abort(),ms);const r=await fetch(u,{signal:ac.signal});clearTimeout(t);if(!r.ok)return "";const b=await r.blob();
+  return await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=()=>res("");fr.readAsDataURL(b);});}catch(e){return "";}}
+async function blobToData(u){return (await imgToData(u,8000))||(await fetchToData(u,8000))||"";}
 async function exportAll(){const msg=$("#exportMsg");const say=t=>{if(msg)msg.textContent=t;};
   if(!db){say("Eksport virker kun i den rigtige app, ikke i forhåndsvisningen.");return;}
   say("Samler data…");const out={app:"madplan",version:1,exportedAt:new Date().toISOString(),collections:{}};
   for(const c of ["recipes","imports","archive","plans","lists","meta"]){
     try{const snap=await db.collection(c).get();out.collections[c]={};for(const d of snap.docs){out.collections[c][d.id]=d.data();}}catch(e){out.collections[c]={};}}
   delete (out.collections.meta||{}).offers;
-  const recs=Object.values(out.collections.recipes||{});let n=0;
-  for(const r of recs){if(r.image&&/^\/_blob\//.test(r.image)){say("Billeder "+(++n)+"…");r.image=await blobToData(r.image);}}
+  const recs=Object.values(out.collections.recipes||{});const todo=recs.filter(r=>r.image&&/^\/_blob\//.test(r.image));let n=0,miss=0,ix=0;
+  say("Billeder 0 af "+todo.length+"…");
+  const worker=async()=>{while(ix<todo.length){const r=todo[ix++];const d=await blobToData(r.image);if(d)r.image=d;else miss++;say("Billeder "+(++n)+" af "+todo.length+"…");}};
+  await Promise.all(Array.from({length:4},worker));
   const s=JSON.stringify(out);const name="madplan-eksport-"+new Date().toISOString().slice(0,10)+".json";
   try{const dl=await claude.use("downloads");if(!dl)throw new Error("no downloads");await dl.save({filename:name,data:new Blob([s],{type:"application/json"})});
-    say("Gemt: "+recs.length+" opskrifter, "+Object.keys(out.collections.plans||{}).length+" uger ("+Math.round(s.length/1024)+" kB).");}
+    say("Gemt: "+recs.length+" opskrifter"+(miss?" ("+miss+" uden billede)":"")+", "+Object.keys(out.collections.plans||{}).length+" uger ("+Math.round(s.length/1024)+" kB).");}
   catch(e){say("Filen kunne ikke gemmes: "+(e&&e.message||e));}}
 $("#exportAll").addEventListener("click",()=>exportAll());
 function renderStores(){renderSched();renderKidsEdit();renderSrcEdit();

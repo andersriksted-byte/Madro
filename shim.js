@@ -226,7 +226,7 @@ async function importFile(file){
   let n=0,bad=[];const cols=["recipes","plans","lists","archive","imports","meta"];
   const total=cols.reduce((a,c)=>a+Object.keys(data.collections[c]||{}).length,0);
   /* several writes at a time: each one waits for the server, so one-by-one is slow with pictures */
-  const jobs=[];for(const c of cols){for(const [id,doc] of Object.entries(data.collections[c]||{})){if(c==="meta"&&id==="offers")continue;jobs.push([c,id,doc]);}}
+  const jobs=[];for(const c of cols){for(const [id,doc] of Object.entries(data.collections[c]||{})){if(c==="meta"&&id==="offers")continue;if(c==="recipes"&&doc&&/^\/_blob\//.test(doc.image||""))doc.image="img/blob/"+doc.image.slice(7)+".jpg";jobs.push([c,id,doc]);}}
   let next=0;const worker=async()=>{while(next<jobs.length){const [c,id,d]=jobs[next++];
       try{await famCol(c).doc(id).set(d);}catch(e){bad.push(c+"/"+id+" ("+((e&&e.code)||"fejl")+")");}
       n++;say("Læser ind… "+n+" af "+total);}};
