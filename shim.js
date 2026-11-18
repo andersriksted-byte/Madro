@@ -145,11 +145,11 @@ function screenNoFamily(inv){
   show(head("Ny familie","Opret jeres familie","Du er logget ind som <b>"+esc(mail)+"</b>. Opret familien, og invitér resten bagefter under Opsætning.")+
     '<label for="auFam">Familiens navn</label><input id="auFam" placeholder="fx Familien Riksted"><label for="auName">Dit navn</label><input id="auName" placeholder="fx Anders">'+
     '<fieldset class="au-start"><legend>Hvordan vil I starte?</legend>'+
-    '<label class="au-opt"><input type="radio" name="auStart" value="lib" checked><span><b>Vær med i fællesskabet</b><small id="auLibN">Start med opskrifter fra andre familier, og del jeres egne</small></span></label>'+
+    '<label class="au-opt"><input type="radio" name="auStart" value="lib" checked><span><b>Vær med i fællesskabet</b><small id="auLibN">Start med opskrifter fra andre familier, og del dem, I selv vælger</small></span></label>'+
     '<label class="au-opt"><input type="radio" name="auStart" value="empty"><span><b>Lukket kogebog</b><small>Start helt tomt. Intet deles med andre</small></span></label>'+
     '<small style="color:var(--muted,#666)">Det kan altid ændres under Opsætning.</small></fieldset>'+
     '<button class="au-btn" type="button" id="auCreate">Opret familie</button><div class="au-msg"></div><p style="font-size:13px">Er du blevet inviteret? Så skal du logge ind med præcis den mail, invitationen blev sendt til.</p><button class="au-link" type="button" id="auOut">Log ud</button>',
-  box=>{libraryCount().then(n=>{const el=box.querySelector("#auLibN");if(!el)return;el.textContent=n>0?"Start med "+n+" opskrifter fra andre familier, og del jeres egne":"Del jeres opskrifter med andre familier, og hent deres, når der kommer nogle";});
+  box=>{libraryCount().then(n=>{const el=box.querySelector("#auLibN");if(!el)return;el.textContent=n>0?"Start med "+n+" opskrifter fra andre familier, og del dem, I selv vælger":"Se og hent andre familiers opskrifter, og del dem, I selv vælger";});
     box.querySelector("#auCreate").onclick=async()=>{const fn=box.querySelector("#auFam").value.trim(),nm=box.querySelector("#auName").value.trim();
       if(!fn||!nm){msg(box,"Skriv både familiens og dit navn.");return;}msg(box,"Opretter…",true);
       const useLib=(box.querySelector('input[name="auStart"]:checked')||{}).value==="lib";
@@ -169,17 +169,18 @@ async function createFamily(famName,myName,useLib,progress){
 }
 
 /* ---------- shared recipes between families (library/<familie>_<opskrift>) ---------- */
-const STRIP=["kids","rating","stars","uses","lastUsed","history","createdAt"];
+const STRIP=["kids","rating","stars","uses","lastUsed","history","createdAt","shared"];
 async function libraryCount(){try{const s=await fs.collection("library").get();return s.docs.length;}catch(e){return 0;}}
 async function copyLibrary(progress,onlyNew){
   const lib=await fs.collection("library").get();
   let have=new Set();if(onlyNew){const mine=await famCol("recipes").get();mine.docs.forEach(d=>{const r=d.data();have.add(low(r.title)+"|"+(r.source||""));});}
   const seen=new Set();let n=0;const jobs=[];
   lib.docs.forEach(d=>{const r=d.data();if(r.familyId===S.fid)return;const k=low(r.title)+"|"+(r.source||"");if(seen.has(k)||have.has(k))return;seen.add(k);jobs.push(r);});
-  let ix=0;const worker=async()=>{while(ix<jobs.length){const r=Object.assign({},jobs[ix++]);["familyId","ownerUid","sharedBy","sharedAt","libId"].forEach(f=>delete r[f]);r.createdAt=Date.now();r.fromLibrary=true;
+  let ix=0;const worker=async()=>{while(ix<jobs.length){const r=Object.assign({},jobs[ix++]);["familyId","ownerUid","sharedBy","sharedAt","libId","shared"].forEach(f=>delete r[f]);r.createdAt=Date.now();r.fromLibrary=true;
       await famCol("recipes").doc("lib"+rid()).set(r);n++;if(progress)progress("Henter opskrifter… "+n+" af "+jobs.length);}};
   await Promise.all(Array.from({length:6},worker));return n;}
-/* community on: the family's own recipes (not copies from others) are mirrored to the library; off: removed again */
+/* one rule only: a recipe is in the library exactly when the family is in the community AND the recipe is marked "shared".
+   Copies fetched from others can't be re-shared. */
 function libCopy(id,data){const r=Object.assign({},data);STRIP.forEach(f=>delete r[f]);delete r.id;
   return Object.assign(r,{familyId:S.fid,ownerUid:S.user.uid,sharedBy:S.family.name,sharedAt:Date.now(),libId:S.fid+"_"+id});}
 const hash=s=>{let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return String(h);};
@@ -200,7 +201,7 @@ function watchCommunity(){
 async function syncLibrary(){
   if(!S.family||!S.family.community||!recSnap)return;
   const key="mp_libsync_"+S.fid;let done={};try{done=JSON.parse(localStorage.getItem(key)||"{}");}catch(e){}
-  const want={};recSnap.docs.forEach(d=>{const r=d.data();if(!r.fromLibrary)want[S.fid+"_"+d.id]=[d.id,r];});
+  const want={};recSnap.docs.forEach(d=>{const r=d.data();if(r.shared===true&&!r.fromLibrary)want[S.fid+"_"+d.id]=[d.id,r];});
   let lib;try{lib=await fs.collection("library").where("familyId","==",S.fid).get();}catch(e){return;}
   const have=new Set(lib.docs.map(d=>d.id));
   for(const d of lib.docs){if(!want[d.id]){try{await d.ref.delete();}catch(e){}delete done[d.id];}}
@@ -262,8 +263,8 @@ function drawFamCard(){
       '<input id="invName" placeholder="Navn (fx Bettina)"><button class="btn small" type="submit" style="align-self:flex-start">Send invitation</button><div class="fm-msg" id="invMsg">'+esc(S.invMsg||"")+'</div></form>':'')+
     '<div class="fm-row"><div><b>Dig i tommel-vurderingen</b><small>Bruges som standard i Opskrift Tinder</small></div><select id="mePerson">'+ps.filter(p=>!(window.__lockedPersons&&window.__lockedPersons.has(p.id))).map(p=>'<option value="'+esc(p.id)+'"'+(S.me&&S.me.personId===p.id?' selected':'')+'>'+esc(p.name)+'</option>').join("")+'</select></div>'+
     '<div class="fm-comm"><b>Opskriftsfællesskab</b>'+
-      '<label class="fm-opt"><input type="radio" name="comm" value="on"'+(S.family.community?' checked':'')+(isAdmin()?'':' disabled')+'><span><b>Del og hent opskrifter</b><small>Jeres egne opskrifter deles med andre familier i Madro, og I kan hente deres. Tommelvurderinger, madplaner og indkøbsliste deles aldrig.</small></span></label>'+
-      '<label class="fm-opt"><input type="radio" name="comm" value="off"'+(S.family.community?'':' checked')+(isAdmin()?'':' disabled')+'><span><b>Lukket kogebog</b><small>Intet deles. Kogebogen er kun jeres.</small></span></label>'+
+      '<label class="fm-opt"><input type="radio" name="comm" value="on"'+(S.family.community?' checked':'')+(isAdmin()?'':' disabled')+'><span><b>Med i fællesskabet</b><small>I kan se og hente andre familiers opskrifter, og dele de opskrifter, I selv vælger, med knappen 🌍 i opskriften. Tommelvurderinger, madplaner og indkøbsliste deles aldrig.</small></span></label>'+
+      '<label class="fm-opt"><input type="radio" name="comm" value="off"'+(S.family.community?'':' checked')+(isAdmin()?'':' disabled')+'><span><b>Lukket kogebog</b><small>Intet deles, og I ser kun jeres egne opskrifter.</small></span></label>'+
       (isAdmin()?'':'<small>Kun administratoren kan ændre det.</small>')+
       (S.family.community?'<button type="button" class="btn ghost small" id="libGet" style="align-self:flex-start">Hent nye opskrifter fra fællesskabet</button>':'')+
       '<div class="fm-msg" id="libMsg">'+esc(S.libMsg||"")+'</div></div>'+
@@ -278,8 +279,8 @@ function drawFamCard(){
   const libSay=t=>{S.libMsg=t;const m=$("#libMsg");if(m)m.textContent=t;};
   const lg=c.querySelector("#libGet");if(lg)lg.onclick=async()=>{lg.disabled=true;try{const n=await copyLibrary(libSay,true);libSay(n?n+" nye opskrifter er lagt i Kogebogen.":"I har allerede alle de delte opskrifter.");}catch(err){libSay(errText(err));}lg.disabled=false;};
   c.querySelectorAll('input[name="comm"]').forEach(r=>r.onchange=async()=>{const on=r.value==="on";
-    if(!on&&!confirm("Gøre kogebogen lukket? Jeres delte opskrifter fjernes fra fællesskabet. Familier, der allerede har hentet dem, beholder deres egen kopi.")){drawFamCard();return;}
-    try{libSay(on?"Deler jeres opskrifter…":"Fjerner jeres delte opskrifter…");await setCommunity(on);libSay(on?"I er med i fællesskabet. Jeres opskrifter deles automatisk.":"Kogebogen er nu lukket.");}catch(err){libSay(errText(err));}});
+    if(!on&&!confirm("Gøre kogebogen lukket? De opskrifter, I har delt, fjernes fra fællesskabet. Familier, der allerede har hentet dem, beholder deres egen kopi.")){drawFamCard();return;}
+    try{libSay(on?"Melder jer ind…":"Fjerner jeres delte opskrifter…");await setCommunity(on);libSay(on?"I er med i fællesskabet. Del en opskrift med knappen 🌍 i opskriften.":"Kogebogen er nu lukket.");}catch(err){libSay(errText(err));}});
   const fi=c.querySelector("#impFile");if(fi)fi.onchange=()=>{if(fi.files[0])importFile(fi.files[0]);fi.value="";};
   c.querySelector("#tellFriend").onclick=async()=>{const url=linkURL();const me=(S.me&&S.me.name)||"";
     const text="Hej! Jeg bruger Madro til madplan, kogebog og indkøbsliste. Prøv den her: "+url+"\n\nSkriv din mail, få et login-link, og opret jeres egen familie."+(me?"\n\nHilsen "+me:"");
