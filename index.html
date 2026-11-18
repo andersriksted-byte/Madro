@@ -12,10 +12,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795013470";</script>
-<script src="config.js?v=1795013470"></script>
-<script src="importer.js?v=1795013470"></script>
-<script src="shim.js?v=1795013470"></script>
+<script>window.__appVersion="1795013695";</script>
+<script src="config.js?v=1795013695"></script>
+<script src="importer.js?v=1795013695"></script>
+<script src="shim.js?v=1795013695"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -3952,6 +3952,7 @@ function renderKidsEdit(){const box=$("#kidsEdit");if(!box||box.contains(documen
 async function saveKids(list){state.settings.kids=list;await saveSettings();renderRecipes();}
 $("#kidsEdit").addEventListener("change",e=>{const inp=e.target.closest("[data-kidname]");if(!inp)return;const nm=inp.value.trim()||("Person "+(kidsList().findIndex(k=>k.id===inp.dataset.kidname)+1));saveKids(kidsList().map(k=>k.id===inp.dataset.kidname?{id:k.id,name:nm}:k)).then(()=>toast("Gemt"));});
 /* in-app "are you sure" dialog */
+window.__confirmBox=(...a)=>confirmBox(...a);
 function confirmBox(title,text,ok){return new Promise(res=>{const o=document.createElement("div");o.className="cbox-wrap";
   o.innerHTML='<div class="cbox" role="alertdialog" aria-modal="true" aria-labelledby="cbT"><h3 id="cbT">'+esc(title)+'</h3>'+(text?'<p>'+esc(text)+'</p>':'')+'<div class="cbox-btns"><button type="button" class="btn plain" data-cb="0">Annuller</button><button type="button" class="btn danger" data-cb="1">'+esc(ok||"Ja")+'</button></div></div>';
   document.body.appendChild(o);requestAnimationFrame(()=>o.classList.add("on"));

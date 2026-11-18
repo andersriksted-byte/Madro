@@ -274,7 +274,8 @@ function drawFamCard(){
   if(sel)sel.onchange=()=>{const p=ps.find(x=>x.id===sel.value);nm.hidden=!!p;if(p)nm.value=p.name;else nm.value="";};
   const f=c.querySelector("#invForm");if(f)f.onsubmit=async e=>{e.preventDefault();await sendInvite(low(c.querySelector("#invMail").value),sel.value,nm.value.trim());};
   c.querySelectorAll("[data-unmem]").forEach(b=>b.onclick=async()=>{const id=b.dataset.unmem,m=(S.family.members||{})[id];if(!m)return;
-    if(!confirm("Fjern "+m.name+" fra familien?\n\n"+m.name+" kan ikke længere logge ind i jeres Madro, og "+m.name+"s 👍 og 👎 fjernes fra tommelvurderingen. Kogebog, madplan og indkøbsliste er urørt."))return;
+    const q="Fjern "+m.name+" fra familien?",t=m.name+" kan ikke længere logge ind i jeres Madro, og "+m.name+"s 👍 og 👎 fjernes fra tommelvurderingen. Det kan ikke fortrydes, men du kan invitere "+m.name+" igen. Kogebog, madplan og indkøbsliste er urørt.";
+    if(!(window.__confirmBox?await window.__confirmBox(q,t,"Fjern "+m.name):confirm(q+"\n\n"+t)))return;
     b.disabled=true;
     try{await fs.doc("families/"+S.fid).update({["members."+id]:firebase.firestore.FieldValue.delete()});
       try{await fs.doc("invites/"+low(m.email)).delete();}catch(e){}
