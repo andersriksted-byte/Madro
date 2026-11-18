@@ -2,7 +2,12 @@
 <html lang="da" data-theme="light">
 <head>
 <meta charset="utf-8">
-<meta name="color-scheme" content="light">
+<meta name="color-scheme" content="light dark">
+<script>/* Udseende: lys, mørk eller som systemet (mp_theme) – set before first paint */
+(function(){var m=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)");
+  function apply(){var t="system";try{t=localStorage.getItem("mp_theme")||"system";}catch(e){}
+    var d=t==="dark"||(t==="system"&&m&&m.matches);document.documentElement.setAttribute("data-theme",d?"dark":"light");}
+  window.__applyTheme=apply;apply();if(m&&m.addEventListener)m.addEventListener("change",apply);})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Madro</title>
 <meta name="theme-color" content="#f6f1e7">
@@ -13,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795023288";</script>
-<script src="config.js?v=1795023288"></script>
-<script src="importer.js?v=1795023288"></script>
-<script src="shim.js?v=1795023288"></script>
+<script>window.__appVersion="1795023424";</script>
+<script src="config.js?v=1795023424"></script>
+<script src="importer.js?v=1795023424"></script>
+<script src="shim.js?v=1795023424"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -37,15 +42,15 @@
   --fs:.92; /* text size, set from the 5-step control */
   color-scheme: light;
 }
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
+
+  :root[data-theme="dark"]{
     --bg:#16131f; --surface:#211c2e; --ink:#f1eef8; --muted:#aaa4bb; --line:#352e45;
     --accent:#b4a2ff; --accent-soft:#2d2550; --on-accent:#1a1235;
     --saffron:#f2bd4a; --chili:#ff7a63; --pistachio:#94cf68; --teal:#4fcfcb; --aubergine:#c88ae0; --paprika:#ff9a62; --indigo:#8fa4ff; --rose:#ff86ad;
     --offer:#f0bd45; --offer-soft:#352a10; --offer-ink:#f7dc9a; --good:#6fc995; --good-soft:#18301f; --note:#8fbbe3; --note-soft:#1b2a38;
     color-scheme: dark;
   }
-}
+
 :root[data-theme="dark"]{
   --bg:#16131f; --surface:#211c2e; --ink:#f1eef8; --muted:#aaa4bb; --line:#352e45;
   --accent:#b4a2ff; --accent-soft:#2d2550; --on-accent:#1a1235;
@@ -245,7 +250,7 @@ a{color:var(--accent)}
 .sl-item{display:flex;align-items:center;gap:8px;padding:9px 10px 9px 12px;border-top:1px solid var(--line)}
 .sl-head+.sl-item{border-top:0}
 .sl-cat{display:flex;align-items:center;padding:6px 12px;font-family:var(--display);font-size:calc(14px * var(--fs));font-weight:700;color:#fff;background:var(--sc,var(--muted));border-top:2px solid var(--surface)}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .sl-cat{color:#1a1430}}:root[data-theme="dark"] .sl-cat{color:#1a1430}
+:root[data-theme="dark"] .sl-cat{color:#1a1430}:root[data-theme="dark"] .sl-cat{color:#1a1430}
 
 /* cook mode */
 .cook{position:fixed;inset:0;z-index:95;background:var(--bg);display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top) + 10px) 16px calc(env(safe-area-inset-bottom) + 12px)}
@@ -563,7 +568,7 @@ html:not(.web-app) .web-only{display:none}html.web-app .claude-only{display:none
 #v-indkob .sl-cb{border-radius:7px;border:1.5px solid color-mix(in srgb,var(--ink) 45%,var(--line))}
 #v-indkob .sl-cb:checked{background:color-mix(in srgb,var(--cc,var(--accent)) 80%,#000);border-color:transparent}
 :root[data-theme="dark"] #v-indkob .sl-head{color:#fff}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) #v-indkob .sl-head{color:#fff}}
+:root[data-theme="dark"] #v-indkob .sl-head{color:#fff}
 #v-indkob .sl-cat i{font-style:normal;font-size:13px;letter-spacing:0}
 .meal.mag.note-mag{aspect-ratio:16/6;cursor:pointer}.meal.mag.note-mag.has-img{aspect-ratio:16/8}
 .r-acts{flex-wrap:wrap;justify-content:flex-end;gap:8px}
@@ -620,7 +625,7 @@ html:not(.web-app) .web-only{display:none}html.web-app .claude-only{display:none
 @keyframes fadeOutFound{0%,80%{opacity:.8}100%{opacity:.25}}
 .sl-found{display:block;margin:6px auto 4px;border:0;background:none;color:var(--accent);font-weight:700;font-size:calc(16px * var(--fs));text-decoration:underline;text-underline-offset:3px}
 .sl-found[hidden]{display:none}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .sl-head{color:#1a1430}}
+:root[data-theme="dark"] .sl-head{color:#1a1430}
 :root[data-theme="dark"] .sl-head{color:#1a1430}
 .info-box{border-radius:12px;padding:10px 12px;font-size:calc(14px * var(--fs));line-height:1.4}
 /* ===== spice-market look ===== */
@@ -643,7 +648,7 @@ body{background:var(--bg)}
 .day .dname::before{content:"";position:absolute;inset:0;background:#fff;-webkit-mask:var(--tile) 0 0/24px 24px repeat;mask:var(--tile) 0 0/24px 24px repeat;opacity:.18;z-index:-1}
 .day .dname small{color:rgba(255,255,255,.9);font-size:calc(11px * var(--fs));margin-top:2px}
 .day .dname{text-shadow:0 1px 2px rgba(0,0,0,.35)}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .day .dname,:root:not([data-theme="light"]) .day .dname small{color:#1a1430;text-shadow:none}}
+:root[data-theme="dark"] .day .dname,:root[data-theme="dark"] .day .dname small{color:#1a1430;text-shadow:none}
 :root[data-theme="dark"] .day .dname,:root[data-theme="dark"] .day .dname small{color:#1a1430;text-shadow:none}
 .day.today .dname{color:#fff;box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--dc)}
 .meal{border-left-color:var(--dc,var(--accent));box-shadow:none;cursor:pointer}
@@ -779,12 +784,12 @@ body{background:var(--bg)}
 #days .meal.note{border-left-color:var(--line)}
 #days .day-add{border-color:var(--line);color:#4a2fa0;background:var(--surface)}
 #days .day-add:hover{background:var(--accent-soft)}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) #days .day{--dc:#b4a2ff}
- :root:not([data-theme="light"]) #days .day .dname{background:linear-gradient(165deg,#3a2620,#46281f)} :root:not([data-theme="light"]) #days .day .dname,:root:not([data-theme="light"]) #days .day .dname small{color:#ffb38a}
- :root:not([data-theme="light"]) #days .day.today .dname{background:linear-gradient(165deg,#e2563a,#f2953c);color:#fff}
- :root:not([data-theme="light"]) #days .day.today .dname small{color:#fff}
- :root:not([data-theme="light"]) #days .day.today{border-color:#b4a2ff;box-shadow:0 0 0 1px #b4a2ff inset}
- :root:not([data-theme="light"]) #days .day-add{color:#b4a2ff}}
+:root[data-theme="dark"] #days .day{--dc:#b4a2ff}
+ :root[data-theme="dark"] #days .day .dname{background:linear-gradient(165deg,#3a2620,#46281f)} :root[data-theme="dark"] #days .day .dname,:root[data-theme="dark"] #days .day .dname small{color:#ffb38a}
+ :root[data-theme="dark"] #days .day.today .dname{background:linear-gradient(165deg,#e2563a,#f2953c);color:#fff}
+ :root[data-theme="dark"] #days .day.today .dname small{color:#fff}
+ :root[data-theme="dark"] #days .day.today{border-color:#b4a2ff;box-shadow:0 0 0 1px #b4a2ff inset}
+ :root[data-theme="dark"] #days .day-add{color:#b4a2ff}
 :root[data-theme="dark"] #days .day{--dc:#b4a2ff}
 :root[data-theme="dark"] #days .day .dname{background:linear-gradient(165deg,#3a2620,#46281f)}:root[data-theme="dark"] #days .day .dname,:root[data-theme="dark"] #days .day .dname small{color:#ffb38a}
 :root[data-theme="dark"] #days .day.today .dname{background:linear-gradient(165deg,#e2563a,#f2953c);color:#fff}
@@ -799,7 +804,7 @@ body{background:var(--bg)}
 /* ===== magazine look for the whole app ===== */
 :root{--serif:"Playfair Display",Georgia,"Times New Roman",serif}
 :root:not([data-theme="dark"]){--bg:#faf7f2;--ink:#1d1a24;--muted:#6f6659;--line:#e7dfd2;--accent:#1d1a24;--accent-soft:#efe8dc;--on-accent:#fff}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--accent:#f0e6d8;--on-accent:#1d1a24;--accent-soft:#2c2620}}
+:root[data-theme="dark"]{--accent:#f0e6d8;--on-accent:#1d1a24;--accent-soft:#2c2620}
 :root[data-theme="dark"]{--accent:#f0e6d8;--on-accent:#1d1a24;--accent-soft:#2c2620}
 body{background:var(--bg)}
 h1,h2,h3{font-family:var(--serif);letter-spacing:-.01em}
@@ -1247,11 +1252,18 @@ body.wv-on .toast{z-index:210}
         <div id="runlog" class="small muted claude-only"></div>
       </div>
       <div class="card stack">
-        <h3>Tekststørrelse</h3>
+        <h3>Udseende</h3>
+        <div class="set-sec" style="border-top:0;padding-top:0;margin-top:0">
+        <h4>Tema</h4>
+        <div class="seg" id="themeSeg" role="group" aria-label="Tema"><button type="button" data-th="light">☀️ Lys</button><button type="button" data-th="dark">🌙 Mørk</button><button type="button" data-th="system">Som systemet</button></div>
+        </div>
+        <div class="set-sec">
+        <h4>Tekststørrelse</h4>
         <div class="fs-seg" id="fsSeg" role="group" aria-label="Tekststørrelse">
           <button type="button" data-fs="0" aria-label="Meget lille" style="font-size:13px">A</button><button type="button" data-fs="1" aria-label="Lille" style="font-size:16px">A</button><button type="button" data-fs="2" aria-label="Normal" style="font-size:19px">A</button><button type="button" data-fs="3" aria-label="Stor" style="font-size:22px">A</button><button type="button" data-fs="4" aria-label="Meget stor" style="font-size:25px">A</button>
         </div>
         <p class="small muted" style="margin:0" id="fsLabel"></p>
+        </div>
       </div>
     </div>
   </section>
@@ -3987,6 +3999,11 @@ const FS_STEPS=[.82,.92,1,1.1,1.22],FS_NAMES=["Meget lille","Lille (standard)","
 function applyFs(i){i=Math.max(0,Math.min(4,i|0));document.documentElement.style.setProperty("--fs",FS_STEPS[i]);
   document.querySelectorAll("#fsSeg [data-fs]").forEach(b=>{const on=+b.dataset.fs===i;b.classList.toggle("on",on);b.setAttribute("aria-pressed",String(on));});
   const l=$("#fsLabel");if(l)l.textContent=FS_NAMES[i];return i;}
+function drawTheme(){let t="system";try{t=localStorage.getItem("mp_theme")||"system";}catch(e){}
+  document.querySelectorAll("#themeSeg [data-th]").forEach(b=>{const on=b.dataset.th===t;b.classList.toggle("on",on);b.setAttribute("aria-pressed",String(on));});}
+$("#themeSeg").addEventListener("click",e=>{const b=e.target.closest("[data-th]");if(!b)return;try{localStorage.setItem("mp_theme",b.dataset.th);}catch(x){}
+  if(window.__applyTheme)window.__applyTheme();drawTheme();});
+drawTheme();
 let fsStep=1;try{const v=localStorage.getItem("mp_fs");if(v!=null)fsStep=+v;}catch(e){}
 applyFs(fsStep);
 $("#fsSeg").addEventListener("click",async e=>{const b=e.target.closest("[data-fs]");if(!b)return;fsStep=applyFs(+b.dataset.fs);try{localStorage.setItem("mp_fs",String(fsStep));}catch(x){}state.settings.textSize=fsStep;await saveSettings();});
