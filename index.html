@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795038165";</script>
-<script src="config.js?v=1795038165"></script>
-<script src="importer.js?v=1795038165"></script>
-<script src="shim.js?v=1795038165"></script>
+<script>window.__appVersion="1795038297";</script>
+<script src="config.js?v=1795038297"></script>
+<script src="importer.js?v=1795038297"></script>
+<script src="shim.js?v=1795038297"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -856,7 +856,7 @@ h1,h2,h3{font-family:var(--serif);letter-spacing:-.01em}
 .masthead-w{margin:0 0 16px}
 .masthead-w .masthead{margin:0;gap:14px}
 .masthead-w .masthead::before,.masthead-w .masthead::after{height:0;background:none;border-top:3px double currentColor;opacity:.7}
-.masthead-w .masthead span{font-family:'Playball',var(--serif);font-style:normal;font-size:calc(40px * var(--fs));font-weight:400;letter-spacing:.01em;line-height:1.05}
+.masthead-w .masthead span{font-size:calc(34px * var(--fs));font-weight:700;letter-spacing:.01em}
 .mast-sub{text-align:center;margin-top:5px;font-family:var(--body);font-size:calc(10.5px * var(--fs));font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
 :root[data-theme="dark"] .masthead{color:#dd5638}
 #v-madplan{--kick:"Ugens menu"}#v-indkob{--kick:"Til butikken"}#v-spil{--kick:"Leg med maden"}#v-opskrifter{--kick:"Opskrifter"}#v-butikker{--kick:"Indstillinger"}
@@ -1411,7 +1411,7 @@ body.wv-on .toast{z-index:210}
 <nav class="tabs" aria-label="Faner">
   <a href="#indkob" data-tab="indkob"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2.2 11h10.6L20 7H6.2"/><circle cx="9" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/></svg>Indkøb</a>
   <a href="#opskrifter" data-tab="opskrifter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg>Kogebog</a>
-  <a href="#madplan" data-tab="madplan"><svg class="seal" viewBox="0 0 24 24" aria-hidden="true"><text x="12" y="17.8" text-anchor="middle" font-family="Playball,Playfair Display,Georgia,serif" font-weight="400" font-size="20.5" fill="#fff" stroke="#fff" stroke-width=".55">M</text></svg><span class="mp-lbl">Madplan</span></a>
+  <a href="#madplan" data-tab="madplan"><svg class="seal" viewBox="0 0 24 24" aria-hidden="true"><text x="12" y="18.2" text-anchor="middle" font-family="Playfair Display,Georgia,serif" font-style="italic" font-weight="700" font-size="20" fill="#fff" stroke="none">M</text></svg><span class="mp-lbl">Madplan</span></a>
   <a href="#spil" data-tab="spil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="11" rx="4"/><path d="M8 11v3M6.5 12.5h3"/><circle cx="15.5" cy="11.5" r=".6" fill="currentColor"/><circle cx="17.5" cy="13.5" r=".6" fill="currentColor"/></svg>Spil</a>
   <a href="#butikker" data-tab="butikker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Opsætning</a>
 </nav>
@@ -2922,12 +2922,12 @@ async function drawWeekCanvas(style){
   const L=mm(12),R=W-mm(12);let T=mm(11);
   /* the app's wordmark: italic Madro between double rules, with what it is underneath; and the round M seal */
   const BRAND="#c8452a";
-  const mast=(cx,y,size,half)=>{c.fillStyle=BRAND;c.font="400 "+pt(size*1.15)+"px Playball,"+SERIF;const tw=c.measureText("Madro").width;
+  const mast=(cx,y,size,half)=>{c.fillStyle=BRAND;c.font="italic 800 "+pt(size)+"px "+SERIF;const tw=c.measureText("Madro").width;
     c.textAlign="center";c.fillText("Madro",cx,y);c.textAlign="left";
     const ly=y-pt(size)*.32,g=mm(4);[[cx-half,cx-tw/2-g],[cx+tw/2+g,cx+half]].forEach(([a,b])=>{c.fillRect(a,ly-mm(.55),b-a,mm(.25));c.fillRect(a,ly+mm(.3),b-a,mm(.25));});
     c.fillStyle=MUTE;c.font="700 "+pt(6.2)+"px "+SANS;sp("MADPLAN  ·  KOGEBOG  ·  INDKØB",cx,y+mm(4.6),pt(6.2)*.28,"center");};
   const seal=(cx,cy,r)=>{c.fillStyle=BRAND;c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.fill();
-    c.fillStyle="#fff";c.font="400 "+(r*1.3)+"px Playball,"+SERIF;c.textAlign="center";c.fillText("M",cx,cy+r*.42);c.textAlign="left";};
+    c.fillStyle="#fff";c.font="italic 800 "+(r*1.35)+"px "+SERIF;c.textAlign="center";c.fillText("M",cx,cy+r*.45);c.textAlign="left";};
   if(MENU){drawMenuBody(c,D,{W,H,mm,pt,sp,wrap,SERIF,SANS,INK,RED,MUTE,LINE,WARM,L,R,T,cssCol,mast,seal});return cv;}
   mast(W/2,T+mm(7.5),24,(R-L)/2);T+=mm(14);
   // header
