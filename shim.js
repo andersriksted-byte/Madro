@@ -78,7 +78,7 @@ const css=`
 #famCard .fm-inv,#famCard .fm-add{padding:8px 2px 12px;border-bottom:1px solid var(--line)}
 #famMore input,#famMore select{font:inherit;font-size:16px}
 #commSlot .fm-comm{display:flex;flex-direction:column;gap:8px}#commSlot .fm-msg{font-size:13px;color:var(--muted)}
-#commSlot .fm-opt{display:flex;gap:10px;align-items:flex-start;cursor:pointer}#commSlot .fm-opt input{margin-top:4px}
+#commSlot .fm-anon{margin-left:26px}#commSlot .fm-opt{display:flex;gap:10px;align-items:flex-start;cursor:pointer}#commSlot .fm-opt input{margin-top:4px}
 #commSlot .fm-opt span{display:flex;flex-direction:column}#commSlot .fm-opt small,#commSlot .fm-comm>small{color:var(--muted);font-size:12.5px;line-height:1.35}
 #impSlot .imp-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0 4px;border-top:1px solid var(--line)}#impSlot small{display:block;color:var(--muted);font-size:12px}#impSlot .fm-msg{font-size:13px;color:var(--muted)}
 #famMore .fm-msg{font-size:13px;color:var(--muted);min-height:1em}
@@ -197,7 +197,8 @@ async function copyLibrary(progress,onlyNew){
 /* one rule only: a recipe is in the library exactly when the family is in the community AND the recipe is marked "shared".
    Copies fetched from others can't be re-shared. */
 function libCopy(id,data){const r=Object.assign({},data);STRIP.forEach(f=>delete r[f]);delete r.id;
-  return Object.assign(r,{familyId:S.fid,ownerUid:S.user.uid,sharedBy:S.family.name,sharedAt:Date.now(),libId:S.fid+"_"+id});}
+  const anon=!!S.family.anonymous;if(anon)r.author="Anonym";/* an anonymous family is never named in the library */
+  return Object.assign(r,{familyId:S.fid,ownerUid:S.user.uid,sharedBy:anon?"Anonym":S.family.name,sharedAt:Date.now(),libId:S.fid+"_"+id});}
 const hash=s=>{let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return String(h);};
 let syncT=0,recSnap=null,recUnsub=null;
 let libUnsub=null;
@@ -241,13 +242,13 @@ async function findInvite(){try{const d=await fs.doc("invites/"+low(S.user.email
 async function enterFamily(fid){
   const snap=await fs.doc("families/"+fid).get();
   if(!snap.exists||!(snap.data().members||{})[S.user.uid]){return false;}
-  S.fid=fid;S.family=snap.data();S.me=S.family.members[S.user.uid];window.__mePerson=S.me.personId;window.__family={id:fid,name:S.family.name};
+  S.fid=fid;S.family=snap.data();S.me=S.family.members[S.user.uid];window.__mePerson=S.me.personId;window.__family={id:fid,name:S.family.name,anonymous:!!S.family.anonymous};
   if(S.famUnsub)S.famUnsub();
   /* thumbs: a person linked to another login can only be rated by that login */
   const syncLock=()=>{const mine=S.me&&S.me.personId;window.__lockedPersons=new Set(Object.entries(S.family.members||{}).filter(([uid,m])=>uid!==S.user.uid&&m.personId&&m.personId!==mine).map(([,m])=>m.personId));};
   syncLock();
   const syncInv=()=>{S.invites=Object.values(S.family.invites||{}).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));};syncInv();
-  S.famUnsub=fs.doc("families/"+fid).onSnapshot(d=>{if(!d.exists)return;if(!(d.data().members||{})[S.user.uid]){location.reload();return;}/* removed from the family */const wasC=!!(S.family&&S.family.community);S.family=d.data();syncInv();S.me=S.family.members[S.user.uid]||S.me;if(S.me)window.__mePerson=S.me.personId;syncLock();if(wasC!==!!S.family.community)watchCommunity();drawFamCard();},err=>{if(err&&err.code==="permission-denied")location.reload();});
+  S.famUnsub=fs.doc("families/"+fid).onSnapshot(d=>{if(!d.exists)return;if(!(d.data().members||{})[S.user.uid]){location.reload();return;}/* removed from the family */const wasC=!!(S.family&&S.family.community);S.family=d.data();window.__family={id:fid,name:S.family.name,anonymous:!!S.family.anonymous};syncInv();S.me=S.family.members[S.user.uid]||S.me;if(S.me)window.__mePerson=S.me.personId;syncLock();if(wasC!==!!S.family.community)watchCommunity();drawFamCard();},err=>{if(err&&err.code==="permission-denied")location.reload();});
   window.__onSettings=()=>drawFamCard();
   hide();ready();
   watchImports();mountFamCard();watchCommunity();setTimeout(offerHomeScreen,1500);
@@ -299,6 +300,7 @@ function drawFamCard(force){
     (rows.length>1?'<div class="fm-row" style="border-bottom:0"><div><b>Du swiper som</b><small>Standard i Opskrift Tinder</small></div><select id="mePerson">'+persons().filter(p=>!(window.__lockedPersons&&window.__lockedPersons.has(p.id))).map(p=>'<option value="'+esc(p.id)+'"'+(me===p.id?' selected':'')+'>'+esc(p.name)+'</option>').join("")+'</select></div>':'');
   const comm=$("#commSlot");if(comm)comm.innerHTML='<h4>Opskriftsfællesskab</h4><div class="fm-comm">'+
       '<label class="fm-opt"><input type="radio" name="comm" value="on"'+(S.family.community?' checked':'')+(adm?'':' disabled')+'><span><b>Med i fællesskabet</b><small>Fællesskabets opskrifter dukker automatisk op i Kogebogen og Opskrift Tinder. Nye opskrifter, I laver, deles også, men hver opskrift kan gøres privat med knappen 🔒 i opskriften. Tommelvurderinger, madplaner og indkøbsliste deles aldrig.</small></span></label>'+
+      (S.family.community?'<label class="fm-opt fm-anon"><input type="checkbox" id="commAnon"'+(S.family.anonymous?' checked':'')+(adm?'':' disabled')+'><span><b>Del anonymt</b><small>Der står "Fra et anonymt køkken" i stedet for '+esc(S.family.name)+' på de opskrifter, I deler.</small></span></label>':'')+
       '<label class="fm-opt"><input type="radio" name="comm" value="off"'+(S.family.community?'':' checked')+(adm?'':' disabled')+'><span><b>Lukket kogebog</b><small>Intet deles, og I ser kun jeres egne opskrifter.</small></span></label>'+
       (adm?'':'<small>Kun administratoren kan ændre det.</small>')+
       '<div class="fm-msg" id="libMsg">'+esc(S.libMsg||"")+'</div></div>';
@@ -344,6 +346,10 @@ function drawFamCard(force){
   (comm||c2).querySelectorAll('input[name="comm"]').forEach(r=>r.onchange=async()=>{const on=r.value==="on";
     if(!on&&!confirm("Gøre kogebogen lukket? De opskrifter, I har delt, fjernes fra fællesskabet. Familier, der allerede har hentet dem, beholder deres egen kopi.")){drawFamCard();return;}
     try{libSay(on?"Melder jer ind…":"Fjerner jeres delte opskrifter…");await setCommunity(on);libSay(on?"I er med i fællesskabet. Del en opskrift med knappen 🌍 i opskriften.":"Kogebogen er nu lukket.");}catch(err){libSay(errText(err));}});
+  const an=comm&&comm.querySelector("#commAnon");if(an)an.onchange=async()=>{an.disabled=true;
+    try{await fs.doc("families/"+S.fid).update({anonymous:an.checked});S.family.anonymous=an.checked;window.__family.anonymous=an.checked;
+      libSay(an.checked?"I deler nu anonymt. Jeres delte opskrifter opdateres.":"Jeres familienavn vises nu på de opskrifter, I deler.");await syncLibrary();}catch(err){libSay(errText(err));an.checked=!an.checked;}
+    an.disabled=false;};
   c2.querySelector("#tellFriend").onclick=async()=>{const url=linkURL();const me=(S.me&&S.me.name)||"";
     const text="Hej! Jeg bruger Madro til madplan, kogebog og indkøbsliste. Prøv den her: "+url+"\n\nSkriv din mail, få et login-link, og opret jeres egen familie."+(me?"\n\nHilsen "+me:"");
     try{if(navigator.share){await navigator.share({title:"Madro",text});return;}}catch(e){if(e&&e.name==="AbortError")return;}

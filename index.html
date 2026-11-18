@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795024524";</script>
-<script src="config.js?v=1795024524"></script>
-<script src="importer.js?v=1795024524"></script>
-<script src="shim.js?v=1795024524"></script>
+<script>window.__appVersion="1795024705";</script>
+<script src="config.js?v=1795024705"></script>
+<script src="importer.js?v=1795024705"></script>
+<script src="shim.js?v=1795024705"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2375,7 +2375,8 @@ function originName(u){let h="";try{h=new URL(u).hostname.replace(/^www\./,"");}
   const k=h.split(".")[0];if(ORIGIN_NAMES[k])return ORIGIN_NAMES[k];return k.split(/[-_]/).map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(" ");}
 function authorOf(r){return r.author||(r.fromLibrary||r._community?r.sharedBy:(window.__family&&window.__family.name))||"";}
 function creditHTML(r){const a=authorOf(r),o=r.source?originName(r.source):"";if(!a&&!o)return "";
-  return '<div class="sub credit">'+(a?'Forfatter: <b>'+esc(a)+'</b>':'')+(a&&(o||!r.source)?' · ':'')+(o?'Oprindelsessted: <b>'+esc(o)+'</b>':a?'Oprindelsessted: <b>Egen opskrift</b>':'')+'</div>';}
+  const anon=a==="Anonym",who=!a?"":anon?'Fra et anonymt køkken':'Fra køkkenet hos <b>'+esc(a)+'</b>';
+  return '<div class="sub credit">'+(who?'👩‍🍳 '+who:'')+(who&&(o||!r.source)?' · ':'')+(o?'Oprindelsessted: <b>'+esc(o)+'</b>':a?'Oprindelsessted: <b>Egen opskrift</b>':'')+'</div>';}
 function srcLinkHTML(r){if(!r.source)return "";let host="";try{host=new URL(r.source).hostname.replace(/^www\./,"");}catch(e){return "";}
   return '<a class="src-link" href="'+esc(r.source)+'" target="_blank" rel="noopener"><span aria-hidden="true">🔗</span><span>Se den originale opskrift<small>'+esc(host)+'</small></span><span aria-hidden="true" class="arr">↗</span></a>';}
 function openRecipe(id,fallback){
