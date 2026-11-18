@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795035070";</script>
-<script src="config.js?v=1795035070"></script>
-<script src="importer.js?v=1795035070"></script>
-<script src="shim.js?v=1795035070"></script>
+<script>window.__appVersion="1795035281";</script>
+<script src="config.js?v=1795035281"></script>
+<script src="importer.js?v=1795035281"></script>
+<script src="shim.js?v=1795035281"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1410,6 +1410,11 @@ const STORES=["Netto","Rema 1000","Coop 365","Løvbjerg","Lidl","Dagli'Brugsen",
 const allStores=()=>STORES.concat((state.settings.customStores||[]).filter(s=>!STORES.includes(s)));
 const DAYS=["Mandag","Tirsdag","Onsdag","Torsdag","Fredag","Lørdag","Søndag"];
 const PANTRY=["salt","peber","vand","olie","olivenolie","rapsolie","neutral olie","sukker","flagesalt","havsalt"];
+/* dried spices: assume they're in the cupboard, so they start unticked (fresh herbs are still bought) */
+const SPICES=["peber","peberkorn","hvid peber","karry","spidskommen","paprika","kanel","laurbær","timian","oregano","rosmarin","krydderi","muskat","kardemomme","gurkemeje","chiliflager","chilipulver","cayenne","stødt","hvidløgspulver","løgpulver","nellike","stjerneanis","fennikelfrø","korianderfrø","sennepsfrø","allehånde","garam masala","sumak","safran","basilikum tørret","tørret","herbes de provence","italiensk krydderi","taco krydderi","tacokrydderi","grillkrydderi","provence","ingefær stødt","chili flakes","enebær","dild tørret","estragon","merian","salvie tørret","fem krydderi","ras el hanout","za'atar","zaatar","vaniljepulver"];
+function isSpice(name,unit){const n=norm(name),u=norm(unit||"");if(/frisk|bundt|kvist|potte/.test(n+" "+u))return false;
+  if(/peberfrugt|peberrod|chili(?!flager|pulver| flakes)/.test(n)&&!/stødt|tørret|pulver|flager/.test(n))return false;
+  return SPICES.some(w=>n===w||n.includes(w));}
 const state={freq:{},imports:[],discover:[],archive:[],recipes:[],plans:{},shopping:[],settings:{stores:["Netto","Rema 1000","Lidl"],primary:"Netto",maxStores:2},offers:null,week:startWeek(),loaded:false};
 let db=null, sample=null, mem=null;
 
@@ -3399,7 +3404,7 @@ function openPicker(entries,subtitle,opts){
   let bn=0;
   const blocks=entries.map(e=>{const r=e.r;const f=(Number(e.servings)||r.servings||4)/(r.servings||4);
     return '<div class="card" data-block data-entryid="'+esc(e.entryId||"")+'" data-week="'+esc(e.week||"")+'"><div class="row" style="justify-content:space-between"><h3>'+esc(r.title)+'</h3><button class="btn plain small" type="button" data-all>Vælg alle</button></div><div class="sub">'+(e.label?esc(e.label)+' · ':'')+esc(e.servings)+' pers.</div>'+
-    (r.ingredients||[]).map((i,ix)=>{const pantry=PANTRY.includes(norm(i.name));const a=i.amount!=null?i.amount*f:null;
+    (r.ingredients||[]).map((i,ix)=>{const pantry=PANTRY.includes(norm(i.name))||isSpice(i.name,i.unit);const a=i.amount!=null?i.amount*f:null;
       const onList=state.shopping.find(x=>norm(x.name)===norm(i.name)&&(x.from||[]).includes(r.title));
       const rb=pantry||onList?{tag:"",note:"",lasting:false}:recentBuyTag(i.name,(bn++));const off=pantry||rb.lasting||!!onList;
       return '<label class="check"><input type="checkbox" '+(off?"":"checked")+' data-name="'+esc(i.name)+'" data-unit="'+esc(i.unit||"")+'" data-amt="'+(a==null?"":a)+'" data-from="'+esc(r.title)+'"><div class="main"><div class="n">'+esc(i.name)+'</div><div class="s">'+esc((a!=null?fmtAmt(a)+" ":"")+(i.unit||""))+(pantry?" · har du sikkert":"")+(onList?' · <b style="color:var(--good)">'+(onList.checked?"købt":"står på listen")+'</b>':'')+'</div>'+rb.tag+rb.note+'</div></label>';}).join("")+'</div>';}).join("");
