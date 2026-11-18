@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795030578";</script>
-<script src="config.js?v=1795030578"></script>
-<script src="importer.js?v=1795030578"></script>
-<script src="shim.js?v=1795030578"></script>
+<script>window.__appVersion="1795030789";</script>
+<script src="config.js?v=1795030789"></script>
+<script src="importer.js?v=1795030789"></script>
+<script src="shim.js?v=1795030789"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -929,6 +929,16 @@ h1,h2,h3{font-family:var(--serif);letter-spacing:-.01em}
 #v-madplan #days .mag-day .day-add,#v-madplan #days.menu-style .mag-day .day-add{align-self:start;justify-self:end;width:28px;height:28px;font-size:17px}
 #v-madplan #days .mag-day.empty-day .dname{min-height:64px}
 #v-madplan #days .mag-day.empty-day .dmeals{align-self:center}
+
+/* the day's shopping status sits under the day name instead of on each dish */
+#v-madplan #days .day.mag-day,#v-madplan #days.menu-style .day.mag-day{grid-template-areas:"name meals add" "stat meals add";grid-template-rows:1fr auto}
+#v-madplan #days .mag-day .dstat-w{grid-area:stat;display:flex;justify-content:center;padding-top:6px}
+#v-madplan #days .mag-day .dstat{width:32px;height:32px;border-radius:50%;border:1px dashed var(--line);background:none;color:var(--muted);font-size:14px;display:grid;place-items:center;position:relative;padding:0;cursor:pointer}
+#v-madplan #days .mag-day .dstat.done{background:#1f9d55;border:0;color:#fff;font-weight:800;font-size:15px}
+#v-madplan #days .mag-day .dstat.wait{border:1.5px solid #e0a020;background:color-mix(in srgb,#f2b632 18%,transparent)}
+#v-madplan #days .mag-day .dstat.wait b{position:absolute;top:-6px;right:-7px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#e0a020;color:#3a2600;font:800 10.5px/17px var(--body)}
+#v-madplan #days .meal.mag .mline .st{display:none!important}
+#v-madplan #days.menu-style .meal.mag .mline{display:none}
 /* recipe actions: one tidy block — servings and share on top, two equal buttons, the main action full width */
 .rec-actions.ra{display:flex;flex-direction:column;gap:8px}
 .ra .ra-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -2728,7 +2738,14 @@ function renderPlan(){
         '<div class="mw">'+(kick?'<span class="mk">'+esc(kick)+'</span>':'')+'<button class="t" type="button" data-open="'+esc(e.recipeId)+'"><span class="mt">'+esc(r?r.title:"Slettet opskrift")+'</span></button>'+(r?'<span class="mintro">'+esc(menuIntro(r))+'</span>':'')+
         '<div class="mline"><span class="ms">'+e.servings+' pers.</span>'+(st?'<button type="button" class="st '+st.cls+'" data-status="'+esc(e.id)+'" aria-label="Indkøb: '+esc(st.text)+'">'+esc(pill)+'</button>':'')+'</div></div></div>';}).join("");
     const MON=["jan","feb","mar","apr","maj","jun","jul","aug","sep","okt","nov","dec"];
-    return '<div class="day mag-day'+(isT?" today":"")+(meals?"":" empty-day")+'" data-dayidx="'+i+'"><div class="dname"><span class="dn-full">'+d+'</span><small>'+date.getDate()+'. '+MON[date.getMonth()]+(isT?' · i dag':'')+'</small></div><div class="dmeals">'+(meals||'<div class="none">— intet på menuen endnu —</div>')+'</div><button type="button" class="day-add" data-add="'+i+'" aria-label="Tilføj til '+d+'">+</button></div>';
+    /* shopping status for the day, shown under the day name: ✓ all bought, a number = items still missing, 🛒 not shopped */
+    const dst=entries.filter(e=>e.day===i&&e.recipeId&&getRecipe(e.recipeId)).map(e=>({e,st:entryStatus(e,getRecipe(e.recipeId))})).filter(x=>x.st);
+    let dayStat="";if(dst.length){const miss=dst.filter(x=>x.st.cls==="wait").reduce((n,x)=>n+x.st.open.length,0),none=dst.some(x=>x.st.cls==="none"),allDone=dst.every(x=>x.st.cls==="done");
+      const first=(dst.find(x=>x.st.cls!=="done")||dst[0]).e.id;
+      dayStat=allDone?'<button type="button" class="dstat done" data-status="'+esc(first)+'" aria-label="Der er handlet ind til '+esc(d)+'">✓</button>':
+        none&&!miss?'<button type="button" class="dstat none" data-status="'+esc(first)+'" aria-label="Ikke handlet til '+esc(d)+'">🛒</button>':
+        '<button type="button" class="dstat wait" data-status="'+esc(first)+'" aria-label="'+miss+' varer mangler til '+esc(d)+'">🛒<b>'+(miss||"!")+'</b></button>';}
+    return '<div class="day mag-day'+(isT?" today":"")+(meals?"":" empty-day")+'" data-dayidx="'+i+'"><div class="dname"><span class="dn-full">'+d+'</span><small>'+date.getDate()+'. '+MON[date.getMonth()]+(isT?' · i dag':'')+'</small></div>'+(dayStat?'<div class="dstat-w">'+dayStat+'</div>':'')+'<div class="dmeals">'+(meals||'<div class="none">— intet på menuen endnu —</div>')+'</div><button type="button" class="day-add" data-add="'+i+'" aria-label="Tilføj til '+d+'">+</button></div>';
   }).join("");
   $("#pickBtn").disabled=!entries.some(e=>e.recipeId&&getRecipe(e.recipeId));
   const wv=document.getElementById("weekView");if(wv)wv.innerHTML=weekViewHTML();
