@@ -487,6 +487,11 @@ html.wheel #recipeList.gal-grid{padding-bottom:22vh}
 #v-madplan.pl-c .meal.note{border:0;background:#f4f2f8;border-radius:16px}
 /* magazine week plan */
 #v-madplan #days{gap:0}
+/* scroll the plan one day at a time: every day (and the page top) is a stopping point */
+html:has(#v-madplan.on){scroll-snap-type:y mandatory;scroll-padding-top:8px;scroll-padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+html:has(#v-madplan.on) .masthead,#v-madplan>.top{scroll-snap-align:start}
+#v-madplan #days .day{scroll-snap-align:start;scroll-snap-stop:always}
+html:has(body.wv-on),html:has(#printWrap){scroll-snap-type:none}
 #v-madplan #days .day.mag-day{display:grid;grid-template-columns:1fr 40px;grid-template-areas:"name add" "meals meals";gap:8px 6px;background:none!important;border:0;border-top:1px solid var(--ink);border-radius:0;box-shadow:none!important;outline:0;padding:14px 0 18px}
 #v-madplan #days .day.mag-day:first-child{border-top:2px solid var(--ink)}
 #v-madplan #days .mag-day .dname{grid-area:name;background:none!important;box-shadow:none!important;padding:0;display:flex;align-items:baseline;gap:10px;text-shadow:none;color:var(--ink);text-align:left}
