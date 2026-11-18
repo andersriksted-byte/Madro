@@ -12,10 +12,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795013980";</script>
-<script src="config.js?v=1795013980"></script>
-<script src="importer.js?v=1795013980"></script>
-<script src="shim.js?v=1795013980"></script>
+<script>window.__appVersion="1795014418";</script>
+<script src="config.js?v=1795014418"></script>
+<script src="importer.js?v=1795014418"></script>
+<script src="shim.js?v=1795014418"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1186,7 +1186,7 @@ body.wv-on .toast{z-index:210}
         <h3>Højst antal butikker pr. tur</h3>
         <div class="seg" id="maxSeg"><button type="button" data-v="1">1</button><button type="button" data-v="2">2</button><button type="button" data-v="3">3</button></div>
       </div>
-      <div class="card stack">
+      <div class="card stack claude-only">
         <h3>Familien</h3>
         <p class="small muted" style="margin:0">Alle i familien kan give en ret 👍 eller 👎. Antallet af 👍 er rettens vurdering, og når alle kan li' den, er den en familiefavorit.</p>
         <div id="kidsEdit" class="stack" style="gap:8px"></div>
@@ -1249,7 +1249,7 @@ body.wv-on .toast{z-index:210}
 <script>
 (function(){
 "use strict";
-const STORES=["Netto","Rema 1000","Coop 365","Løvbjerg","Lidl","Dagli'Brugsen","SuperBrugsen","Bilka","Føtex"];
+const STORES=["Netto","Rema 1000","Coop 365","Løvbjerg","Lidl","Dagli'Brugsen","SuperBrugsen","Kvickly","Meny","Spar","Min Købmand","Bilka","Føtex"];
 const allStores=()=>STORES.concat((state.settings.customStores||[]).filter(s=>!STORES.includes(s)));
 const DAYS=["Mandag","Tirsdag","Onsdag","Torsdag","Fredag","Lørdag","Søndag"];
 const PANTRY=["salt","peber","vand","olie","olivenolie","rapsolie","neutral olie","sukker","flagesalt","havsalt"];
@@ -1316,6 +1316,7 @@ function emitMem(col){listeners[col]&&listeners[col]();}
 async function setDoc(col,id,data){
   /* in a community family new recipes start shared; each one can be made private afterwards */
   if(col==="recipes"&&window.__communityOn&&data&&data.shared===undefined&&!data.fromLibrary&&!getRecipe(id))data=Object.assign({},data,{shared:true});
+  if(col==="recipes"&&data&&!data.author&&!data.fromLibrary&&!getRecipe(id)&&window.__family&&window.__family.name)data=Object.assign({},data,{author:window.__family.name});
   data=JSON.parse(JSON.stringify(data,(k,v)=>(typeof v==="number"&&!isFinite(v))?null:v));
   if(db){try{await db.collection(col).doc(id).set(data);}catch(e){
     if(e&&e.code==="unavailable"){await new Promise(r=>setTimeout(r,400+Math.random()*600));try{await db.collection(col).doc(id).set(data);return;}catch(e2){e=e2;}}
@@ -2277,10 +2278,10 @@ document.addEventListener("keydown",e=>{if(!cook.el||cook.el.hidden)return;
   else if(e.key==="ArrowLeft"){e.preventDefault();e.stopImmediatePropagation();cookGo(-1);}
   else if(e.key==="Escape"){e.preventDefault();e.stopImmediatePropagation();const pn=cook.el.querySelector(".cook-panel");if(!pn.hidden)pn.hidden=true;else closeCook(false);}},true);
 /* copy a community recipe into our own book (optionally with someone's 👍); returns the new id */
-async function saveCommunityCopy(r,kids){const cp=Object.assign({},r);["id","_community","familyId","ownerUid","sharedBy","sharedAt","libId","shared"].forEach(k=>delete cp[k]);
+async function saveCommunityCopy(r,kids){const cp=Object.assign({},r);cp.author=r.author||r.sharedBy||"";["id","_community","familyId","ownerUid","sharedBy","sharedAt","libId","shared"].forEach(k=>delete cp[k]);
   cp.fromLibrary=true;cp.createdAt=Date.now();if(kids)cp.kids=kids;const nid="lib"+uid();try{await setDoc("recipes",nid,cp);return nid;}catch(e){toast("Kunne ikke gemme");return "";}}
 function openCommunityRecipe(r){
-  openSheet('<div class="sheet-head"><div><h2>'+esc(r.title)+'</h2><div class="sub">Fra fællesskabet'+(r.sharedBy?' · delt af '+esc(r.sharedBy):'')+'</div></div>'+closeBtn+'</div><div class="stack">'+
+  openSheet('<div class="sheet-head"><div><h2>'+esc(r.title)+'</h2><div class="sub">Fra fællesskabet</div>'+creditHTML(r)+'</div>'+closeBtn+'</div><div class="stack">'+
     ((r.image&&isImg(r.image))?'<img class="hero" src="'+r.image+'" alt="'+esc(r.title)+'">':'')+
     '<div class="row" style="gap:6px">'+typePills(r)+(r.time?'<span class="pill">'+esc(r.time)+'</span>':'')+'<span class="pill">'+(r.servings||4)+' pers.</span></div>'+
     (r.description?'<p style="margin:0">'+esc(r.description)+'</p>':'')+
@@ -2295,6 +2296,13 @@ function openCommunityRecipe(r){
       toast(r.title+" er gemt i din kogebog");
       for(let i=0;i<30&&!getRecipe(nid);i++)await new Promise(res=>setTimeout(res,100));
       if(getRecipe(nid))openRecipe(nid);else closeSheet();};});}
+/* "Forfatter" = the family that made the recipe; "Oprindelsessted" = the site it came from */
+const ORIGIN_NAMES={"valdemarsro":"Valdemarsro","arla":"Arla","dk-kogebogen":"DK-Kogebogen","madensverden":"Madens Verden","alletiders-kogebog":"Alletiders Kogebog","mummum":"Mummum","nemlig":"Nemlig.com","coop":"Coop","dr":"DR","bbcgoodfood":"BBC Good Food","allrecipes":"Allrecipes","madogbolig":"Mad & Bolig","isabellas":"Isabellas","louiogkasper":"Loui og Kasper","spisbedre":"Spis Bedre","opskrifter":"Opskrifter.dk"};
+function originName(u){let h="";try{h=new URL(u).hostname.replace(/^www\./,"");}catch(e){return "";}
+  const k=h.split(".")[0];if(ORIGIN_NAMES[k])return ORIGIN_NAMES[k];return k.split(/[-_]/).map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(" ");}
+function authorOf(r){return r.author||(r.fromLibrary||r._community?r.sharedBy:(window.__family&&window.__family.name))||"";}
+function creditHTML(r){const a=authorOf(r),o=r.source?originName(r.source):"";if(!a&&!o)return "";
+  return '<div class="sub credit">'+(a?'Forfatter: <b>'+esc(a)+'</b>':'')+(a&&(o||!r.source)?' · ':'')+(o?'Oprindelsessted: <b>'+esc(o)+'</b>':a?'Oprindelsessted: <b>Egen opskrift</b>':'')+'</div>';}
 function srcLinkHTML(r){if(!r.source)return "";let host="";try{host=new URL(r.source).hostname.replace(/^www\./,"");}catch(e){return "";}
   return '<a class="src-link" href="'+esc(r.source)+'" target="_blank" rel="noopener"><span aria-hidden="true">🔗</span><span>Se den originale opskrift<small>'+esc(host)+'</small></span><span aria-hidden="true" class="arr">↗</span></a>';}
 function openRecipe(id,fallback){
@@ -2303,7 +2311,7 @@ function openRecipe(id,fallback){
   let serv=r.servings||4;
   const draw=()=>{
     const f=serv/(r.servings||4);
-    openSheet(`<div class="sheet-head"><div><h2>${esc(r.title)}</h2><div class="sub">${r.time?esc(r.time)+" · ":""}${(r.ingredients||[]).length} ingredienser</div></div>${closeBtn}</div>
+    openSheet(`<div class="sheet-head"><div><h2>${esc(r.title)}</h2><div class="sub">${r.time?esc(r.time)+" · ":""}${(r.ingredients||[]).length} ingredienser</div>${creditHTML(r)}</div>${closeBtn}</div>
     <div class="stack">
       ${(r.image&&isImg(r.image))?'<div class="hero-wrap"><img class="hero" src="'+r.image+'" alt="'+esc(r.title)+'"><button type="button" class="btn plain small hero-btn" id="imgChange">Skift billede</button></div>':''}
       ${r.id?'<div class="paste-zone" id="pasteWrap"'+((r.image&&isImg(r.image))?' hidden':'')+'><div class="paste-box" id="pasteBox" contenteditable="true" role="textbox" aria-label="Indsæt billede her" inputmode="none"></div><div class="paste-hint">Kopiér et billede, og <b>tryk og hold her</b> → <b>Indsæt</b></div><label class="btn plain small" for="imgFile">eller vælg fra billeder</label><input type="file" id="imgFile" accept="image/*" hidden><div class="small" id="imgStatus"></div></div>':''}
@@ -3176,7 +3184,7 @@ async function addItems(items){
 
 /* ---------- offers matching ---------- */
 /* ---------- offers: normalise, validity, matching ---------- */
-const STORE_CODE={N:"Netto",R:"Rema 1000",B:"Dagli'Brugsen",L:"Lidl",M:"Meny",C:"Coop 365",S:"SuperBrugsen",F:"Føtex",BI:"Bilka",LO:"Løvbjerg"};
+const STORE_CODE={N:"Netto",R:"Rema 1000",B:"Dagli'Brugsen",L:"Lidl",M:"Meny",C:"Coop 365",S:"SuperBrugsen",F:"Føtex",BI:"Bilka",LO:"Løvbjerg",K:"Kvickly",SP:"Spar",MK:"Min Købmand"};
 let _offCache={src:null,list:[]};
 function allOffers(){
   const off=state.offers;if(!off)return [];
@@ -3960,6 +3968,8 @@ function confirmBox(title,text,ok){return new Promise(res=>{const o=document.cre
   o.addEventListener("click",e=>{const b=e.target.closest("[data-cb]");if(b)done(b.dataset.cb==="1");else if(e.target===o)done(false);});
   o.querySelector('[data-cb="0"]').focus();});}
 window.__removePerson=pid=>saveKids(kidsList().filter(x=>x.id!==pid)).then(renderKidsEdit);
+window.__addPerson=async name=>{const id="c"+Date.now().toString(36);await saveKids(kidsList().concat([{id,name}]));renderKidsEdit();return id;};
+window.__renamePerson=(id,name)=>saveKids(kidsList().map(k=>k.id===id?Object.assign({},k,{name}):k)).then(renderKidsEdit);
 $("#kidsEdit").addEventListener("click",async e=>{const d=e.target.closest("[data-kiddel]");if(!d)return;const k=kidsList().find(x=>x.id===d.dataset.kiddel);
   if(window.__webApp&&window.__lockedPersons&&window.__lockedPersons.has(d.dataset.kiddel)){await confirmBox((k?k.name:"Personen")+" har sit eget login","Fjern "+(k?k.name:"personen")+" under Familie og login længere oppe. Så fjernes både login og 👍.","OK");return;}
   if(!await confirmBox("Fjern "+(k?k.name:"personen")+"?",(k?k.name+"s":"Personens")+" 👍 og 👎 på opskrifterne bliver ikke vist mere.","Fjern"))return;
