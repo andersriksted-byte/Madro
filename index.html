@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795030443";</script>
-<script src="config.js?v=1795030443"></script>
-<script src="importer.js?v=1795030443"></script>
-<script src="shim.js?v=1795030443"></script>
+<script>window.__appVersion="1795030578";</script>
+<script src="config.js?v=1795030578"></script>
+<script src="importer.js?v=1795030578"></script>
+<script src="shim.js?v=1795030578"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -257,7 +257,7 @@ a{color:var(--accent)}
 .cook[hidden]{display:none}
 .cook-top{display:flex;align-items:center;gap:8px}
 .cook-top .ttl{flex:1;min-width:0;font-weight:600;color:var(--muted);font-size:calc(14px * var(--fs));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cook-x{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--surface);font-size:20px;line-height:1;color:var(--ink);cursor:pointer;flex:none}
+.cook-x{width:42px;height:42px;border-radius:50%;border:1px solid var(--ink);background:none;font-size:24px;line-height:1;color:var(--ink);cursor:pointer;flex:none}
 .cook-pos{display:flex;align-items:baseline;justify-content:space-between;margin:14px 0 8px}
 .cook-pos .n{font-family:var(--display);font-size:calc(28px * var(--fs));font-weight:800;color:var(--accent)}
 .cook-pos .n small{font-size:.62em;color:var(--muted);font-weight:700}
@@ -2410,12 +2410,12 @@ function openCook(r,servings){
   if(!r||!(r.steps||[]).length){toast("Opskriften har ingen trin");return;}
   const el=cookEl();cook.r=r;cook.f=(Number(servings)||r.servings||4)/(r.servings||4);
   let saved=0;try{saved=+localStorage.getItem("mp_cook_"+r.id)||0;}catch(e){}cook.i=saved>0&&saved<r.steps.length?saved:0;
-  el.innerHTML=`<div class="cook-top"><button type="button" class="cook-x" data-ck="close" aria-label="Luk trin for trin">✕</button><div class="ttl">${esc(r.title)}${servings?" · "+esc(servings)+" pers.":""}</div><button type="button" class="cook-wake" data-ck="wake"></button></div>
+  el.innerHTML=`<div class="cook-top"><div class="ttl">${esc(r.title)}${servings?" · "+esc(servings)+" pers.":""}</div><button type="button" class="cook-wake" data-ck="wake"></button><button type="button" class="cook-x" data-ck="close" aria-label="Luk trin for trin">×</button></div>
     <div class="cook-pos"><div class="n" aria-live="polite"></div><div class="row" style="gap:12px"><button type="button" class="linkbtn cook-restart" data-ck="restart">Start forfra</button><button type="button" class="cook-say" data-ck="say" aria-pressed="false"></button><button type="button" class="linkbtn" data-ck="ing">Ingredienser</button></div></div>
     <div class="cook-bar" role="img"></div>
     <div class="cook-main"><p class="cook-text"></p><div class="cook-ing"></div></div>
     <div class="cook-nav"><button type="button" class="prev" data-ck="prev">← Forrige</button><button type="button" class="next" data-ck="next">Næste →</button></div>
-    <div class="cook-panel" hidden><div class="cook-top"><div class="ttl" style="color:var(--ink);font-size:calc(20px * var(--fs))">Ingredienser</div><button type="button" class="cook-x" data-ck="ingclose" aria-label="Luk ingredienser">✕</button></div>
+    <div class="cook-panel" hidden><div class="cook-top"><div class="ttl" style="color:var(--ink);font-size:calc(20px * var(--fs))">Ingredienser</div><button type="button" class="cook-x" data-ck="ingclose" aria-label="Luk ingredienser">×</button></div>
       <div class="cnt"></div><div class="list"></div></div>`;
   el.hidden=false;document.documentElement.style.overflow="hidden";
   setWake(false);keepAwake();drawCookIng();drawCook();
