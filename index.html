@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795037481";</script>
-<script src="config.js?v=1795037481"></script>
-<script src="importer.js?v=1795037481"></script>
-<script src="shim.js?v=1795037481"></script>
+<script>window.__appVersion="1795037826";</script>
+<script src="config.js?v=1795037826"></script>
+<script src="importer.js?v=1795037826"></script>
+<script src="shim.js?v=1795037826"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1518,9 +1518,10 @@ function handleErr(e){
 }
 function subscribeCol(col,cb){
   if(db){
-    let timer=setTimeout(()=>notice("Dine data kan ikke hentes lige nu. Det kan være forbindelsen."),10000);
+    /* warn only if nothing at all arrives; data from the phone's own copy counts too, and the warning goes away when data comes */
+    let timer=setTimeout(()=>{timer=null;notice("Dine data kan ikke hentes lige nu. Det kan være forbindelsen.");},15000);
     db.collection(col).onSnapshot(snap=>{
-      if(!snap.metadata.fromCache){clearTimeout(timer);}
+      if(timer){clearTimeout(timer);timer=null;}else{const n=$("#notice");if(n&&/kan ikke hentes/.test(n.textContent))notice("");}
       cb(snap.docs.map(d=>Object.assign({id:d.id},d.data())));
     },err=>{clearTimeout(timer);handleErr(err);});
   }else{
