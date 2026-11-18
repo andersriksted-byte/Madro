@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795026268";</script>
-<script src="config.js?v=1795026268"></script>
-<script src="importer.js?v=1795026268"></script>
-<script src="shim.js?v=1795026268"></script>
+<script>window.__appVersion="1795028533";</script>
+<script src="config.js?v=1795028533"></script>
+<script src="importer.js?v=1795028533"></script>
+<script src="shim.js?v=1795028533"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2630,6 +2630,8 @@ function noteKind(n){const t=String(n||"").toLowerCase();
 const UDE_IMG=window.__webApp?"img/spiser-ude.jpg":"/_blob/2025a67fbd193f2746716b27a7b62b1e";
 /* photo for an entry without a recipe: its own upload, else the restaurant photo for "spiser ude" */
 function noteImg(e){if(!e)return "";if(e.image&&isImg(e.image))return e.image;if(e.noImage)return "";const t=String(e.note||"");return /ude|restaurant/i.test(t)?UDE_IMG:"";}
+/* what a plan note shows: its own photo, the bistro photo for "spiser ude", otherwise the illustrated default */
+function noteShowImg(e){return noteImg(e)||defaultArt({title:String((e&&e.note)||"")});}
 function openNoteImage(en,key){const cur=noteImg(en);
   openSheet('<div class="sheet-head"><div><h2>'+esc(en.note)+'</h2><div class="sub">Tekst og billede til punktet</div></div>'+closeBtn+'</div>'+
     '<div class="stack"><form class="row" id="niSubF" style="flex-wrap:nowrap"><input type="text" id="niSub" maxlength="80" value="'+esc(en.sub||"")+'" placeholder="Tekst under, fx hos Claus og Nina" aria-label="Tekst under punktet"><button class="btn" type="submit">Gem</button></form>'+(cur?'<img src="'+esc(cur)+'" alt="" style="width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px">':'<p class="muted" style="margin:0">Intet billede endnu.</p>')+
@@ -2662,7 +2664,7 @@ function renderPlan(){
       const grip='<span class="grip" data-grip="'+esc(e.id)+'" title="Træk for at flytte eller ændre rækkefølgen">⠿</span>';
       if(e.pendingUrl){const imp=state.imports.find(x=>x.url===e.pendingUrl);const failed=imp&&imp.status==="fejl";
         return '<div class="meal note" data-entry="'+esc(e.id)+'">'+grip+'<span class="t"><span class="mt">'+esc(e.note||e.pendingUrl)+'</span><span class="ms">'+(failed?"kunne ikke hentes"+(imp.error?": "+esc(imp.error):""):"hentes snart")+'</span></span><button class="x" type="button" data-rm="'+esc(e.id)+'" aria-label="Fjern">×</button></div>';}
-      if(e.note!=null){const nk=noteKind(e.note);const ni=noteImg(e);return '<div class="meal mag note-mag'+(ni?' has-img':'')+'" style="--rc:'+nk.c+'" data-entry="'+esc(e.id)+'">'+(ni?'<img class="mag-img" src="'+esc(ni)+'" alt="">':'<span class="mag-emo" aria-hidden="true">'+nk.e+'</span>')+grip+'<button class="x" type="button" data-rm="'+esc(e.id)+'" aria-label="Fjern '+esc(e.note)+'">×</button><div class="mw">'+(norm(nk.k)===norm(e.note)?'':'<span class="mk">'+esc(nk.k)+'</span>')+'<span class="mt">'+esc(e.note)+'</span>'+(e.sub?'<span class="msub">'+esc(e.sub)+'</span>':'')+'</div></div>';}
+      if(e.note!=null){const nk=noteKind(e.note);const ni=noteShowImg(e);return '<div class="meal mag note-mag'+(ni?' has-img':'')+'" style="--rc:'+nk.c+'" data-entry="'+esc(e.id)+'">'+(ni?'<img class="mag-img" src="'+esc(ni)+'" alt="">':'<span class="mag-emo" aria-hidden="true">'+nk.e+'</span>')+grip+'<button class="x" type="button" data-rm="'+esc(e.id)+'" aria-label="Fjern '+esc(e.note)+'">×</button><div class="mw">'+(norm(nk.k)===norm(e.note)?'':'<span class="mk">'+esc(nk.k)+'</span>')+'<span class="mt">'+esc(e.note)+'</span>'+(e.sub?'<span class="msub">'+esc(e.sub)+'</span>':'')+'</div></div>';}
       if(false)return '<div class="meal note" data-entry="'+esc(e.id)+'">'+grip+'<span class="nemo" aria-hidden="true">'+noteEmoji(e.note)+'</span><span class="t"><span class="mt">'+esc(e.note)+'</span></span><button class="x" type="button" data-rm="'+esc(e.id)+'" aria-label="Fjern '+esc(e.note)+'">×</button></div>';
       const r=getRecipe(e.recipeId);
       const st=r?entryStatus(e,r):null;
@@ -2705,7 +2707,7 @@ function printSheetHTML(){
       if(e.recipeId){const r=getRecipe(e.recipeId);if(!r)return '';const im=imgOf(r);
         const k=[(r.themes||[])[0]||recipeTypes(r)[0],r.time?"⏱ "+r.time:""].filter(Boolean).join("  ·  ");
         return '<div class="ps-card" style="--rc:'+catColor("r"+r.title)+'">'+(im?'<div class="img" style="background-image:url(\''+im+'\')"></div>':'<span class="emo">'+dishEmoji(r)+'</span>')+'<div class="ps-ov">'+(k?'<div class="k">'+esc(k)+'</div>':'')+'<div class="t">'+esc(r.title)+'</div></div></div>';}
-      const txt=e.note||e.pendingUrl||"";const nk=noteKind(txt);const ni=noteImg(e);
+      const txt=e.note||e.pendingUrl||"";const nk=noteKind(txt);const ni=e.note!=null?noteShowImg(e):"";
       return '<div class="ps-card" style="--rc:'+nk.c+'">'+(ni?'<div class="img" style="background-image:url(\''+ni+'\')"></div>':'<span class="emo">'+nk.e+'</span>')+'<div class="ps-ov">'+(norm(nk.k)===norm(txt)?'':'<div class="k">'+esc(nk.k)+'</div>')+'<div class="t">'+esc(txt)+'</div>'+(e.sub?'<div class="k">'+esc(e.sub)+'</div>':'')+'</div></div>';}).filter(Boolean);
     return '<div class="ps-row"><div class="ps-day"><b>'+d.slice(0,3)+'</b><small>'+date.getDate()+'. '+MON[date.getMonth()]+'</small></div>'+
       '<div class="ps-meals n'+cards.length+'">'+(cards.join("")||'<div class="ps-empty">Fri aften</div>')+'</div>'+
@@ -2724,7 +2726,7 @@ function weekSheetData(){
         return {im:imgOf(r),rc:catColor("r"+r.title),emo:dishEmoji(r),intro:menuIntro(r),time:r.time||"",
           kick:[(r.themes||[])[0]||recipeTypes(r)[0],r.time?"⏱ "+r.time:""].filter(Boolean).join("  ·  "),title:r.title||""};}
       const txt=e.note||e.pendingUrl||"";const nk=noteKind(txt);
-      return {im:noteImg(e),rc:nk.c,emo:nk.e,kick:e.sub||(norm(nk.k)===norm(txt)?"":nk.k),title:txt,intro:e.sub||""};}).filter(Boolean);
+      return {im:noteShowImg(e),rc:nk.c,emo:nk.e,kick:e.sub||(norm(nk.k)===norm(txt)?"":nk.k),title:txt,intro:e.sub||""};}).filter(Boolean);
     return {day:d.slice(0,3),dayFull:d,date:date.getDate()+". "+M[date.getMonth()],cards};});
   return {week:w.week,range:wk.getDate()+". "+M[wk.getMonth()]+" – "+end.getDate()+". "+M[end.getMonth()],year:end.getFullYear(),rows};}
 /* one short line for the menu card: the recipe's own description, else its main ingredients */
@@ -2913,7 +2915,7 @@ function weekViewHTML(){const wk=state.week,w=isoWeek(wk),entries=planOf(weekKey
         const k=[(r.themes||[])[0]||recipeTypes(r)[0],r.time].filter(Boolean).join(" · ");
         return '<button type="button" class="wv-card" data-wvr="'+esc(r.id)+'" data-wve="'+esc(e.id)+'" style="--rc:'+catColor("r"+r.title)+'">'+(im?'<img src="'+im+'" alt="">':'<span class="emo" aria-hidden="true">'+dishEmoji(r)+'</span>')+'<span class="wv-ov">'+(k?'<span class="k">'+esc(k)+'</span>':'')+'<span class="t">'+esc(r.title)+'</span></span></button>';}
       const txt=e.note||e.pendingUrl||"";const nk=noteKind(txt);
-const ni=noteImg(e);
+const ni=noteShowImg(e);
       return '<div class="wv-card" style="--rc:'+nk.c+'">'+(ni?'<img src="'+esc(ni)+'" alt="">':'<span class="emo" aria-hidden="true">'+nk.e+'</span>')+'<span class="wv-ov">'+(norm(nk.k)===norm(txt)?'':'<span class="k">'+esc(nk.k)+'</span>')+'<span class="t">'+esc(txt)+'</span>'+(e.sub?'<span class="k" style="text-transform:none;letter-spacing:0;font-style:italic">'+esc(e.sub)+'</span>':'')+'</span></div>';}).filter(Boolean);
     return '<div class="wv-row'+(isT?' today':'')+'"><div class="wv-day"><b>'+d.slice(0,3)+'</b><small>'+date.getDate()+'. '+M[date.getMonth()]+'</small></div><div class="wv-meals n'+cards.length+'">'+(cards.join("")||'<button type="button" class="wv-empty" data-wvadd="'+i+'">+ Tilføj ret</button>')+'</div></div>';}).join("");
   return '<div class="wv-head"><div><h2>Uge '+w.week+'</h2><small>'+wk.getDate()+'. '+M[wk.getMonth()]+' – '+end.getDate()+'. '+M[end.getMonth()]+'</small></div>'+
