@@ -18,10 +18,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795024705";</script>
-<script src="config.js?v=1795024705"></script>
-<script src="importer.js?v=1795024705"></script>
-<script src="shim.js?v=1795024705"></script>
+<script>window.__appVersion="1795024835";</script>
+<script src="config.js?v=1795024835"></script>
+<script src="importer.js?v=1795024835"></script>
+<script src="shim.js?v=1795024835"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2708,8 +2708,17 @@ async function drawWeekCanvas(style){
        c.beginPath();c.moveTo(cx+sd*mm(4.4),cy);c.lineTo(cx+sd*mm(8.6),cy);c.lineWidth=mm(.3);c.stroke();});};
    fleuron(W/2,o);fleuron(W/2,H-o);
    c.lineWidth=mm(.18);}
-  const L=mm(12),R=W-mm(12),T=mm(11);
-  if(MENU){drawMenuBody(c,D,{W,H,mm,pt,sp,wrap,SERIF,SANS,INK,RED,MUTE,LINE,WARM,L,R,T,cssCol});return cv;}
+  const L=mm(12),R=W-mm(12);let T=mm(11);
+  /* the app's wordmark: italic Madro between double rules, with what it is underneath; and the round M seal */
+  const BRAND="#c8452a";
+  const mast=(cx,y,size,half)=>{c.fillStyle=BRAND;c.font="italic 800 "+pt(size)+"px "+SERIF;const tw=c.measureText("Madro").width;
+    c.textAlign="center";c.fillText("Madro",cx,y);c.textAlign="left";
+    const ly=y-pt(size)*.32,g=mm(4);[[cx-half,cx-tw/2-g],[cx+tw/2+g,cx+half]].forEach(([a,b])=>{c.fillRect(a,ly-mm(.55),b-a,mm(.25));c.fillRect(a,ly+mm(.3),b-a,mm(.25));});
+    c.fillStyle=MUTE;c.font="700 "+pt(6.2)+"px "+SANS;sp("MADPLAN  ·  KOGEBOG  ·  INDKØB",cx,y+mm(4.6),pt(6.2)*.28,"center");};
+  const seal=(cx,cy,r)=>{c.fillStyle=BRAND;c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.fill();
+    c.fillStyle="#fff";c.font="italic 800 "+(r*1.35)+"px "+SERIF;c.textAlign="center";c.fillText("M",cx,cy+r*.45);c.textAlign="left";};
+  if(MENU){drawMenuBody(c,D,{W,H,mm,pt,sp,wrap,SERIF,SANS,INK,RED,MUTE,LINE,WARM,L,R,T,cssCol,mast,seal});return cv;}
+  mast(W/2,T+mm(7.5),24,(R-L)/2);T+=mm(14);
   // header
   c.fillStyle=RED;c.font="700 "+pt(7.5)+"px "+SANS;sp("UGENS MENU",L,T+mm(2.6),pt(7.5)*.24);
   c.fillStyle=INK;c.font="800 "+pt(34)+"px "+SERIF;c.fillText("Uge "+D.week,L,T+mm(14.6));
@@ -2748,7 +2757,8 @@ async function drawWeekCanvas(style){
     c.fillStyle=CREAM;rr(xNotes,y,wNotes,rowH,rad);c.fill();c.strokeStyle=LINE+".45)";c.lineWidth=mm(.22);c.stroke();
     c.fillStyle=RED;c.font="700 "+pt(6)+"px "+SANS;sp("NOTER",xNotes+mm(2.6),y+mm(3.8),pt(6)*.2);
     const ly0=y+mm(5.2),lh2=(rowH-mm(5.2)-mm(.8))/5;c.fillStyle=LINE+".22)";for(let k=1;k<=4;k++)c.fillRect(xNotes+mm(2.6),ly0+lh2*k,wNotes-mm(5.2),mm(.18));});
-  c.fillStyle=MUTE;c.font="700 "+pt(6.5)+"px "+SANS;sp("MADRO",L,H-mm(9),pt(6.5)*.2);sp("VELBEKOMME",R,H-mm(9),pt(6.5)*.2,"right");
+  seal(L+mm(2.6),H-mm(10.1),mm(2.6));c.fillStyle=BRAND;c.font="italic 800 "+pt(9)+"px "+SERIF;c.fillText("Madro",L+mm(6.6),H-mm(9));
+  c.fillStyle=MUTE;c.font="700 "+pt(6.5)+"px "+SANS;sp("VELBEKOMME",R,H-mm(9),pt(6.5)*.2,"right");
   return cv;}
 function jpegToPdf(jpg,wPx,hPx){/* minimal one-page A4 PDF with the JPEG as a full-page image */
   const enc=t=>{const u=new Uint8Array(t.length);for(let i=0;i<t.length;i++)u[i]=t.charCodeAt(i)&255;return u;};
@@ -2765,15 +2775,15 @@ function jpegToPdf(jpg,wPx,hPx){/* minimal one-page A4 PDF with the JPEG as a fu
   push(enc(x+"trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n"+xref+"\n%%EOF"));
   return new Blob(parts,{type:"application/pdf"});}
 /* the alternative print: a bistro menu card. Dish name and a short introduction, the picture as a small round vignette */
-function drawMenuBody(c,D,o){const {W,H,mm,pt,sp,wrap,SERIF,SANS,INK,RED,MUTE,LINE,WARM,L,R,T}=o;const CX=W/2;
+function drawMenuBody(c,D,o){const {W,H,mm,pt,sp,wrap,SERIF,SANS,INK,RED,MUTE,LINE,WARM,L,R,T,mast,seal}=o;const CX=W/2;
   const orn=(y,w)=>{c.fillStyle=RED;c.fillRect(CX-w/2,y,w/2-mm(3),mm(.22));c.fillRect(CX+mm(3),y,w/2-mm(3),mm(.22));
     c.beginPath();c.moveTo(CX,y-mm(1.3));c.lineTo(CX+mm(.9),y+mm(.11));c.lineTo(CX,y+mm(1.5));c.lineTo(CX-mm(.9),y+mm(.11));c.closePath();c.fill();};
   c.textBaseline="alphabetic";
-  c.fillStyle=RED;c.font="700 "+pt(7.5)+"px "+SANS;sp("MADRO",CX,T+mm(4),pt(7.5)*.32,"center");
-  c.fillStyle=INK;c.font="italic 800 "+pt(40)+"px "+SERIF;c.textAlign="center";c.fillText("Menu",CX,T+mm(19));c.textAlign="left";
-  c.fillStyle=MUTE;c.font="700 "+pt(7.5)+"px "+SANS;sp(("Uge "+D.week+"  ·  "+D.range+" "+D.year).toUpperCase(),CX,T+mm(25.5),pt(7.5)*.2,"center");
-  orn(T+mm(30),mm(70));
-  const top=T+mm(35),bottom=H-mm(17),rowH=(bottom-top)/7;
+  mast(CX,T+mm(6),17,mm(36));
+  c.fillStyle=INK;c.font="italic 800 "+pt(40)+"px "+SERIF;c.textAlign="center";c.fillText("Menu",CX,T+mm(28));c.textAlign="left";
+  c.fillStyle=MUTE;c.font="700 "+pt(7.5)+"px "+SANS;sp(("Uge "+D.week+"  ·  "+D.range+" "+D.year).toUpperCase(),CX,T+mm(34.5),pt(7.5)*.2,"center");
+  orn(T+mm(39),mm(70));
+  const top=T+mm(44),bottom=H-mm(22),rowH=(bottom-top)/7;
   D.rows.forEach((row,i)=>{const y=top+i*rowH,n=row.cards.length,left=i%2===0;
     const dia=Math.min(rowH-mm(7),mm(30)),cy=y+rowH/2,icx=left?L+mm(4)+dia/2:R-mm(4)-dia/2;
     const tx0=left?L+mm(4)+dia+mm(8):L+mm(6),tx1=left?R-mm(6):R-mm(4)-dia-mm(8),tw=tx1-tx0;
@@ -2800,7 +2810,7 @@ function drawMenuBody(c,D,o){const {W,H,mm,pt,sp,wrap,SERIF,SANS,INK,RED,MUTE,LI
     if(i<6){c.save();c.setLineDash([mm(.5),mm(1.2)]);c.strokeStyle=LINE+".35)";c.lineWidth=mm(.25);c.beginPath();c.moveTo(L+mm(20),y+rowH);c.lineTo(R-mm(20),y+rowH);c.stroke();c.restore();}
   });
   orn(H-mm(15),mm(50));
-  c.fillStyle=MUTE;c.font="italic 700 "+pt(9)+"px "+SERIF;c.textAlign="center";c.fillText("Velbekomme",CX,H-mm(9.5));c.textAlign="left";}
+  seal(CX,H-mm(17),mm(3.2));c.fillStyle=MUTE;c.font="italic 700 "+pt(9)+"px "+SERIF;c.textAlign="center";c.fillText("Velbekomme",CX,H-mm(9.5));c.textAlign="left";}
 async function makeWeekPdf(style){
   const cv=await drawWeekCanvas(style);
   const jb=await new Promise((res,rej)=>{try{cv.toBlob(b=>b?res(b):rej(new Error("billedet kunne ikke laves")),"image/jpeg",.9);}catch(e){rej(e);}});
