@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795078388";</script>
-<script src="config.js?v=1795078388"></script>
-<script src="importer.js?v=1795078388"></script>
-<script src="shim.js?v=1795078388"></script>
+<script>window.__appVersion="1795078494";</script>
+<script src="config.js?v=1795078494"></script>
+<script src="importer.js?v=1795078494"></script>
+<script src="shim.js?v=1795078494"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1014,6 +1014,8 @@ html.logo-tin .tabs a[data-tab="madplan"].on svg.seal{box-shadow:0 0 0 2px #6b3a
 .ob-info{font-size:calc(13px * var(--fs));color:var(--muted);display:grid;gap:4px}
 .ob-exp{display:flex;flex-wrap:wrap;gap:4px 12px}.ob-exp b{color:var(--ink);font-weight:600}
 #offBtn{position:relative}
+.tabs a[data-tab="indkob"]{position:relative}
+.tabs a.off-new::before{content:"%";position:absolute;top:3px;left:calc(50% + 4px);min-width:17px;height:17px;border-radius:9px;background:#d8342a;color:#fff;font:700 11px/17px system-ui,sans-serif;text-align:center;border:2px solid var(--surface,#fff);box-sizing:content-box;z-index:1}
 #offBtn.has-new::after{content:"";position:absolute;top:1px;right:1px;width:11px;height:11px;border-radius:50%;background:var(--brand,#c8452a);border:2px solid var(--bg)}
 /* recipe actions: one tidy block — servings and share on top, two equal buttons, the main action full width */
 .rec-actions.ra{display:flex;flex-direction:column;gap:8px}
@@ -1576,10 +1578,12 @@ function pickOffers(){
   offDot();
 }
 /* a dot on the % button when offers newer than the last look have arrived */
+function offSeenKey(){let u=null;try{u=window.firebase&&firebase.auth&&firebase.auth().currentUser;}catch(e){}return "mp_offSeen"+(u&&u.uid?"_"+u.uid:"");}
 function offStamp(){return (state.offers&&state.offers.updatedAt)?String(state.offers.updatedAt):"";}
-function offDot(){const b=document.getElementById("offBtn");if(!b)return;const st=offStamp();let seen="";try{seen=localStorage.getItem("mp_offSeen")||"";}catch(e){}
-  b.classList.toggle("has-new",!!st&&st!==seen&&allOffers().length>0);}
-function offSeen(){try{localStorage.setItem("mp_offSeen",offStamp());}catch(e){}offDot();}
+function offDot(){const b=document.getElementById("offBtn");if(!b)return;const st=offStamp();let seen="";try{seen=localStorage.getItem(offSeenKey())||"";}catch(e){}
+  const on=!!st&&st!==seen&&allOffers().length>0;b.classList.toggle("has-new",on);
+  const t=document.querySelector('.tabs a[data-tab="indkob"]');if(t){t.classList.toggle("off-new",on);t.setAttribute("aria-label",on?"Indkøb, nye tilbud":"Indkøb");}}
+function offSeen(){try{localStorage.setItem(offSeenKey(),offStamp());}catch(e){}offDot();}
 async function loadOfferFile(){
   try{const res=await fetch("offers.json",{cache:"no-store"});if(!res.ok)return;fileOffers=await res.json();pickOffers();renderStores();renderShop();}catch(e){}
 }
