@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795077831";</script>
-<script src="config.js?v=1795077831"></script>
-<script src="importer.js?v=1795077831"></script>
-<script src="shim.js?v=1795077831"></script>
+<script>window.__appVersion="1795078388";</script>
+<script src="config.js?v=1795078388"></script>
+<script src="importer.js?v=1795078388"></script>
+<script src="shim.js?v=1795078388"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1002,7 +1002,8 @@ html.logo-tin .tabs a[data-tab="madplan"].on svg.seal{box-shadow:0 0 0 2px #6b3a
 :root.logo-tin[data-theme="dark"]{--brand:#e0b04a;--accent:#d9a43a;--on-accent:#1f3a4a;--accent-soft:#1f3a4a;--bg:#13232c;--surface:#1b303b;--line:#2c4552}
 :root.logo-tin .tabs a.on::after{background:#d9a43a}
 .ob-row{width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);color:inherit;font:inherit;align-items:center;cursor:pointer}
-.ob-row .ob-pr{font-weight:700;white-space:nowrap}
+.ob-row .ob-pr{font-weight:700;white-space:nowrap;text-align:right;display:grid;line-height:1.2}
+.ob-before{font-weight:400;font-size:calc(12px * var(--fs));color:var(--muted)}
 .ob-row .ob-add{flex:none;width:30px;height:30px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-weight:700;color:var(--accent)}
 .ob-row.ob-has .ob-add{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .ob-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:14px 0 4px;border-bottom:1.5px solid var(--ink)}
@@ -3549,16 +3550,16 @@ function allOffers(){
   const weekEnd=new Date(fetched);weekEnd.setDate(weekEnd.getDate()+7);weekEnd.setHours(23,59,59,0);
   const list=[];
   (off.rows||[]).forEach(r=>{
-    const [s,product,size,price,to,limit]=r;
+    const [s,product,size,price,to,limit,before]=r;
     let validTo=weekEnd,assumed=true;
     if(to){const [m,d]=String(to).split("-").map(Number);validTo=new Date(year,m-1,d,23,59,59);assumed=false;}
-    list.push({store:STORE_CODE[s]||s,product:String(product),unitText:size||"",price:Number(price),validTo,assumed,limit:limit||""});
+    const bf=Number(before);list.push({store:STORE_CODE[s]||s,product:String(product),unitText:size||"",price:Number(price),before:bf>Number(price)?bf:0,validTo,assumed,limit:limit||""});
   });
   (off.items||[]).forEach(o=>{
     let validTo=weekEnd,assumed=true;const m=String(o.product||"").match(/til (\d{1,2})\.(\d{1,2})|–(\d{1,2})\.(\d{1,2})/);
     if(m){const d=+(m[1]||m[3]),mo=+(m[2]||m[4]);validTo=new Date(year,mo-1,d,23,59,59);assumed=false;}
     if(/fast lav pris/i.test(o.product||"")){validTo=new Date(year,11,31,23,59,59);assumed=false;}
-    list.push(Object.assign({},o,{validTo,assumed,limit:o.limit||""}));
+    const bf=Number(o.before);list.push(Object.assign({},o,{validTo,assumed,limit:o.limit||"",before:bf>Number(o.price)?bf:0}));
   });
   _offCache={src:off,list};
   return list.filter(o=>o.validTo>=todayStart());
@@ -4307,7 +4308,7 @@ function openOfferBrowser(){
   const onList=n=>state.shopping.some(x=>!x.checked&&norm(x.name)===norm(n));
   let s,shown=[];
   const row=(o,i,item)=>{const nm=item?item.n:o.product;const has=onList(nm);
-    return '<button type="button" class="check ob-row'+(has?' ob-has':'')+'" data-obadd="'+i+'"><div class="main"><div class="n">'+esc(o.product)+'</div><div class="s">'+esc(o.store)+(o.unitText?' · '+esc(o.unitText):'')+' · '+esc(offerWhen(o))+(o.limit?' · <b style="color:var(--accent)">'+esc(o.limit)+'</b>':'')+'</div></div><span class="num ob-pr">'+esc(fmtKr(o.price))+'</span><span class="ob-add" aria-hidden="true">'+(has?'✓':'+')+'</span></button>';};
+    return '<button type="button" class="check ob-row'+(has?' ob-has':'')+'" data-obadd="'+i+'"><div class="main"><div class="n">'+esc(o.product)+'</div><div class="s">'+esc(o.store)+(o.unitText?' · '+esc(o.unitText):'')+' · '+esc(offerWhen(o))+(o.limit?' · <b style="color:var(--accent)">'+esc(o.limit)+'</b>':'')+'</div></div><span class="num ob-pr">'+esc(fmtKr(o.price))+(o.before?'<s class="ob-before" title="Førpris: højeste pris i butikkerne">'+esc(fmtKr(o.before))+'</s>':'')+'</span><span class="ob-add" aria-hidden="true">'+(has?'✓':'+')+'</span></button>';};
   const draw=()=>{
     const qq=norm(q);
     const list=allOffers().filter(o=>(st?o.store===st:stores.includes(o.store))&&(!qq||norm(o.product).includes(qq)));
@@ -4320,6 +4321,8 @@ function openOfferBrowser(){
       html+=gs.map(g=>'<div class="ob-h"><b>'+esc(g.m.n)+'</b><span>købt '+g.m.f+' gange</span></div>'+g.os.sort((x,y)=>unitPrice(x)-unitPrice(y)).map(o=>push(o,g.m)).join("")).join("");
       if(!gs.length)html+='<p class="muted small" style="margin:8px 0">Ingen af dine faste varer er på tilbud lige nu'+(usual.length?'':'. Når du har handlet et par gange, kommer de varer, du ofte køber, øverst her')+'.</p>';
       if(rest.length)html+='<div class="ob-h"><b>Andre tilbud</b><span>'+rest.length+'</span></div>'+rest.sort((x,y)=>x.product.localeCompare(y.product,"da")).slice(0,200).map(o=>push(o,null)).join("");
+    }else if(mode==="az"){
+      let last="";list.slice().sort((x,y)=>x.product.localeCompare(y.product,"da")||x.price-y.price).forEach(o=>{const L=(o.product.trim()[0]||"#").toUpperCase();const ch=/[A-ZÆØÅ]/.test(L)?L:"#";if(ch!==last){last=ch;html+='<div class="ob-h"><b>'+esc(ch)+'</b><span></span></div>';}html+=push(o,mineOf(o));});
     }else{
       const by=new Map();list.forEach(o=>{if(!by.has(o.store))by.set(o.store,[]);by.get(o.store).push(o);});
       html+=[...by.keys()].sort((x,y)=>stores.indexOf(x)-stores.indexOf(y)).map(k=>'<div class="ob-h"><b>'+esc(k)+'</b><span>'+by.get(k).length+' tilbud</span></div>'+by.get(k).sort((x,y)=>{const a=mineOf(x),b=mineOf(y);return ((b&&b.f)||0)-((a&&a.f)||0)||x.product.localeCompare(y.product,"da");}).slice(0,150).map(o=>push(o,mineOf(o))).join("")).join("");
@@ -4335,10 +4338,10 @@ function openOfferBrowser(){
   };
   if(!allOffers().length){openSheet('<div class="sheet-head"><div><h2>Tilbud</h2></div>'+closeBtn+'</div><div class="empty">Der er ingen aktuelle tilbud endnu. De hentes automatisk for dine butikker.</div>');return;}
   openSheet(`<div class="sheet-head"><div><h2>Tilbud</h2><div class="sub" id="obCount"></div></div>${closeBtn}</div>
-    <div class="stack">${offInfoHTML(stores)}<div class="seg ob-seg" id="obSort" role="group" aria-label="Sortér tilbud"><button type="button" data-os="mine">Mine varer</button><button type="button" data-os="store">Butik</button></div>
+    <div class="stack">${offInfoHTML(stores)}<div class="seg ob-seg" id="obSort" role="group" aria-label="Sortér tilbud"><button type="button" data-os="mine">Mine varer</button><button type="button" data-os="store">Butik</button><button type="button" data-os="az">A–Å</button></div>
     <input type="text" data-clear id="obQ" placeholder="Søg, fx kylling, kaffe, æg" aria-label="Søg i tilbud">
     <div class="row ob-chips">${['<button type="button" class="chip on" data-obst="">Alle butikker</button>'].concat(stores.map(x=>'<button type="button" class="chip" data-obst="'+esc(x)+'">'+esc(x)+'</button>')).join("")}</div>
-    <p class="small muted" style="margin:0">Tryk på en vare for at lægge den på indkøbslisten i den butik.</p>
+    <p class="small muted" style="margin:0">Tryk på en vare for at lægge den på indkøbslisten i den butik. Den overstregede førpris er det højeste, varen ellers koster i butikkerne.</p>
     <div class="card" id="obList"></div></div>`,el=>{s=el;
     const setSort=()=>el.querySelectorAll("[data-os]").forEach(x=>x.classList.toggle("on",x.dataset.os===mode));setSort();
     el.querySelectorAll("[data-os]").forEach(b=>b.onclick=()=>{mode=b.dataset.os;setMyPref("offSort",mode);setSort();draw();});
