@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795038834";</script>
-<script src="config.js?v=1795038834"></script>
-<script src="importer.js?v=1795038834"></script>
-<script src="shim.js?v=1795038834"></script>
+<script>window.__appVersion="1795077831";</script>
+<script src="config.js?v=1795077831"></script>
+<script src="importer.js?v=1795077831"></script>
+<script src="shim.js?v=1795077831"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1001,6 +1001,19 @@ html.logo-tin .tabs a[data-tab="madplan"].on svg.seal{box-shadow:0 0 0 2px #6b3a
 :root.logo-tin:not([data-theme="dark"]){--brand:#2b6c78;--accent:#1f3a4a;--accent-soft:#e2efed;--on-accent:#f6efe0;--bg:#f6f3ec;--line:#dcd8cc}
 :root.logo-tin[data-theme="dark"]{--brand:#e0b04a;--accent:#d9a43a;--on-accent:#1f3a4a;--accent-soft:#1f3a4a;--bg:#13232c;--surface:#1b303b;--line:#2c4552}
 :root.logo-tin .tabs a.on::after{background:#d9a43a}
+.ob-row{width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);color:inherit;font:inherit;align-items:center;cursor:pointer}
+.ob-row .ob-pr{font-weight:700;white-space:nowrap}
+.ob-row .ob-add{flex:none;width:30px;height:30px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-weight:700;color:var(--accent)}
+.ob-row.ob-has .ob-add{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.ob-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:14px 0 4px;border-bottom:1.5px solid var(--ink)}
+.ob-h:first-child{padding-top:2px}
+.ob-h span{font-size:calc(12px * var(--fs));color:var(--muted)}
+.ob-chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.ob-chips .chip{flex:none}
+.ob-seg{align-self:flex-start}
+.ob-info{font-size:calc(13px * var(--fs));color:var(--muted);display:grid;gap:4px}
+.ob-exp{display:flex;flex-wrap:wrap;gap:4px 12px}.ob-exp b{color:var(--ink);font-weight:600}
+#offBtn{position:relative}
+#offBtn.has-new::after{content:"";position:absolute;top:1px;right:1px;width:11px;height:11px;border-radius:50%;background:var(--brand,#c8452a);border:2px solid var(--bg)}
 /* recipe actions: one tidy block — servings and share on top, two equal buttons, the main action full width */
 .rec-actions.ra{display:flex;flex-direction:column;gap:8px}
 .ra .ra-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -1314,7 +1327,7 @@ body.wv-on .toast{z-index:210}
 
   <!-- INDKØB -->
   <section class="view" id="v-indkob">
-    <div class="top"><div><h1>Indkøbsliste</h1><div class="sub" id="shopSub"></div></div><div class="row" style="gap:8px;flex-wrap:nowrap;align-items:center"><button class="icon-btn" style="flex:none" id="smsBtn" type="button" aria-label="Send indkøbslisten som sms" title="Send som sms"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3 10 14"/><path d="M21 3l-6.5 18-4.5-7-7-4.5z"/></svg></button><button class="btn small" id="addItemBtn" type="button">+ Tilføj</button></div></div>
+    <div class="top"><div><h1>Indkøbsliste</h1><div class="sub" id="shopSub"></div></div><div class="row" style="gap:8px;flex-wrap:nowrap;align-items:center"><button class="icon-btn" style="flex:none" id="offBtn" type="button" aria-label="Se aktuelle tilbud" title="Tilbud"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M19 5 5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/></svg></button><button class="icon-btn" style="flex:none" id="smsBtn" type="button" aria-label="Send indkøbslisten som sms" title="Send som sms"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3 10 14"/><path d="M21 3l-6.5 18-4.5-7-7-4.5z"/></svg></button><button class="btn small" id="addItemBtn" type="button">+ Tilføj</button></div></div>
     <select id="addStore2" aria-label="Butik" hidden></select><input type="text" id="kbProxy" aria-hidden="true" tabindex="-1" class="kb-proxy">
     <div class="sl-bar">
       <div class="seg" id="groupSeg" role="group" aria-label="Sortér efter"><button type="button" data-g="cat">Kategori</button><button type="button" data-g="store">Butik</button><button type="button" data-g="dish">Ret</button></div>
@@ -1559,7 +1572,13 @@ let fileOffers=null;
 function pickOffers(){
   const a=state.dbOffers,b=fileOffers;const t=x=>x&&x.updatedAt?new Date(x.updatedAt).getTime():0;
   state.offers=(t(b)>=t(a)?b:a)||null;
+  offDot();
 }
+/* a dot on the % button when offers newer than the last look have arrived */
+function offStamp(){return (state.offers&&state.offers.updatedAt)?String(state.offers.updatedAt):"";}
+function offDot(){const b=document.getElementById("offBtn");if(!b)return;const st=offStamp();let seen="";try{seen=localStorage.getItem("mp_offSeen")||"";}catch(e){}
+  b.classList.toggle("has-new",!!st&&st!==seen&&allOffers().length>0);}
+function offSeen(){try{localStorage.setItem("mp_offSeen",offStamp());}catch(e){}offDot();}
 async function loadOfferFile(){
   try{const res=await fetch("offers.json",{cache:"no-store"});if(!res.ok)return;fileOffers=await res.json();pickOffers();renderStores();renderShop();}catch(e){}
 }
@@ -4275,26 +4294,67 @@ function offerUrl(store){const sl=PREJ_SLUG[store];return "https://prej.dk/tilbu
 function offerLinkHTML(store,label){return '<a href="'+esc(offerUrl(store))+'" target="_blank" rel="noopener" class="offer-link">'+esc(label||("Se "+store+"s tilbud"))+' ↗</a>';}
 function openOfferBrowser(){
   const stores=[...new Set(allOffers().map(o=>o.store))].filter(x=>state.settings.stores.includes(x));
-  let q="",st="";
+  let q="",st="",mode=myPref("offSort","mine");
+  /* which of my usual items does each offer fit? the most bought item wins */
+  const fc=freqCounts();
+  const usual=Object.entries(fc).filter(([k,v])=>v>=2).sort((x,y)=>y[1]-x[1]).slice(0,80);
+  const names=new Map();(state.archive||[]).forEach(t=>(t.items||[]).forEach(i=>{const k=norm(i.name);if(!names.has(k))names.set(k,i.name);}));
+  const pretty=k=>names.get(k)||k.replace(/^./,c=>c.toUpperCase());
+  const hit=new Map();
+  const mineOf=o=>{const key=offKey(o);if(hit.has(key))return hit.get(key);let r=null;
+    for(const [k,v] of usual){try{if(!offerNo(k).includes(key)&&matchesOffer(k,o)){r={k,n:pretty(k),f:v};break;}}catch(e){}}
+    hit.set(key,r);return r;};
+  const onList=n=>state.shopping.some(x=>!x.checked&&norm(x.name)===norm(n));
+  let s,shown=[];
+  const row=(o,i,item)=>{const nm=item?item.n:o.product;const has=onList(nm);
+    return '<button type="button" class="check ob-row'+(has?' ob-has':'')+'" data-obadd="'+i+'"><div class="main"><div class="n">'+esc(o.product)+'</div><div class="s">'+esc(o.store)+(o.unitText?' · '+esc(o.unitText):'')+' · '+esc(offerWhen(o))+(o.limit?' · <b style="color:var(--accent)">'+esc(o.limit)+'</b>':'')+'</div></div><span class="num ob-pr">'+esc(fmtKr(o.price))+'</span><span class="ob-add" aria-hidden="true">'+(has?'✓':'+')+'</span></button>';};
   const draw=()=>{
     const qq=norm(q);
-    const list=allOffers().filter(o=>(st?o.store===st:stores.includes(o.store))&&(!qq||norm(o.product).includes(qq))).sort((a,b)=>a.store.localeCompare(b.store)||a.product.localeCompare(b.product,"da"));
-    const shown=list.slice(0,150);
-    s.querySelector("#obList").innerHTML=(shown.map((o,i)=>'<div class="check" style="align-items:center"><div class="main"><div class="n">'+esc(o.product)+'</div><div class="s">'+esc(o.store)+(o.unitText?' · '+esc(o.unitText):'')+' · '+esc(offerWhen(o))+(o.limit?' · <b style="color:var(--accent)">'+esc(o.limit)+'</b>':'')+'</div></div><span class="num" style="font-weight:700;white-space:nowrap">'+esc(fmtKr(o.price))+'</span><button type="button" class="btn plain small" data-obadd="'+i+'" aria-label="Læg på indkøbslisten">+</button></div>').join("")||'<p class="muted">Ingen tilbud matcher.</p>')+(list.length>150?'<p class="small muted">Viser 150 af '+list.length+'. Søg for at finde flere.</p>':'');
+    const list=allOffers().filter(o=>(st?o.store===st:stores.includes(o.store))&&(!qq||norm(o.product).includes(qq)));
+    shown=[];let html="";
+    const push=(o,item)=>{shown.push({o,item});return row(o,shown.length-1,item);};
+    if(mode==="mine"){
+      const groups=new Map(),rest=[];
+      list.forEach(o=>{const m=mineOf(o);if(m){if(!groups.has(m.k))groups.set(m.k,{m,os:[]});groups.get(m.k).os.push(o);}else rest.push(o);});
+      const gs=[...groups.values()].sort((x,y)=>y.m.f-x.m.f);
+      html+=gs.map(g=>'<div class="ob-h"><b>'+esc(g.m.n)+'</b><span>købt '+g.m.f+' gange</span></div>'+g.os.sort((x,y)=>unitPrice(x)-unitPrice(y)).map(o=>push(o,g.m)).join("")).join("");
+      if(!gs.length)html+='<p class="muted small" style="margin:8px 0">Ingen af dine faste varer er på tilbud lige nu'+(usual.length?'':'. Når du har handlet et par gange, kommer de varer, du ofte køber, øverst her')+'.</p>';
+      if(rest.length)html+='<div class="ob-h"><b>Andre tilbud</b><span>'+rest.length+'</span></div>'+rest.sort((x,y)=>x.product.localeCompare(y.product,"da")).slice(0,200).map(o=>push(o,null)).join("");
+    }else{
+      const by=new Map();list.forEach(o=>{if(!by.has(o.store))by.set(o.store,[]);by.get(o.store).push(o);});
+      html+=[...by.keys()].sort((x,y)=>stores.indexOf(x)-stores.indexOf(y)).map(k=>'<div class="ob-h"><b>'+esc(k)+'</b><span>'+by.get(k).length+' tilbud</span></div>'+by.get(k).sort((x,y)=>{const a=mineOf(x),b=mineOf(y);return ((b&&b.f)||0)-((a&&a.f)||0)||x.product.localeCompare(y.product,"da");}).slice(0,150).map(o=>push(o,mineOf(o))).join("")).join("");
+    }
+    s.querySelector("#obList").innerHTML=html||'<p class="muted">Ingen tilbud matcher.</p>';
     s.querySelector("#obCount").textContent=list.length+" tilbud";
-    s.querySelector("#obLink").innerHTML=st?offerLinkHTML(st,"Se "+st+"s tilbud på prej.dk"):'<div class="row" style="gap:12px">'+stores.map(x=>offerLinkHTML(x,x)).join("")+'</div>';
-    s.querySelectorAll("[data-obadd]").forEach(b=>b.onclick=()=>{const o=shown[+b.dataset.obadd];saveShopping(state.shopping.concat([{id:uid(),name:o.product,unit:"",amount:null,from:[],checked:false,store:o.store,createdAt:Date.now()}]));toast(o.product+" er lagt på listen ("+o.store+")");});
+    s.querySelectorAll("[data-obadd]").forEach(b=>b.onclick=async()=>{const x=shown[+b.dataset.obadd];if(!x)return;const o=x.o,nm=x.item?x.item.n:o.product;
+      if(onList(nm)){toast(nm+" står allerede på listen");return;}
+      if(typeof can==="function"&&!can("shop")){if(typeof noPerm==="function")noPerm("shop");return;}
+      await saveShopping(state.shopping.concat([{id:uid(),name:nm,unit:"",amount:null,from:[],checked:false,store:o.store,createdAt:Date.now()}]));
+      if(typeof bumpFreq==="function")bumpFreq(nm);
+      b.classList.add("ob-has");b.querySelector(".ob-add").textContent="✓";toast(nm+" er lagt på listen ("+o.store+")");});
   };
-  let s;
-  openSheet(`<div class="sheet-head"><div><h2>Alle tilbud</h2><div class="sub" id="obCount"></div></div>${closeBtn}</div>
-    <div class="stack"><input type="text" data-clear id="obQ" placeholder="Søg, fx kylling, kaffe, æg" aria-label="Søg i tilbud">
-    <div class="row">${['<button type="button" class="chip on" data-obst="">Alle</button>'].concat(stores.map(x=>'<button type="button" class="chip" data-obst="'+esc(x)+'">'+esc(x)+'</button>')).join("")}</div>
-    <div id="obLink"></div>
-    <p class="small muted" style="margin:0">Tilbud uden slutdato regnes som gældende i 1 uge fra de blev hentet. Tryk + for at lægge en vare på indkøbslisten i den butik.</p>
+  if(!allOffers().length){openSheet('<div class="sheet-head"><div><h2>Tilbud</h2></div>'+closeBtn+'</div><div class="empty">Der er ingen aktuelle tilbud endnu. De hentes automatisk for dine butikker.</div>');return;}
+  openSheet(`<div class="sheet-head"><div><h2>Tilbud</h2><div class="sub" id="obCount"></div></div>${closeBtn}</div>
+    <div class="stack">${offInfoHTML(stores)}<div class="seg ob-seg" id="obSort" role="group" aria-label="Sortér tilbud"><button type="button" data-os="mine">Mine varer</button><button type="button" data-os="store">Butik</button></div>
+    <input type="text" data-clear id="obQ" placeholder="Søg, fx kylling, kaffe, æg" aria-label="Søg i tilbud">
+    <div class="row ob-chips">${['<button type="button" class="chip on" data-obst="">Alle butikker</button>'].concat(stores.map(x=>'<button type="button" class="chip" data-obst="'+esc(x)+'">'+esc(x)+'</button>')).join("")}</div>
+    <p class="small muted" style="margin:0">Tryk på en vare for at lægge den på indkøbslisten i den butik.</p>
     <div class="card" id="obList"></div></div>`,el=>{s=el;
+    const setSort=()=>el.querySelectorAll("[data-os]").forEach(x=>x.classList.toggle("on",x.dataset.os===mode));setSort();
+    el.querySelectorAll("[data-os]").forEach(b=>b.onclick=()=>{mode=b.dataset.os;setMyPref("offSort",mode);setSort();draw();});
     el.querySelector("#obQ").addEventListener("input",e=>{q=e.target.value;draw();});
     el.querySelectorAll("[data-obst]").forEach(b=>b.onclick=()=>{st=b.dataset.obst;el.querySelectorAll("[data-obst]").forEach(x=>x.classList.toggle("on",x===b));draw();});
     draw();});
+}
+$("#offBtn").addEventListener("click",()=>{offSeen();openOfferBrowser();});
+/* when the offers were fetched, and until when each store's offers run */
+function offInfoHTML(stores){
+  const up=state.offers&&state.offers.updatedAt?new Date(state.offers.updatedAt):null;
+  const all=allOffers();const per=stores.map(st=>{const c=new Map();all.filter(o=>o.store===st&&!/fast lav pris/i.test(o.product)).forEach(o=>{const k=o.validTo.getTime();c.set(k,(c.get(k)||0)+1);});
+    const best=[...c.entries()].sort((x,y)=>y[1]-x[1])[0];if(!best)return "";const d=new Date(best[0]);
+    const assumed=all.filter(o=>o.store===st&&o.validTo.getTime()===best[0]).every(o=>o.assumed);
+    return '<span><b>'+esc(st)+'</b> til '+esc(WD[d.getDay()].slice(0,3))+'. '+esc(fmtDate(d))+(assumed?' (anslået)':'')+'</span>';}).filter(Boolean);
+  return '<div class="ob-info">'+(up?'<div>Hentet '+esc(WD[up.getDay()])+' '+esc(fmtDate(up))+' kl. '+String(up.getHours()).padStart(2,"0")+'.'+String(up.getMinutes()).padStart(2,"0")+'</div>':'')+(per.length?'<div class="ob-exp">Udløber: '+per.join("")+'</div>':'')+'</div>';
 }
 document.addEventListener("click",e=>{if(e.target.closest("#browseOffers"))openOfferBrowser();});
 
