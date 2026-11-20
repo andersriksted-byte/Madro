@@ -1,5 +1,13 @@
 [
  {
+  "v": "1795193261",
+  "date": "2026-11-20",
+  "new": [
+   "Tager det mere end et par sekunder at hente en opskrift fra et link, lægger den sig som en lille boks nederst på skærmen og viser, hvor langt den er. Du kan arbejde videre i appen imens og trykke på boksen for at åbne opskriften, når den er klar."
+  ],
+  "fixed": []
+ },
+ {
   "v": "1795192737",
   "date": "2026-11-20",
   "new": [
