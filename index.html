@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795171340";</script>
-<script src="config.js?v=1795171340"></script>
-<script src="importer.js?v=1795171340"></script>
-<script src="shim.js?v=1795171340"></script>
+<script>window.__appVersion="1795171556";</script>
+<script src="config.js?v=1795171556"></script>
+<script src="importer.js?v=1795171556"></script>
+<script src="shim.js?v=1795171556"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -4698,14 +4698,18 @@ init();
   if(document.fonts&&document.fonts.ready)document.fonts.ready.then(go);go();})();
 </script>
 <script>
-/* fold/unfold the main areas in Opsætning; remembered on this device */
+/* fold/unfold the main areas in Opsætning: all closed by default, the ones you open are remembered on this device */
 (function(){const host=document.getElementById("v-butikker");if(!host)return;
-  const get=()=>{try{return JSON.parse(localStorage.getItem("mp_setFold")||"{}");}catch(e){return {};}};
-  const put=o=>{try{localStorage.setItem("mp_setFold",JSON.stringify(o));}catch(e){}};
-  function apply(){const f=get();host.querySelectorAll(".stack>.card").forEach(c=>{if(!c.id)return;const h=c.querySelector(":scope>h3");if(!h)return;
-    c.classList.toggle("folded",!!f[c.id]);h.setAttribute("role","button");h.setAttribute("tabindex","0");h.setAttribute("aria-expanded",String(!f[c.id]));});}
+  const get=()=>{try{return JSON.parse(localStorage.getItem("mp_setOpen")||"{}");}catch(e){return {};}};
+  const put=o=>{try{localStorage.setItem("mp_setOpen",JSON.stringify(o));}catch(e){}};
+  let n=0;
+  function apply(){const o=get();host.querySelectorAll(".stack>.card").forEach(c=>{const h=c.querySelector(":scope>h3");if(!h)return;
+    if(!c.id)c.id="setCard"+(++n);const open=!!o[c.id];
+    if(c.classList.contains("folded")===open)c.classList.toggle("folded",!open);
+    if(h.getAttribute("aria-expanded")!==String(open))h.setAttribute("aria-expanded",String(open));
+    if(!h.hasAttribute("role")){h.setAttribute("role","button");h.setAttribute("tabindex","0");}});}
   host.addEventListener("click",e=>{const h=e.target.closest(".stack>.card>h3");if(!h||!host.contains(h))return;const c=h.parentElement;if(!c.id)return;
-    const f=get();f[c.id]=!f[c.id];put(f);apply();});
+    const o=get();o[c.id]=!o[c.id];put(o);apply();});
   host.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.matches(".stack>.card>h3")){e.preventDefault();e.target.click();}});
   new MutationObserver(()=>apply()).observe(host,{childList:true,subtree:true});apply();})();
 </script>
