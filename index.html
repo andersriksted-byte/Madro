@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795174978";</script>
-<script src="config.js?v=1795174978"></script>
-<script src="importer.js?v=1795174978"></script>
-<script src="shim.js?v=1795174978"></script>
+<script>window.__appVersion="1795192737";</script>
+<script src="config.js?v=1795192737"></script>
+<script src="importer.js?v=1795192737"></script>
+<script src="shim.js?v=1795192737"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2467,6 +2467,7 @@ $("#impGo").addEventListener("click",async()=>{
     if(window.__webApp&&window.MadroImporter){/* web: fetch and read the recipe right here, with progress and a clear error */
       const btn=$("#impGo");btn.disabled=true;st.textContent="Henter opskriften fra siden…";
       try{const r=await window.MadroImporter.importRecipe(url,t=>{st.textContent=t;});if(!r.image&&impImage)r.image=impImage;
+      if(r.translateFailed){delete r.translateFailed;setTimeout(()=>toast("Opskriften kunne ikke oversættes lige nu og står på originalsproget"),1500);}
         st.textContent="Gemmer…";const nid="imp"+uid();await setDoc("recipes",nid,r);
         for(const x of state.imports.filter(x=>x.url===url))try{await delDoc("imports",x.id);}catch(e){}
         $("#impUrl").value="";impImage="";showImpImage();$("#importBox").style.display="none";st.textContent="";btn.disabled=false;

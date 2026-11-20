@@ -449,7 +449,7 @@ async function autoImport(id,v,stale){
     if(!claimed)return;
     let r;try{r=await window.MadroImporter.importRecipe(v.url);}
     catch(err){await ref.set({status:"venter",auto:"fejl",autoError:String((err&&err.message)||err).slice(0,120)},{merge:true});return;}
-    if(!r.image&&v.image)r.image=v.image;
+    if(!r.image&&v.image)r.image=v.image;delete r.translateFailed;
     if(S.family&&S.family.community&&r.shared===undefined)r.shared=true;
     await famCol("recipes").doc("imp"+rid()).set(r);await ref.delete();
     try{const t=document.getElementById("toast");if(t){t.textContent="Lagt i Kogebogen: "+r.title;t.classList.add("on");setTimeout(()=>t.classList.remove("on"),3500);}}catch(e){}

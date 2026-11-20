@@ -57,6 +57,54 @@ function num(v){const m=/[\d.,]+/.exec(txt(v));return m?Math.round(parseFloat(m[
 const UNITS={"g":"g","gr":"g","gram":"g","kg":"kg","kilo":"kg","dl":"dl","l":"l","liter":"l","ml":"ml","cl":"cl","spsk":"spsk","spsk.":"spsk","tsk":"tsk","tsk.":"tsk",
   "stk":"stk","stk.":"stk","fed":"fed","dåse":"dåse","dåser":"dåse","ds":"dåse","ds.":"dåse","bundt":"bundt","bdt":"bundt","bdt.":"bundt","knsp":"knsp","knsp.":"knsp","nip":"knsp",
   "pakke":"pakke","pakker":"pakke","pk":"pakke","pk.":"pakke","håndfuld":"håndfuld","skive":"skive","skiver":"skive","glas":"glas","bakke":"bakke","pose":"pose","dash":"knsp"};
+/* foreign units -> Danish kitchen units (dl, ml, g, spsk, tsk …) */
+const FOREIGN=[
+  [/^(?:fl\.?\s*oz\.?|fluid\s+ounces?)$/i,a=>vol(a*29.57)],
+  [/^(?:cups?|c\.|tazas?|tasse[n]?|kopp(?:ar)?)$/i,a=>vol(a*236.6)],
+  [/^(?:tbsps?\.?|tbl\.?|tablespoons?|T\.?|EL|Essl\.?|Esslöffel|msk\.?|ss\.?|cucharadas?|c\.s\.|cs)$/,a=>({amount:a,unit:"spsk"})],
+  [/^(?:tsps?\.?|teaspoons?|t\.?|TL|Teel\.?|Teelöffel|tsk\.?|ts\.?|cucharaditas?|c\.c\.|cc)$/,a=>({amount:a,unit:"tsk"})],
+  [/^(?:oz\.?|ounces?|onzas?)$/i,a=>wt(a*28.35)],
+  [/^(?:lbs?\.?|pounds?|libras?)$/i,a=>wt(a*453.6)],
+  [/^(?:pints?|pt\.?)$/i,a=>vol(a*473)],
+  [/^(?:quarts?|qt\.?)$/i,a=>vol(a*946)],
+  [/^(?:gallons?|gal\.?)$/i,a=>vol(a*3785)],
+  [/^(?:sticks?)$/i,a=>wt(a*113)],
+  [/^(?:grams?|gramm|gramos|gr\.?)$/i,a=>({amount:a,unit:"g"})],
+  [/^(?:kilograms?|kilogramm|kilos?)$/i,a=>({amount:a,unit:"kg"})],
+  [/^(?:millilit(?:er|re)s?|milliliter)$/i,a=>vol(a)],
+  [/^(?:centilit(?:er|re)s?)$/i,a=>vol(a*10)],
+  [/^(?:decilit(?:er|re)s?)$/i,a=>vol(a*100)],
+  [/^(?:lit(?:er|re)s?|liter)$/i,a=>vol(a*1000)],
+  [/^(?:pinch(?:es)?|prisen?|nypa|dash(?:es)?|krm)$/i,a=>({amount:a,unit:"knsp"})],
+  [/^(?:cloves?|zehen?|klyftor|klyfta|dientes?)$/i,a=>({amount:a,unit:"fed"})],
+  [/^(?:cans?|tins?|dosen?|burkar?|latas?)$/i,a=>({amount:a,unit:"dåse"})],
+  [/^(?:bunch(?:es)?|bund|knippe)$/i,a=>({amount:a,unit:"bundt"})],
+  [/^(?:slices?|scheiben?|skivor?)$/i,a=>({amount:a,unit:"skive"})],
+  [/^(?:handfuls?|handvoll)$/i,a=>({amount:a,unit:"håndfuld"})],
+  [/^(?:packages?|pkgs?\.?|packets?|packungen?|paket)$/i,a=>({amount:a,unit:"pakke"})],
+  [/^(?:pieces?|pcs?\.?|stück|st\.?)$/i,a=>({amount:a,unit:"stk"})]
+];
+const FOREIGN_RE=/^((?:fl\.?\s*oz\.?|fluid\s+ounces?)|[A-Za-zÄÖÜäöüß.]+)\s*(.*)$/;
+function r5(x){return Math.max(5,Math.round(x/5)*5);}
+function q(x,st){return Math.round(x/st)*st;}
+function vol(ml){if(ml==null)return {amount:null,unit:"dl"};
+  if(ml<15)return {amount:Math.max(1,Math.round(ml)),unit:"ml"};
+  if(ml<100)return {amount:r5(ml),unit:"ml"};
+  if(ml<1000)return {amount:Math.max(1,q(ml/100,ml<200?.25:.5)),unit:"dl"};
+  return {amount:Math.round(ml/100)/10,unit:"l"};}
+function wt(g){if(g==null)return {amount:null,unit:"g"};if(g>=1000)return {amount:Math.round(g/100)/10,unit:"kg"};return {amount:g<20?Math.round(g):(g<500?r5(g):q(g,25)),unit:"g"};}
+function isForeign(u){const k=u.trim();return FOREIGN.some(([re])=>re.test(k));}
+function convUnit(a,u){const k=u.trim();for(const [re,f] of FOREIGN){if(re.test(k))return f(a);}
+  const d=UNITS[k.toLowerCase()];return {amount:a,unit:d||""};}
+/* the same in running text: 350°F, 9-inch, 14 oz, 2 cups */
+function convText(t){if(!t)return t;
+  return String(t)
+    .replace(/(\d{2,3})\s*(?:°|º|˚|degrees?\s*)\s*F(?:ahrenheit)?\b/gi,(m,f)=>Math.round(((+f-32)*5/9)/5)*5+" °C")
+    .replace(/\b(\d{3})\s*F\b/g,(m,f)=>Math.round(((+f-32)*5/9)/5)*5+" °C")
+    .replace(/(\d+(?:[.,]\d+)?)\s*(?:-|\s)?(?:inch(?:es)?|in\.|")(?=[\s,.)]|$)/gi,(m,n)=>Math.round(parseFloat(n.replace(",","."))*2.54)+" cm")
+    .replace(/(\d+(?:[.,]\d+)?)\s*(?:-|\s)?(?:fl\.?\s*oz|ounces?|oz)\b\.?/gi,(m,n)=>{const c=wt(parseFloat(n.replace(",","."))*28.35);return c.amount+" "+c.unit;})
+    .replace(/(\d+(?:[.,]\d+)?)\s*(?:-|\s)?(?:lbs?|pounds?)\b\.?/gi,(m,n)=>{const c=wt(parseFloat(n.replace(",","."))*453.6);return String(c.amount).replace(".",",")+" "+c.unit;})
+    .replace(/(\d+(?:[.,]\d+)?|[½¼¾⅓⅔])\s*cups?\b/gi,(m,n)=>{const v=vol((FR[n]!=null?FR[n]:parseFloat(n.replace(",",".")))*236.6);return String(v.amount).replace(".",",")+" "+v.unit;});}
 const FR={"½":.5,"¼":.25,"¾":.75,"⅓":1/3,"⅔":2/3,"⅛":.125};
 function parseAmount(s){s=s.trim().replace(",",".");if(!s)return null;
   const range=s.split(/\s*[-–]\s*/);if(range.length>1)s=range[range.length-1];
@@ -68,14 +116,19 @@ function parseAmount(s){s=s.trim().replace(",",".");if(!s)return null;
   return any?Math.round(total*100)/100:null;}
 function parseIngredient(line,group){
   line=decode(line).replace(/^[-•*·]\s*/,"");
-  const m=/^((?:\d+(?:[.,]\d+)?|[½¼¾⅓⅔⅛]|\d+\/\d+)(?:\s*[½¼¾⅓⅔⅛])?(?:\s*[-–]\s*(?:\d+(?:[.,]\d+)?|[½¼¾⅓⅔⅛]))?(?:\s+\d+\/\d+)?)\s*(.*)$/.exec(line);
+  const m=/^((?:\d+\/\d+|\d+(?:[.,]\d+)?|[½¼¾⅓⅔⅛])(?:\s*[½¼¾⅓⅔⅛])?(?:\s*[-–]\s*(?:\d+(?:[.,]\d+)?|[½¼¾⅓⅔⅛]))?(?:\s+\d+\/\d+)?)\s*(.*)$/.exec(line);
   let amount=null,rest=line;
   if(m){amount=parseAmount(m[1]);rest=m[2];}
-  let unit="";const w=/^(\S+)\s+(.*)$/.exec(rest);
+  let pre="";const pm=/^\(([^)]*)\)\s*(.*)$/.exec(rest);if(pm){pre=convText(pm[1]);rest=pm[2];}
+  let unit="";const fu=FOREIGN_RE.exec(rest);
+  if(fu&&isForeign(fu[1])&&(amount!=null||/^(pinch|prise|nypa|dash|clove|zehe|klyfta)/i.test(fu[1]))){const c=convUnit(amount,fu[1]);amount=c.amount;unit=c.unit;rest=fu[2];}
+  else{const w=/^(\S+)\s+(.*)$/.exec(rest);
   if(w&&UNITS[w[1].toLowerCase()]){unit=UNITS[w[1].toLowerCase()];rest=w[2];}
-  else if(UNITS[rest.toLowerCase()]&&amount!=null){unit=UNITS[rest.toLowerCase()];rest="";}
+  else if(UNITS[rest.toLowerCase()]&&amount!=null){unit=UNITS[rest.toLowerCase()];rest="";}}
+  rest=rest.replace(/^of\s+/i,"");
   let name=rest,note="";const c=rest.indexOf(",");if(c>0){name=rest.slice(0,c).trim();note=rest.slice(c+1).trim();}
   const par=/^(.*?)\s*\(([^)]*)\)\s*$/.exec(name);if(par){name=par[1];note=(note?note+", ":"")+par[2];}
+  if(pre)note=pre+(note?", "+note:"");
   return {group:group||"",amount,unit,name:name.trim()||line,note};}
 
 const TAGS=[[/aftensmad|middag|hovedret|dinner|main/i,"Aftensmad"],[/frokost|lunch/i,"Frokost"],[/morgenmad|brunch|breakfast/i,"Morgenmad"],[/dessert|kage|bagv|cake/i,"Dessert"],
@@ -115,7 +168,7 @@ function recipeFromHTML(html,url){
   [meta('meta[property="og:title"]'),h1&&h1.textContent.replace(/\s+/g," ").trim(),strip(doc.title)].forEach(t=>{if(isSite(title)&&t&&!isSite(t))title=t;});
   if(isSite(title)&&!isSite(strip(title)))title=strip(title);
   const ingr=[];const raw=r.recipeIngredient||r.ingredients||[];(Array.isArray(raw)?raw:[raw]).forEach(l=>{if(typeof l==="string"&&l.trim())ingr.push(parseIngredient(l));});
-  const st=steps(r.recipeInstructions);
+  const st=steps(r.recipeInstructions).map(convText);ingr.forEach(i=>{i.note=convText(i.note);});
   if(!title||!ingr.length)return null;
   let servings=num(r.recipeYield);if(!servings||servings>40)servings=4;
   const n=r.nutrition||{};const kcal=num(n.calories),protein=num(n.proteinContent),fiber=num(n.fiberContent);
@@ -123,19 +176,62 @@ function recipeFromHTML(html,url){
   const img=imageOf(r.image)||(doc.querySelector('meta[property="og:image"]')||{}).content||"";
   const tags=tagsOf(r,title);
   return {title,servings,time:isoDur(r.totalTime||r.cookTime||r.prepTime),description:desc,ingredients:ingr,steps:st,tags:tags.length?tags:["Aftensmad"],meals:tags.includes("Dessert")?["Dessert"]:tags.includes("Morgenmad")?["Morgenmad"]:tags.includes("Frokost")?["Frokost"]:["Aftensmad"],
+    _lang:langOf(doc,r,[title,desc].concat(st).join(" ")),
     source:url,createdAt:Date.now(),nutrition:kcal?{kcal,protein:protein||0,fiber:fiber||0,source:"opskrift"}:null,image:img&&!/^data:/.test(img)?new URL(img,url).href:""};
 }
 async function shrink(blob){try{const bmp=await createImageBitmap(blob);const sc=Math.min(1,720/Math.max(bmp.width,bmp.height));const cv=document.createElement("canvas");
   cv.width=Math.round(bmp.width*sc);cv.height=Math.round(bmp.height*sc);cv.getContext("2d").drawImage(bmp,0,0,cv.width,cv.height);return cv.toDataURL("image/jpeg",.72);}catch(e){return "";}}
+
+/* ---------- language: translate recipes that are not in Danish ---------- */
+function langOf(doc,r,sample){
+  const l=String(r.inLanguage||doc.documentElement.getAttribute("lang")||(doc.querySelector('meta[property="og:locale"]')||{}).content||"").toLowerCase();
+  const w=String(sample||"").toLowerCase();const c=re=>(w.match(re)||[]).length;
+  const da=c(/\b(og|med|til|skal|ikke|eller|evt|derefter|gryde|steg|hak|tilsæt)\b/g)+c(/[æø]/g)/3;
+  const en=c(/\b(the|and|with|until|into|minutes|add|heat|stir)\b/g);
+  const de=c(/\b(und|mit|die|der|das|bis|minuten|zugeben)\b/g);
+  if(/^da/.test(l))return "da";
+  if(l&&!/^(nb|no|nn|sv)/.test(l)&&da<(en+de))return l.slice(0,2);
+  if(da>=(en+de)*1.5&&da>=3&&!/^(nb|no|nn|sv)/.test(l))return "da";
+  return l?l.slice(0,2):(en>=de?"en":"de");}
+const GT=q=>"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=da&dt=t&q="+encodeURIComponent(q);
+async function gtx(text){
+  const tries=[u=>u,u=>"https://corsproxy.io/?url="+encodeURIComponent(u),u=>"https://api.allorigins.win/raw?url="+encodeURIComponent(u)];
+  let err;for(const t of tries){try{const ac=new AbortController();const tm=setTimeout(()=>ac.abort(),12000);
+    const r=await fetch(t(GT(text)),{signal:ac.signal});clearTimeout(tm);if(!r.ok){err=new Error("HTTP "+r.status);continue;}
+    const j=JSON.parse(await r.text());return (j[0]||[]).map(x=>x[0]||"").join("");}catch(e){err=e;}}
+  throw err||new Error("oversættelse fejlede");}
+/* translate a list of short texts in a few calls; keeps the order, falls back one by one */
+async function translateAll(list){
+  const out=list.slice();const idx=[];list.forEach((t,i)=>{if(t&&/[A-Za-zÀ-ÿ]/.test(t))idx.push(i);});
+  let chunk=[];const flush=async()=>{if(!chunk.length)return;const src=chunk.map(i=>list[i].replace(/\n+/g," "));
+    let res=null;try{res=(await gtx(src.join("\n"))).split("\n");}catch(e){}
+    if(!res||res.length!==src.length){res=[];for(const t of src){try{res.push(await gtx(t));}catch(e){res.push(t);}}}
+    chunk.forEach((i,k)=>{out[i]=(res[k]||list[i]).trim();});chunk=[];};
+  let len=0;for(const i of idx){const l=list[i].length+1;if(len+l>1500){await flush();len=0;}chunk.push(i);len+=l;}
+  await flush();return out;}
+async function localize(r,progress){
+  const lang=r._lang;delete r._lang;if(!lang||lang==="da")return r;
+  if(progress)progress("Oversætter opskriften til dansk…");
+  const ing=r.ingredients;
+  const list=[r.title,r.description].concat(ing.map(i=>i.name),ing.map(i=>i.note||""),ing.map(i=>i.group||""),r.steps);
+  try{const t=await translateAll(list);let k=0;
+    r.title=t[k++]||r.title;r.description=t[k++]||"";
+    ing.forEach(i=>{const n=t[k++]||i.name;i.name=n.charAt(0).toLowerCase()+n.slice(1);});
+    ing.forEach(i=>{i.note=t[k++]||"";});ing.forEach(i=>{i.group=t[k++]||"";});
+    r.steps=r.steps.map(()=>t[k++]);
+    r.translatedFrom=lang;
+  }catch(e){r.translateFailed=true;}
+  return r;}
 
 /* fetch + parse one link; returns a recipe object ready for Firestore, or throws */
 async function importRecipe(url,progress){
   const html=await viaProxy(url,"text",15000,progress);if(progress)progress("Læser opskriften…");
   const r=recipeFromHTML(html,url);
   if(!r)throw new Error("Siden har ingen opskrift, appen kan læse");
+  await localize(r,progress);
   if(r.image){if(progress)progress("Henter billedet…");const orig=r.image;try{const b=await viaProxy(orig,"blob",15000);r.image=(await shrink(b))||orig;}catch(e){r.image=orig;}}
   if(!r.nutrition)delete r.nutrition;
   return r;
 }
-window.MadroImporter={importRecipe,recipeFromHTML,parseIngredient,isoDur};
+window.MadroImporter={importRecipe,recipeFromHTML,parseIngredient,isoDur,convText,localize};
 })();

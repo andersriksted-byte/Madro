@@ -1,5 +1,15 @@
 [
  {
+  "v": "1795192737",
+  "date": "2026-11-20",
+  "new": [
+   "Opskrifter fra udenlandske links bliver nu oversat til dansk, og mål som cups, oz og °F laves om til dl, g og °C."
+  ],
+  "fixed": [
+   "Mængder som ½ tsk og \"1 (400 g) dåse\" læses nu rigtigt, når en opskrift hentes fra et link."
+  ]
+ },
+ {
   "v": "1795174978",
   "date": "2026-11-20",
   "new": [
