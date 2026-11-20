@@ -8,6 +8,7 @@ Familiens fælles kogebog, madplan og indkøbsliste. Login og data ligger i Fire
 - **config.js** har dit Firebase-projekts oplysninger.
 - **firestore.rules** sørger for, at kun familiens medlemmer kan se og ændre familiens data.
 - **offers.json** er ugens tilbud. Claudes planlagte opgave skriver den her i repoet.
+- **changelog.json** er teksten til "Nyt i Madro", som vises efter en opdatering. Se **CLAUDE.md** for, hvordan den opdateres.
 - **inbox/** er opskrifter, som Claude har hentet fra links. Appen lægger dem selv ind i Kogebogen og fjerner linket fra listen.
 
 ## 1. Firebase (ca. 10 minutter)

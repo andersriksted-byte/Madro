@@ -1,0 +1,14 @@
+[
+ {
+  "v": "1795172075",
+  "date": "2026-11-20",
+  "new": [
+   "Nyt i Madro: efter en opdatering får du en kort besked om, hvad der er nyt og rettet.",
+   "Startside: under Opsætning kan du vælge, hvilken side appen åbner på (Madplan, Kogebog, Indkøb …). Det gælder kun dig.",
+   "Opsætning er mere overskuelig: alle menuer er lukket fra start, og dem du åbner, bliver husket."
+  ],
+  "fixed": [
+   "Beskeden om ny version blev ved med at komme, selvom man lukkede appen. Nu forsvinder den, når du trykker Opdater nu."
+  ]
+ }
+]

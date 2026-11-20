@@ -260,7 +260,7 @@ async function enterFamily(fid){
   S.famUnsub=fs.doc("families/"+fid).onSnapshot(d=>{if(!d.exists)return;if(!(d.data().members||{})[S.user.uid]){location.reload();return;}/* removed from the family */const wasC=!!(S.family&&S.family.community);S.family=d.data();window.__family={id:fid,name:S.family.name,anonymous:!!S.family.anonymous};applyPerms();syncInv();S.me=S.family.members[S.user.uid]||S.me;if(S.me)window.__mePerson=S.me.personId;syncLock();if(wasC!==!!S.family.community)watchCommunity();drawFamCard();},err=>{if(err&&err.code==="permission-denied")location.reload();});
   window.__onSettings=()=>drawFamCard();
   hide();ready();
-  watchImports();mountFamCard();watchCommunity();setTimeout(offerHomeScreen,1500);
+  watchImports();mountFamCard();watchCommunity();setTimeout(showNews,1200);setTimeout(offerHomeScreen,1500);
   return true;
 }
 const isAdmin=()=>S.me&&S.me.role==="admin";
@@ -465,7 +465,7 @@ function offerHomeScreen(){
   const standalone=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
   const ua=navigator.userAgent||"";const ios=/iPhone|iPad|iPod/i.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);const android=/Android/i.test(ua);
   let seen=null;try{seen=localStorage.getItem("mp_a2hs");}catch(e){}
-  if(standalone||seen||!(ios||android)||$("#a2hs"))return;
+  if(standalone||seen||!(ios||android)||$("#a2hs")||$("#mdNews"))return;
   const st=document.createElement("style");st.textContent=`
 #a2hs{position:fixed;inset:0;z-index:2147483000;background:rgba(20,16,12,.45);display:flex;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom))}
 #a2hs .box{background:var(--bg,#fff);color:var(--ink,#222);border-radius:22px;padding:22px 20px 18px;max-width:420px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.3);display:flex;flex-direction:column;gap:12px}
@@ -486,6 +486,34 @@ function offerHomeScreen(){
   const close=()=>{try{localStorage.setItem("mp_a2hs","1");}catch(e){}w.remove();};
   w.querySelector("#a2Ok").onclick=close;w.addEventListener("click",e=>{if(e.target===w)close();});
   const ib=w.querySelector("#a2Install");if(ib)ib.onclick=async()=>{try{installEvt.prompt();await installEvt.userChoice;}catch(e){}close();};
+}
+
+/* ---------- "Nyt i Madro": after an update, a short note on new features and fixes (changelog.json) ---------- */
+async function showNews(){
+  const cur=String(window.__appVersion||"");if(!cur||$("#mdNews"))return;
+  let seen="";try{seen=localStorage.getItem("mp_seenVer")||"";}catch(e){return;}
+  if(seen===cur)return;
+  const mark=()=>{try{localStorage.setItem("mp_seenVer",cur);}catch(e){}};
+  let log=[];try{const r=await fetch("changelog.json?t="+Date.now(),{cache:"no-store"});if(r.ok)log=await r.json();}catch(e){}
+  if(!Array.isArray(log)){mark();return;}
+  const n=x=>Number(x)||0;
+  /* never seen a version on this phone: show only the newest note, not the whole history */
+  let es=log.filter(e=>e&&n(e.v)<=n(cur)&&(seen?n(e.v)>n(seen):true)).sort((a,b)=>n(b.v)-n(a.v));
+  if(!seen)es=es.slice(0,1);
+  const neu=[],fix=[];es.forEach(e=>{(e.new||[]).forEach(t=>neu.push(t));(e.fixed||[]).forEach(t=>fix.push(t));});
+  if(!neu.length&&!fix.length){mark();return;}
+  const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const st=document.createElement("style");st.textContent=`#mdNews{position:fixed;inset:0;z-index:2147483000;background:rgba(20,16,12,.45);display:flex;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom))}
+#mdNews .box{background:var(--bg,#fff);color:var(--ink,#222);border-radius:22px;padding:22px 20px 18px;max-width:420px;width:100%;max-height:80vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.3);display:flex;flex-direction:column;gap:10px}
+#mdNews h2{font-family:var(--serif,Georgia,serif);font-size:26px;margin:0;line-height:1.1}
+#mdNews h3{font-size:13px;text-transform:uppercase;letter-spacing:.06em;margin:6px 0 0;color:var(--muted,#666)}
+#mdNews ul{margin:0;padding-left:20px;line-height:1.5}#mdNews li+li{margin-top:4px}`;document.head.appendChild(st);
+  const ul=a=>"<ul>"+a.map(t=>"<li>"+esc(t)+"</li>").join("")+"</ul>";
+  const w=document.createElement("div");w.id="mdNews";w.setAttribute("role","dialog");w.setAttribute("aria-modal","true");w.setAttribute("aria-label","Nyt i Madro");
+  w.innerHTML='<div class="box"><h2>Nyt i Madro</h2>'+(neu.length?'<h3>Nyt</h3>'+ul(neu):'')+(fix.length?'<h3>Rettet</h3>'+ul(fix):'')+'<button class="au-btn" type="button" id="mdNewsOk">Forstået</button></div>';
+  document.body.appendChild(w);
+  const close=()=>{mark();w.remove();};
+  w.querySelector("#mdNewsOk").onclick=close;w.addEventListener("click",e=>{if(e.target===w)close();});
 }
 
 /* ---------- new version available: a small banner with "Opdater" ---------- */
