@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795172075";</script>
-<script src="config.js?v=1795172075"></script>
-<script src="importer.js?v=1795172075"></script>
-<script src="shim.js?v=1795172075"></script>
+<script>window.__appVersion="1795172819";</script>
+<script src="config.js?v=1795172819"></script>
+<script src="importer.js?v=1795172819"></script>
+<script src="shim.js?v=1795172819"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1380,7 +1380,7 @@ body.wv-on .toast{z-index:210}
         <h4>Tips til appen</h4>
         <div class="seg" id="tipsSeg" role="group" aria-label="Tips"><button type="button" data-tips="on">Til</button><button type="button" data-tips="off">Fra</button></div>
         <p class="small muted" style="margin:0">Når tips er slået til, viser hver side kort, hvordan du bruger den: tryk, langt tryk, swipe og træk.</p>
-        <div><button type="button" class="btn plain small" id="tipsAgain">Vis alle tips igen</button></div>
+        <div class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="btn plain small" id="tipsAgain">Vis alle tips igen</button><button type="button" class="btn plain small" id="tourAgain">Vis starttutorial</button></div>
         </div>
         <div class="set-sec">
         <h4>Startside</h4>
@@ -4665,7 +4665,8 @@ init();
   let open=null;
   function close(){const w=document.getElementById("tipWrap");if(!w)return;w.classList.remove("on");setTimeout(()=>w.remove(),200);open=null;}
   function show(k,force){const T=TIPS[k];if(!T||open)return;if(!force&&(!on()||seen().includes(k)))return;
-    if(document.querySelector("#sheetWrap.on,.cbox-wrap,#authWrap:not([hidden])"))return;
+    let tourSeen=true;try{tourSeen=localStorage.getItem("mp_tour")==="1";}catch(e){}if(!force&&!tourSeen)return;/* the start tour comes first; it calls __tipLater when closed */
+    if(document.querySelector("#sheetWrap.on,.cbox-wrap,#authWrap:not([hidden]),#tourWrap,#mdNews"))return;
     open=k;const w=document.createElement("div");w.id="tipWrap";w.setAttribute("role","dialog");w.setAttribute("aria-modal","true");w.setAttribute("aria-labelledby","tipH");
     w.innerHTML='<div id="tipCard"><div class="tk">Tip</div><h3 id="tipH">'+T.t+'</h3><ul>'+T.items().map(([g,a,b])=>'<li><span class="g '+g+'" aria-hidden="true">'+G[g]+'</span><div><b>'+a+'</b><span>'+b+'</span></div></li>').join("")+'</ul>'+
       '<div class="ta"><button type="button" class="btn plain small" id="tipOff">Slå tips fra</button><button type="button" class="btn small" id="tipOk">Forstået</button></div></div>';
@@ -4684,7 +4685,192 @@ init();
   draw();
   /* wait until the app (and, on the web, the login) is ready before the first tip */
   const first=()=>{if(document.querySelector("#authWrap:not([hidden])")){setTimeout(first,1500);return;}later();};setTimeout(first,1500);
-  window.__showTip=k=>show(k||page(),true);
+  window.__showTip=k=>show(k||page(),true);window.__tipLater=later;
+})();
+</script>
+<script>
+/* Starttutorial: a short swipeable tour with small animated previews of the main features.
+   Shown once (mp_tour), before the per-page tips. Can be opened again from Opsætning (#tourAgain) */
+(function(){
+  const web=()=>!!window.__webApp;
+  const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const names=()=>{let k=[];try{k=((window.__appState&&window.__appState().settings.kids)||[]).map(x=>x.name).filter(Boolean);}catch(e){}
+    const d=["Mor","Far","Emma"];return [0,1,2].map(i=>k[i]||d[i]);};
+  const st=document.createElement("style");st.textContent=`
+#tourWrap{position:fixed;inset:0;z-index:2147481500;background:rgba(20,16,28,.5);display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;transition:opacity .25s}
+#tourWrap.on{opacity:1}
+#tour{width:100%;max-width:420px;max-height:calc(100vh - 32px);background:var(--surface,#fff);color:var(--ink);border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden;display:flex;flex-direction:column}
+#tour .tr-track{display:flex;transition:transform .35s ease;touch-action:pan-y}
+#tour .sl{flex:0 0 100%;padding:18px 20px 6px;box-sizing:border-box;display:flex;flex-direction:column;gap:10px}
+#tour .tk{font-size:calc(10.5px * var(--fs));font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--brand)}
+#tour h2{margin:0;font-family:var(--serif);font-style:italic;font-size:calc(25px * var(--fs));line-height:1.12}
+#tour p.tx{margin:0;color:var(--muted);line-height:1.42;font-size:calc(15px * var(--fs))}
+#tour .tr-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 16px 16px}
+#tour .dots{display:flex;gap:6px}#tour .dots button{width:8px;height:8px;border-radius:50%;border:0;padding:0;background:var(--line);cursor:pointer}
+#tour .dots button.on{background:var(--brand);width:20px;border-radius:99px}
+#tour .tr-bar .btn{flex:none}
+/* the little stage with the preview */
+#tour .tq-tv{position:relative;height:200px;border-radius:18px;background:var(--accent-soft);overflow:hidden;font-size:13px;--d:5s}
+#tour .tq-tv *{box-sizing:border-box}
+#tour .tq-mc{position:absolute;left:14px;right:14px;background:var(--surface,#fff);color:var(--ink);border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,.1);padding:10px 12px;display:flex;align-items:center;gap:10px}
+#tour .tq-mc .tq-e{font-size:26px;line-height:1;width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);flex:none}
+#tour .tq-mc b{display:block;font-size:14px}#tour .tq-mc small{display:block;color:var(--muted);font-size:12px}
+#tour .tq-pill{display:inline-block;font-size:11px;font-weight:800;padding:3px 8px;border-radius:99px;background:var(--accent-soft);white-space:nowrap}
+#tour .tq-toast{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);background:var(--ink);color:var(--surface,#fff);font-weight:700;font-size:12px;padding:7px 12px;border-radius:99px;white-space:nowrap;opacity:0}
+#tour .tq-fing{position:absolute;font-size:26px;opacity:0;filter:drop-shadow(0 2px 3px rgba(0,0,0,.25))}
+#tour .on .tq-toast{animation:tShow var(--d) infinite}
+@keyframes tShow{0%,55%{opacity:0;transform:translate(-50%,8px)}62%,92%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
+/* 1 link */
+#tour .tq-v1 .tq-in{position:absolute;top:22px;left:14px;right:14px;height:40px;border-radius:12px;background:var(--surface,#fff);border:1px solid var(--line);display:flex;align-items:center;padding:0 6px 0 10px;gap:6px}
+#tour .tq-v1 .tq-url{flex:1;overflow:hidden;white-space:nowrap;color:var(--ink);font-size:12px;width:0}
+#tour .tq-v1 .tq-url span{display:inline-block;overflow:hidden;width:0;vertical-align:bottom;border-right:2px solid var(--brand)}
+#tour .tq-v1 .tq-go{background:var(--accent);color:var(--on-accent);font-weight:700;border-radius:99px;padding:5px 10px;font-size:12px}
+#tour .tq-v1 .tq-mc{top:82px;opacity:0}
+#tour .on.tq-v1 .tq-url{width:auto}
+#tour .on.tq-v1 .tq-url span{animation:t1Type var(--d) steps(28) infinite}
+#tour .on.tq-v1 .tq-go{animation:t1Go var(--d) infinite}
+#tour .on.tq-v1 .tq-mc{animation:t1Pop var(--d) infinite}
+@keyframes t1Type{0%{width:0}35%,100%{width:100%}}
+@keyframes t1Go{0%,38%,50%,100%{transform:none}44%{transform:scale(.88)}}
+@keyframes t1Pop{0%,48%{opacity:0;transform:translateY(14px)}58%,94%{opacity:1;transform:none}100%{opacity:0}}
+/* 2 + 3 swipe */
+#tour .tq-sw{position:absolute;top:26px;left:14px;right:14px;height:62px}
+#tour .tq-sw .tq-under{position:absolute;inset:0;border-radius:14px;display:flex;align-items:center;padding:0 16px;font-weight:800;color:#fff}
+#tour .tq-sw .tq-under.tq-l{background:var(--brand);justify-content:flex-end}
+#tour .tq-sw .tq-under.tq-r{background:#3d8a5a;justify-content:flex-start}
+#tour .tq-sw .tq-mc{left:0;right:0;top:0;height:62px}
+#tour .on .tq-sw.tq-left .tq-mc{animation:t2L var(--d) infinite}
+#tour .on .tq-sw.tq-right .tq-mc{animation:t2R var(--d) infinite}
+@keyframes t2L{0%,12%{transform:none}32%,44%{transform:translateX(-52%)}54%,100%{transform:none}}
+@keyframes t2R{0%,12%{transform:none}32%,44%{transform:translateX(52%)}54%,100%{transform:none}}
+#tour .on .tq-fing.tq-fl{animation:t2FL var(--d) infinite}#tour .on .tq-fing.tq-fr{animation:t2FR var(--d) infinite}
+@keyframes t2FL{0%,8%{opacity:0;transform:translate(0,0)}12%{opacity:1}32%{opacity:1;transform:translate(-110px,0)}40%,100%{opacity:0;transform:translate(-110px,0)}}
+@keyframes t2FR{0%,8%{opacity:0;transform:translate(0,0)}12%{opacity:1}32%{opacity:1;transform:translate(110px,0)}40%,100%{opacity:0;transform:translate(110px,0)}}
+#tour .tq-wk{position:absolute;left:14px;right:14px;top:104px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+#tour .tq-wk div{background:var(--surface,#fff);border-radius:10px;padding:6px;font-size:11px;min-height:58px;color:var(--muted)}
+#tour .tq-wk div b{display:block;color:var(--ink);font-size:11px;margin-bottom:3px}
+#tour .tq-wk .tq-new{opacity:0;display:block;background:var(--accent-soft);border-radius:6px;padding:3px 4px;color:var(--ink);font-weight:700}
+#tour .on .tq-wk .tq-new{animation:t2New var(--d) infinite}
+@keyframes t2New{0%,46%{opacity:0;transform:scale(.6)}56%,94%{opacity:1;transform:none}100%{opacity:0}}
+#tour .tq-rate{position:absolute;left:14px;right:14px;top:98px;display:flex;flex-direction:column;gap:5px}
+#tour .tq-rate div{background:var(--surface,#fff);border-radius:10px;padding:4px 10px;display:flex;justify-content:space-between;align-items:center;font-weight:700;opacity:0}
+#tour .on .tq-rate div{animation:t3Rate var(--d) infinite}
+#tour .on .tq-rate div:nth-child(2){animation-name:t3Rate2}#tour .on .tq-rate div:nth-child(3){animation-name:t3Rate3}
+@keyframes t3Rate{0%,46%{opacity:0;transform:translateX(-10px)}52%,94%{opacity:1;transform:none}100%{opacity:0}}
+@keyframes t3Rate2{0%,54%{opacity:0;transform:translateX(-10px)}60%,94%{opacity:1;transform:none}100%{opacity:0}}
+@keyframes t3Rate3{0%,62%{opacity:0;transform:translateX(-10px)}68%,94%{opacity:1;transform:none}100%{opacity:0}}
+/* 4 shopping status */
+#tour .tq-v4 .tq-mc{top:16px}
+#tour .tq-v4 .tq-ps{position:relative;margin-left:auto;width:96px;height:22px;flex:none}
+#tour .tq-v4 .tq-ps .tq-pill{position:absolute;right:0;top:0;opacity:0}
+#tour .tq-v4 .tq-ps .tq-p1{opacity:1}
+#tour .on.tq-v4 .tq-ps .tq-p1{animation:t4P1 var(--d) infinite}#tour .on.tq-v4 .tq-ps .tq-p2{animation:t4P2 var(--d) infinite}#tour .on.tq-v4 .tq-ps .tq-p3{animation:t4P3 var(--d) infinite;background:#3d8a5a;color:#fff}
+@keyframes t4P1{0%,26%{opacity:1}30%,100%{opacity:0}}
+@keyframes t4P2{0%,28%{opacity:0}32%,66%{opacity:1}70%,100%{opacity:0}}
+@keyframes t4P3{0%,68%{opacity:0}72%,96%{opacity:1}100%{opacity:0}}
+#tour .tq-v4 .tq-cart{position:absolute;top:82px;left:14px;background:var(--accent);color:var(--on-accent);font-weight:700;border-radius:99px;padding:6px 12px;font-size:12px}
+#tour .on.tq-v4 .tq-cart{animation:t1Go var(--d) infinite;animation-delay:-1.3s}
+#tour .tq-v4 .tq-lst{position:absolute;top:120px;left:14px;right:14px;display:flex;gap:6px}
+#tour .tq-v4 .tq-lst span{flex:1;background:var(--surface,#fff);border-radius:10px;padding:7px 8px;font-size:12px;font-weight:600;opacity:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#tour .on.tq-v4 .tq-lst span{animation:t4L var(--d) infinite}
+#tour .on.tq-v4 .tq-lst span:nth-child(2){animation-delay:.15s}#tour .on.tq-v4 .tq-lst span:nth-child(3){animation-delay:.3s}
+@keyframes t4L{0%,24%{opacity:0;transform:translateY(-30px)}32%{opacity:1;transform:none;text-decoration:none;color:var(--ink)}52%{text-decoration:none}60%,94%{opacity:1;text-decoration:line-through;color:var(--muted)}100%{opacity:0}}
+/* 5 offers + stores */
+#tour .tq-v5 .tq-seg5{position:absolute;top:14px;left:14px;right:14px;display:flex;background:var(--surface,#fff);border-radius:99px;padding:3px;font-size:12px;font-weight:700}
+#tour .tq-v5 .tq-seg5 span{flex:1;text-align:center;padding:5px 0;border-radius:99px;color:var(--muted)}
+#tour .tq-v5 .tq-seg5 .tq-b{background:var(--accent);color:var(--on-accent)}
+#tour .on.tq-v5 .tq-seg5 .tq-b{animation:t1Go var(--d) infinite;animation-delay:1.6s}
+#tour .tq-v5 .tq-grp{position:absolute;left:14px;right:14px;top:54px;display:flex;flex-direction:column;gap:5px}
+#tour .tq-v5 .tq-h{font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--brand);margin-top:2px}
+#tour .tq-v5 .tq-it{background:var(--surface,#fff);border-radius:10px;padding:5px 10px;font-weight:600;font-size:12px}
+#tour .tq-v5 .tq-it .tq-of{display:block;font-weight:700;font-size:11px;background:#f6d860;color:#3a2e00;border-radius:6px;padding:2px 6px;margin-top:3px;opacity:0}
+#tour .on.tq-v5 .tq-it .tq-of{animation:t5Of var(--d) infinite}
+#tour .on.tq-v5 .tq-grp .tq-it:nth-of-type(n+3) .tq-of{animation-delay:.35s}
+@keyframes t5Of{0%,10%{opacity:0;transform:translateX(-8px)}20%,94%{opacity:1;transform:none}100%{opacity:0}}
+/* 6 tinder */
+#tour .tq-v6 .tq-cd{position:absolute;top:14px;left:50%;width:170px;height:130px;margin-left:-85px;border-radius:16px;background:var(--surface,#fff);box-shadow:0 6px 16px rgba(0,0,0,.14);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-weight:800}
+#tour .tq-v6 .tq-cd .tq-e{font-size:44px;line-height:1}
+#tour .tq-v6 .tq-cd .tq-tag{position:absolute;top:8px;left:8px;font-size:10px;font-weight:800;background:var(--accent-soft);border-radius:99px;padding:2px 7px}
+#tour .tq-v6 .tq-cd.tq-b2{transform:scale(.93) translateY(8px);opacity:.85}
+#tour .tq-v6 .tq-stamp{position:absolute;top:12px;right:10px;font-size:26px;opacity:0}
+#tour .on.tq-v6 .tq-cd.tq-b1{animation:t6Fly var(--d) infinite}
+#tour .on.tq-v6 .tq-stamp{animation:t6St var(--d) infinite}
+#tour .on.tq-v6 .tq-cd.tq-b2{animation:t6Up var(--d) infinite}
+@keyframes t6Fly{0%,14%{transform:none;opacity:1}34%{transform:rotate(8deg) translateX(30px);opacity:1}48%{transform:rotate(20deg) translateX(260px);opacity:0}96%{transform:rotate(20deg) translateX(260px);opacity:0}100%{transform:none;opacity:0}}
+@keyframes t6St{0%,16%{opacity:0;transform:scale(.4)}26%,40%{opacity:1;transform:scale(1)}48%,100%{opacity:0}}
+@keyframes t6Up{0%,40%{transform:scale(.93) translateY(8px);opacity:.85}52%,96%{transform:none;opacity:1}100%{transform:scale(.93) translateY(8px);opacity:.85}}
+/* 7 share */
+#tour .tq-v7 .tq-mc{top:22px}
+#tour .tq-v7 .tq-shr{position:absolute;top:96px;left:14px;right:14px;background:var(--surface,#fff);border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px;font-weight:700}
+#tour .tq-v7 .tq-shr .tq-gl{font-size:22px}
+#tour .tq-v7 .tq-sw7{margin-left:auto;width:44px;height:26px;border-radius:99px;background:var(--line);position:relative;flex:none}
+#tour .tq-v7 .tq-sw7::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+#tour .on.tq-v7 .tq-sw7{animation:t7Bg var(--d) infinite}#tour .on.tq-v7 .tq-sw7::after{animation:t7Kn var(--d) infinite}
+#tour .on.tq-v7 .tq-gl{animation:t7Gl var(--d) infinite}
+@keyframes t7Bg{0%,28%{background:var(--line)}34%,94%{background:#3d8a5a}100%{background:var(--line)}}
+@keyframes t7Kn{0%,28%{transform:none}34%,94%{transform:translateX(18px)}100%{transform:none}}
+@keyframes t7Gl{0%,34%,60%,100%{transform:none}44%{transform:scale(1.3) rotate(-12deg)}}
+@media (prefers-reduced-motion:reduce){#tour .tq-tv *{animation:none!important}
+  #tour .tq-v1 .tq-url span{width:100%}#tour .tq-v1 .tq-mc,#tour .tq-wk .tq-new,#tour .tq-rate div,#tour .tq-v4 .tq-lst span,#tour .tq-v5 .tq-it .tq-of,#tour .tq-toast{opacity:1}
+  #tour .tq-v4 .tq-ps .tq-p1{opacity:0}#tour .tq-v4 .tq-ps .tq-p3{opacity:1;background:#3d8a5a;color:#fff}#tour .tq-v6 .tq-stamp{opacity:1}#tour .tq-v7 .tq-sw7{background:#3d8a5a}#tour .tq-v7 .tq-sw7::after{transform:translateX(18px)}#tour .tq-toast{transform:translateX(-50%)}}`;
+  document.head.appendChild(st);
+  function slides(){
+    const n=names(),c=web();
+    const S=[
+      {k:"Opskrifter",h:"Gem opskrifter med et link",t:"Indsæt linket til en opskrift fra nettet, så henter Madro titel, billede, ingredienser og fremgangsmåde til jeres kogebog.",
+       v:'<div class="tq-tv tq-v1"><div class="tq-in"><div class="tq-url"><span>valdemarsro.dk/lasagne</span></div><span class="tq-go">Hent</span></div>'+
+         '<div class="tq-mc"><span class="tq-e">🍝</span><div><b>Lasagne</b><small>9 ingredienser · 6 trin</small></div><span class="tq-pill" style="margin-left:auto">✓ Gemt</span></div></div>'},
+      {k:"Kogebogen",h:"Swipe til venstre: på madplanen",t:"Swipe en opskrift til venstre i kogebogen, og vælg dagen. Så står retten på ugens madplan.",
+       v:'<div class="tq-tv"><div class="tq-sw tq-left"><div class="tq-under tq-l">📅 Madplan</div><div class="tq-mc"><span class="tq-e">🍗</span><div><b>Kylling i karry</b><small>30 min</small></div></div></div>'+
+         '<span class="tq-fing tq-fl" style="top:44px;right:40px">👆</span>'+
+         '<div class="tq-wk"><div><b>Man</b>Rester</div><div><b>Tir</b><span class="tq-new">Kylling i karry</span></div><div><b>Ons</b>–</div><div><b>Tor</b>Taco</div></div></div>'},
+      {k:"Kogebogen",h:"Swipe til højre: anmeld retten",t:"Swipe til højre, og giv 👍 eller 👎 for hver i familien. Så ved Madro, hvad der er hit hos jer.",
+       v:'<div class="tq-tv"><div class="tq-sw tq-right"><div class="tq-under tq-r">👍 👎</div><div class="tq-mc"><span class="tq-e">🍝</span><div><b>Lasagne</b><small>Hvad synes I?</small></div></div></div>'+
+         '<span class="tq-fing tq-fr" style="top:44px;left:40px">👆</span>'+
+         '<div class="tq-rate"><div>'+esc(n[0])+'<span>👍</span></div><div>'+esc(n[1])+'<span>👍</span></div><div>'+esc(n[2])+'<span>👎</span></div></div></div>'},
+      {k:"Madplanen",h:"Fra madplan til indkøbsliste",t:"Tryk på indkøbsvognen, så kommer ingredienserne på indkøbslisten. Ved hver ret kan du se, om der er købt ind til den.",
+       v:'<div class="tq-tv tq-v4"><div class="tq-mc"><span class="tq-e">🍗</span><div><b>Tirsdag</b><small>Kylling i karry</small></div><div class="tq-ps"><span class="tq-pill tq-p1">🛒 Ikke handlet</span><span class="tq-pill tq-p2">🛒 3 mangler</span><span class="tq-pill tq-p3">✓ Handlet</span></div></div>'+
+         '<span class="tq-cart">🛒 Til indkøbslisten</span><div class="tq-lst"><span>Kylling</span><span>Karry</span><span>Ris</span></div></div>'},
+      {k:"Indkøb",h:"Tilbud og butikker",t:"Varer på tilbud er markeret med gult på indkøbslisten. Sortér listen efter butik, så har du en liste til hver butik.",
+       v:'<div class="tq-tv tq-v5"><div class="tq-seg5"><span>Kategori</span><span class="tq-b">Butik</span><span>Ret</span></div><div class="tq-grp">'+
+         '<div class="tq-h">Netto</div><div class="tq-it">Hakket oksekød<span class="tq-of">Tilbud 35 kr. · før 49,95</span></div>'+
+         '<div class="tq-h">Rema 1000</div><div class="tq-it">Smør<span class="tq-of">Tilbud 12 kr. · før 19,95</span></div></div></div>'},
+      {k:"Spil",h:"Opskrift Tinder",t:c?"Swipe jer gennem retter, og få idéer fra fællesskabets opskrifter. Giv 👍, så kan du gemme retten i din egen kogebog.":"Swipe jer gennem kogebogen med 👍 og 👎, og find ud af, hvad hele familien har lyst til.",
+       v:'<div class="tq-tv tq-v6"><div class="tq-cd tq-b2"><span class="tq-e">🥗</span>Græsk salat</div><div class="tq-cd tq-b1">'+(c?'<span class="tq-tag">🌍 Fællesskabet</span>':'')+'<span class="tq-e">🍳</span>Shakshuka<span class="tq-stamp">👍</span></div>'+
+         '<span class="tq-toast">'+(c?"＋ Gemt i din kogebog":"👍 Shakshuka")+'</span></div>'}];
+    if(c)S.push({k:"Fællesskabet",h:"Del dine opskrifter",t:"Del jeres bedste opskrifter med fællesskabet, så andre familier kan finde dem i Opskrift Tinder. Du bestemmer selv for hver opskrift.",
+       v:'<div class="tq-tv tq-v7"><div class="tq-mc"><span class="tq-e">🍝</span><div><b>Familiens lasagne</b><small>Fra jeres kogebog</small></div></div>'+
+         '<div class="tq-shr"><span class="tq-gl">🌍</span>Del med fællesskabet<span class="tq-sw7"></span></div><span class="tq-toast">Delt med fællesskabet</span></div>'});
+    return S;
+  }
+  let i=0,S=[],w=null;
+  function go(n){i=Math.max(0,Math.min(S.length-1,n));const tr=w.querySelector(".tr-track");tr.style.transform="translateX("+(-100*i)+"%)";
+    w.querySelectorAll(".sl").forEach((s,k)=>{s.classList.toggle("on",k===i);s.setAttribute("aria-hidden",String(k!==i));s.querySelector(".tq-tv").classList.toggle("on",k===i);});
+    w.querySelectorAll(".dots button").forEach((d,k)=>d.classList.toggle("on",k===i));
+    const nx=w.querySelector("#tourNext");nx.textContent=i===S.length-1?"Kom i gang":"Næste";
+    w.querySelector("#tourSkip").style.visibility=i===S.length-1?"hidden":"visible";}
+  function close(){if(!w)return;try{localStorage.setItem("mp_tour","1");}catch(e){}const x=w;w=null;x.classList.remove("on");setTimeout(()=>x.remove(),250);
+    if(window.__tipLater)window.__tipLater();}
+  function open(){if(w)return;S=slides();i=0;
+    w=document.createElement("div");w.id="tourWrap";w.setAttribute("role","dialog");w.setAttribute("aria-modal","true");w.setAttribute("aria-label","Velkommen til Madro");
+    w.innerHTML='<div id="tour"><div style="overflow:hidden"><div class="tr-track">'+S.map((s,k)=>'<section class="sl"><div class="tk">'+(k+1)+' af '+S.length+' · '+s.k+'</div>'+s.v+'<h2>'+s.h+'</h2><p class="tx">'+s.t+'</p></section>').join("")+'</div></div>'+
+      '<div class="tr-bar"><button type="button" class="btn plain small" id="tourSkip">Spring over</button><div class="dots">'+S.map((s,k)=>'<button type="button" aria-label="Side '+(k+1)+'"></button>').join("")+'</div><button type="button" class="btn small" id="tourNext">Næste</button></div></div>';
+    document.body.appendChild(w);requestAnimationFrame(()=>w&&w.classList.add("on"));
+    w.querySelector("#tourSkip").onclick=close;
+    w.querySelector("#tourNext").onclick=()=>{if(i>=S.length-1)close();else go(i+1);};
+    w.querySelectorAll(".dots button").forEach((d,k)=>d.onclick=()=>go(k));
+    const tr=w.querySelector(".tr-track");let x0=null,y0=0;
+    tr.addEventListener("touchstart",e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY;},{passive:true});
+    tr.addEventListener("touchend",e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;x0=null;
+      if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy))go(i+(dx<0?1:-1));},{passive:true});
+    go(0);setTimeout(()=>{const b=w&&w.querySelector("#tourNext");if(b)b.focus();},300);}
+  addEventListener("keydown",e=>{if(!w)return;if(e.key==="Escape")close();else if(e.key==="ArrowRight")go(i+1);else if(e.key==="ArrowLeft")go(i-1);});
+  const seen=()=>{try{return localStorage.getItem("mp_tour")==="1";}catch(e){return true;}};
+  /* first start: wait for login and the app, then show the tour before any tips */
+  const first=()=>{if(seen())return;if(document.querySelector("#authWrap:not([hidden]),#sheetWrap.on,.cbox-wrap,#mdNews,#a2hs")){setTimeout(first,1500);return;}open();};
+  setTimeout(first,1200);
+  const again=document.getElementById("tourAgain");if(again)again.onclick=open;
+  window.__showTour=open;
 })();
 </script>
 <script>
