@@ -1,5 +1,13 @@
 [
  {
+  "v": "1795174978",
+  "date": "2026-11-20",
+  "new": [
+   "Starttutorialen viser nu korte film fra selve appen: gem en opskrift med et link, swipe til madplanen, giv 👍, læg varer på indkøbslisten, find tilbud, Opskrift Tinder og deling. Se den under Opsætning → Tips til appen → Vis starttutorial."
+  ],
+  "fixed": []
+ },
+ {
   "v": "1795172819",
   "date": "2026-11-20",
   "new": [
