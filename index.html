@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795091193";</script>
-<script src="config.js?v=1795091193"></script>
-<script src="importer.js?v=1795091193"></script>
-<script src="shim.js?v=1795091193"></script>
+<script>window.__appVersion="1795171340";</script>
+<script src="config.js?v=1795171340"></script>
+<script src="importer.js?v=1795171340"></script>
+<script src="shim.js?v=1795171340"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1032,6 +1032,7 @@ html.logo-tin .tabs a[data-tab="madplan"].on svg.seal{box-shadow:0 0 0 2px #6b3a
 .g-mini .g-splat{top:0;right:0;width:46px;height:46px}.g-mini .g-splat b{font-size:7.5px}
 .wv-meals .g-splat{right:-26px}
 .g-mini .g-splat{margin-top:0}
+.seg-wrap{flex-wrap:wrap}
 /* recipe actions: one tidy block — servings and share on top, two equal buttons, the main action full width */
 .rec-actions.ra{display:flex;flex-direction:column;gap:8px}
 .ra .ra-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -1380,6 +1381,11 @@ body.wv-on .toast{z-index:210}
         <div class="seg" id="tipsSeg" role="group" aria-label="Tips"><button type="button" data-tips="on">Til</button><button type="button" data-tips="off">Fra</button></div>
         <p class="small muted" style="margin:0">Når tips er slået til, viser hver side kort, hvordan du bruger den: tryk, langt tryk, swipe og træk.</p>
         <div><button type="button" class="btn plain small" id="tipsAgain">Vis alle tips igen</button></div>
+        </div>
+        <div class="set-sec">
+        <h4>Startside</h4>
+        <div class="seg seg-wrap" id="startSeg" role="group" aria-label="Startside"><button type="button" data-sp="madplan">Madplan</button><button type="button" data-sp="opskrifter">Kogebog</button><button type="button" data-sp="indkob">Indkøb</button><button type="button" data-sp="spil">Spil</button></div>
+        <p class="small muted" style="margin:0">Den side, appen åbner på. Gælder kun dig.</p>
         </div>
         <div class="set-sec">
         <h4>Madplanen</h4>
@@ -1977,6 +1983,7 @@ const TABS=["madplan","indkob","spil","opskrifter","butikker"];
 function route(){
   let h=(location.hash||"").replace("#","");
   if(h==="importer"){h="opskrifter";setTimeout(()=>{const box=$("#importBox");box.style.display="flex";$("#impText").focus();$("#impStatus").innerHTML="Tryk i tekstfeltet og vælg <b>Indsæt</b>.";},50);}
+  if(!h){let sp="madplan";try{const v=JSON.parse(localStorage.getItem("mp_my_startPage")||'"madplan"');if(TABS.includes(v))sp=v;}catch(e){}h=sp;if(sp!=="madplan")try{history.replaceState(null,"","#"+sp);}catch(e){}}
   if(h==="opsaetning")h="butikker";
   if(!TABS.includes(h))h="madplan";
   if(h==="spil")renderGames();
@@ -2921,6 +2928,9 @@ window.addEventListener("hashchange",()=>setTimeout(()=>{try{placeSplats();}catc
 function planStyle(){try{return localStorage.getItem("mp_planStyle")||"menu";}catch(e){return "menu";}}
 function drawPlanStyle(){const v=planStyle();$("#days").classList.toggle("menu-style",v==="menu");setTimeout(()=>{try{placeSplats();}catch(e){}},30);
   document.querySelectorAll("#planStyleSeg [data-ps]").forEach(b=>{const on=b.dataset.ps===v;b.classList.toggle("on",on);b.setAttribute("aria-pressed",String(on));});}
+function drawStartSeg(){const v=myPref("startPage","madplan");document.querySelectorAll("#startSeg [data-sp]").forEach(b=>{b.classList.toggle("on",b.dataset.sp===v);b.setAttribute("aria-pressed",b.dataset.sp===v);});}
+$("#startSeg").addEventListener("click",e=>{const b=e.target.closest("[data-sp]");if(!b)return;setMyPref("startPage",b.dataset.sp);drawStartSeg();toast("Appen åbner nu på "+b.textContent);});
+drawStartSeg();
 $("#planStyleSeg").addEventListener("click",e=>{const b=e.target.closest("[data-ps]");if(!b)return;try{localStorage.setItem("mp_planStyle",b.dataset.ps);}catch(x){}drawPlanStyle();});
 drawPlanStyle();
 function goWeek(n){
