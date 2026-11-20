@@ -21,7 +21,7 @@ async function viaProxy(url,as,ms,progress){
       let v=as==="blob"?await r.blob():await r.text();clearTimeout(t);
       if(p.json){try{v=JSON.parse(v)[p.json]||"";}catch(e){v="";}}
       if(as!=="blob"&&(!v||v.length<200)){lastErr=new Error("tom side");errs.push("tom");continue;}
-      if(as!=="blob"&&!/ld\+json|recipeIngredient|schema\.org\/Recipe/i.test(v)){lastErr=new Error("ingen opskriftsdata");errs.push("uden opskrift");continue;}
+      if(as!=="blob"&&!/ld\+json|recipeIngredient|schema\.org\/Recipe|ingredient|ingrediens|zutaten|ingrédients|ingredientes/i.test(v)){lastErr=new Error("ingen opskriftsdata");errs.push("uden opskrift");continue;}
       if(as==="blob"&&!/^image\//.test(v.type||"")&&v.size<1000){lastErr=new Error("intet billede");continue;}
       return v;}catch(e){lastErr=e;errs.push(e&&e.name==="AbortError"?"for langsom":"blokeret");}
   }
@@ -88,8 +88,8 @@ const FOREIGN_RE=/^((?:fl\.?\s*oz\.?|fluid\s+ounces?)|[A-Za-zÄÖÜäöüß.]+)\
 function r5(x){return Math.max(5,Math.round(x/5)*5);}
 function q(x,st){return Math.round(x/st)*st;}
 function vol(ml){if(ml==null)return {amount:null,unit:"dl"};
-  if(ml<15)return {amount:Math.max(1,Math.round(ml)),unit:"ml"};
-  if(ml<100)return {amount:r5(ml),unit:"ml"};
+  if(ml<10)return {amount:Math.max(1,Math.round(ml)),unit:"ml"};
+  if(ml<100)return {amount:Math.max(.5,Math.round(ml/5)/2),unit:"cl"};
   if(ml<1000)return {amount:Math.max(1,q(ml/100,ml<200?.25:.5)),unit:"dl"};
   return {amount:Math.round(ml/100)/10,unit:"l"};}
 function wt(g){if(g==null)return {amount:null,unit:"g"};if(g>=1000)return {amount:Math.round(g/100)/10,unit:"kg"};return {amount:g<20?Math.round(g):(g<500?r5(g):q(g,25)),unit:"g"};}
@@ -114,14 +114,15 @@ function parseAmount(s){s=s.trim().replace(",",".");if(!s)return null;
     const f=/^(\d+)\/(\d+)$/.exec(part);if(f){total+=(+f[1])/(+f[2]);any=true;continue;}
   }
   return any?Math.round(total*100)/100:null;}
-function parseIngredient(line,group){
-  line=decode(line).replace(/^[-•*·]\s*/,"");
+const LIQUID=/\b(rum|vodka|gin|tequila|mezcal|whiske?y|bourbon|brandy|cognac|liqueur|likør|vermouth|aperol|campari|wine|vin|champagne|prosecco|beer|øl|juice|saft|syrup|sirup|soda|tonic|water|vand|milk|mælk|cream|fløde|broth|stock|bouillon|vinegar|eddike|sauce|bitters|espresso|coffee|kaffe|tea|te)\b/i;
+function parseIngredient(line,group,drink){
+  line=decode(line).replace(/\u2044/g,"/").replace(/(\d)\s+\|\s*/,"$1 ").replace(/\s*\|\s*/g," ").replace(/^[-•*·]\s*/,"");
   const m=/^((?:\d+\/\d+|\d+(?:[.,]\d+)?|[½¼¾⅓⅔⅛])(?:\s*[½¼¾⅓⅔⅛])?(?:\s*[-–]\s*(?:\d+(?:[.,]\d+)?|[½¼¾⅓⅔⅛]))?(?:\s+\d+\/\d+)?)\s*(.*)$/.exec(line);
   let amount=null,rest=line;
   if(m){amount=parseAmount(m[1]);rest=m[2];}
   let pre="";const pm=/^\(([^)]*)\)\s*(.*)$/.exec(rest);if(pm){pre=convText(pm[1]);rest=pm[2];}
   let unit="";const fu=FOREIGN_RE.exec(rest);
-  if(fu&&isForeign(fu[1])&&(amount!=null||/^(pinch|prise|nypa|dash|clove|zehe|klyfta)/i.test(fu[1]))){const c=convUnit(amount,fu[1]);amount=c.amount;unit=c.unit;rest=fu[2];}
+  if(fu&&isForeign(fu[1])&&(amount!=null||/^(pinch|prise|nypa|dash|clove|zehe|klyfta)/i.test(fu[1]))){const liq=/^(oz\.?|ounces?)$/i.test(fu[1].trim())&&(drink||LIQUID.test(fu[2]));const c=liq?vol(amount==null?null:amount*29.57):convUnit(amount,fu[1]);amount=c.amount;unit=c.unit;rest=fu[2];}
   else{const w=/^(\S+)\s+(.*)$/.exec(rest);
   if(w&&UNITS[w[1].toLowerCase()]){unit=UNITS[w[1].toLowerCase()];rest=w[2];}
   else if(UNITS[rest.toLowerCase()]&&amount!=null){unit=UNITS[rest.toLowerCase()];rest="";}}
@@ -132,7 +133,7 @@ function parseIngredient(line,group){
   return {group:group||"",amount,unit,name:name.trim()||line,note};}
 
 const TAGS=[[/aftensmad|middag|hovedret|dinner|main/i,"Aftensmad"],[/frokost|lunch/i,"Frokost"],[/morgenmad|brunch|breakfast/i,"Morgenmad"],[/dessert|kage|bagv|cake/i,"Dessert"],
-  [/vegetar|vegetarian/i,"Vegetar"],[/vegan/i,"Vegansk"],[/kylling|chicken/i,"Kylling"],[/okse|beef/i,"Oksekød"],[/svin|gris|pork/i,"Svinekød"],[/fisk|laks|torsk|fish/i,"Fisk"],[/pasta/i,"Pasta"],[/suppe|soup/i,"Suppe"]];
+  [/vegetar|vegetarian/i,"Vegetar"],[/vegan/i,"Vegansk"],[/kylling|chicken/i,"Kylling"],[/okse|beef/i,"Oksekød"],[/svin|gris|pork/i,"Svinekød"],[/fisk|laks|torsk|fish/i,"Fisk"],[/pasta/i,"Pasta"],[/suppe|soup/i,"Suppe"],[/cocktail|drink|martini|mojito|spritz|sour\b|daiquiri|margarita|negroni|punch|lemonade|smoothie/i,"Drinks"]];
 function tagsOf(r,title){const hay=[txt(r.recipeCategory),Array.isArray(r.recipeCategory)?r.recipeCategory.join(" "):"",txt(r.keywords),Array.isArray(r.keywords)?r.keywords.join(" "):"",txt(r.recipeCuisine),title].join(" ");
   const out=[];TAGS.forEach(([re,t])=>{if(re.test(hay)&&!out.includes(t))out.push(t);});return out.slice(0,3);}
 
@@ -154,10 +155,36 @@ function microdata(doc){
     description:val(one("description")),recipeIngredient:ingr,recipeInstructions:steps,image:val(one("image")),recipeCategory:val(one("recipeCategory")),keywords:val(one("keywords")),
     nutrition:nut?{calories:val(nut.querySelector('[itemprop~="calories"]')),proteinContent:val(nut.querySelector('[itemprop~="proteinContent"]')),fiberContent:val(nut.querySelector('[itemprop~="fiberContent"]'))}:null};
 }
+/* pages without schema.org: find the "Ingredients" and "Method" headings and read the lists after them */
+const ING_H=/^\s*(ingredients?|ingredienser|ingredienserne|du skal bruge|zutaten|ingrédients|ingredientes|ingredienti|ingrediënten)\b/i;
+const STEP_H=/^\s*(instructions?|method|directions|how to make|preparation|steps|fremgangsmåde|sådan gør du|tilberedning|zubereitung|anleitung|préparation|preparación|preparazione|bereiding)\b/i;
+function rowsAfter(h,stopRe){
+  const out=[];let el=h;const walker=h.ownerDocument.createTreeWalker(h.ownerDocument.body,1);walker.currentNode=h;let n=0;
+  while((el=walker.nextNode())&&n<400){n++;
+    if(/^H[1-4]$/.test(el.tagName)&&out.length)break;
+    if(stopRe&&/^(H[1-6]|STRONG|B|TH|DT|LEGEND)$/.test(el.tagName)&&stopRe.test(el.textContent)&&out.length)break;
+    if(el.tagName==="LI"||el.tagName==="TR"){const cells=el.tagName==="TR"?[...el.children].map(c=>c.textContent.replace(/\s+/g," ").trim()).filter(Boolean):[el.textContent.replace(/\s+/g," ").trim()];
+      const t=cells.join(" ").trim();if(t&&t.length<300)out.push(t);}
+    else if(el.tagName==="P"&&!el.closest("li,tr")&&out.length===0&&stopRe===ING_H){const t=el.textContent.replace(/\s+/g," ").trim();if(t.length>20)out.push(t);}
+  }
+  return out;}
+function genericRecipe(doc){
+  const heads=[...doc.querySelectorAll("h1,h2,h3,h4,h5,strong,b,th,dt,legend,caption,[class*=title],[class*=heading]")];
+  const ih=heads.find(h=>ING_H.test(h.textContent)&&h.textContent.length<60);if(!ih)return null;
+  let ingr=rowsAfter(ih,STEP_H);
+  if(!ingr.length){const li=[...doc.querySelectorAll('[class*="ingredient" i] li,[class*="ingredient" i] tr,li[class*="ingredient" i]')];ingr=li.map(e=>e.textContent.replace(/\s+/g," ").trim()).filter(Boolean);}
+  if(!ingr.length)return null;
+  const sh=heads.find(h=>STEP_H.test(h.textContent)&&h.textContent.length<60);
+  const st=sh?rowsAfter(sh,ING_H):[];
+  const m=q=>{const e=doc.querySelector(q);return e?e.getAttribute("content")||"":"";};
+  const h1=doc.querySelector("h1");
+  return {name:(h1&&h1.textContent.replace(/\s+/g," ").trim())||m('meta[property="og:title"]'),description:m('meta[name="description"]')||m('meta[property="og:description"]'),
+    recipeIngredient:ingr.slice(0,60),recipeInstructions:st.slice(0,40),image:m('meta[property="og:image"]'),keywords:"",recipeCategory:""};}
 function recipeFromHTML(html,url){
   const doc=new DOMParser().parseFromString(html,"text/html");
   let r=null;for(const s of doc.querySelectorAll('script[type="application/ld+json"]')){try{r=findRecipe(JSON.parse(s.textContent));}catch(e){try{r=findRecipe(JSON.parse(s.textContent.replace(/[\u0000-\u001f]+/g," ")));}catch(e2){}}if(r)break;}
   if(!r)r=microdata(doc);
+  if(!r)r=genericRecipe(doc);
   if(!r)return null;
   const meta=q=>{const m=doc.querySelector(q);return m?txt(m.getAttribute("content")||""):"";};
   const site=meta('meta[property="og:site_name"]');let host="";try{host=new URL(url).hostname.replace(/^www\./,"").split(".")[0];}catch(e){}
@@ -167,7 +194,8 @@ function recipeFromHTML(html,url){
   let title=txt(r.name);
   [meta('meta[property="og:title"]'),h1&&h1.textContent.replace(/\s+/g," ").trim(),strip(doc.title)].forEach(t=>{if(isSite(title)&&t&&!isSite(t))title=t;});
   if(isSite(title)&&!isSite(strip(title)))title=strip(title);
-  const ingr=[];const raw=r.recipeIngredient||r.ingredients||[];(Array.isArray(raw)?raw:[raw]).forEach(l=>{if(typeof l==="string"&&l.trim())ingr.push(parseIngredient(l));});
+  const ingr=[];const raw=r.recipeIngredient||r.ingredients||[];const drink=tagsOf(r,title).includes("Drinks")||/cocktail|drink/i.test(url);
+  (Array.isArray(raw)?raw:[raw]).forEach(l=>{if(typeof l==="string"&&l.trim())ingr.push(parseIngredient(l,"",drink));});
   const st=steps(r.recipeInstructions).map(convText);ingr.forEach(i=>{i.note=convText(i.note);});
   if(!title||!ingr.length)return null;
   let servings=num(r.recipeYield);if(!servings||servings>40)servings=4;
@@ -175,7 +203,7 @@ function recipeFromHTML(html,url){
   let desc=txt(r.description);if(desc.length>220)desc=desc.slice(0,217).replace(/\s+\S*$/,"")+"…";
   const img=imageOf(r.image)||(doc.querySelector('meta[property="og:image"]')||{}).content||"";
   const tags=tagsOf(r,title);
-  return {title,servings,time:isoDur(r.totalTime||r.cookTime||r.prepTime),description:desc,ingredients:ingr,steps:st,tags:tags.length?tags:["Aftensmad"],meals:tags.includes("Dessert")?["Dessert"]:tags.includes("Morgenmad")?["Morgenmad"]:tags.includes("Frokost")?["Frokost"]:["Aftensmad"],
+  return {title,servings,time:isoDur(r.totalTime||r.cookTime||r.prepTime),description:desc,ingredients:ingr,steps:st,tags:tags.length?tags:[/drink|cocktail/i.test(url)?"Drinks":"Aftensmad"],meals:tags.includes("Drinks")?["Drinks"]:tags.includes("Dessert")?["Dessert"]:tags.includes("Morgenmad")?["Morgenmad"]:tags.includes("Frokost")?["Frokost"]:["Aftensmad"],
     _lang:langOf(doc,r,[title,desc].concat(st).join(" ")),
     source:url,createdAt:Date.now(),nutrition:kcal?{kcal,protein:protein||0,fiber:fiber||0,source:"opskrift"}:null,image:img&&!/^data:/.test(img)?new URL(img,url).href:""};
 }

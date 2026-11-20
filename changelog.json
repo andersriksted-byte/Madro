@@ -1,5 +1,15 @@
 [
  {
+  "v": "1795193506",
+  "date": "2026-11-20",
+  "new": [
+   "Drinks og cocktails kan nu hentes fra links, fx fra Difford's Guide. Mål som fl oz bliver til cl, og opskriften lægges under Drinks."
+  ],
+  "fixed": [
+   "Opskrifter fra sider uden opskriftsdata, fx nogle drinksider, kunne ikke hentes. Nu læser appen ingredienser og fremgangsmåde direkte fra siden."
+  ]
+ },
+ {
   "v": "1795193261",
   "date": "2026-11-20",
   "new": [
