@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795193506";</script>
-<script src="config.js?v=1795193506"></script>
-<script src="importer.js?v=1795193506"></script>
-<script src="shim.js?v=1795193506"></script>
+<script>window.__appVersion="1795300892";</script>
+<script src="config.js?v=1795300892"></script>
+<script src="importer.js?v=1795300892"></script>
+<script src="shim.js?v=1795300892"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1010,7 +1010,7 @@ html.logo-tin .tabs a[data-tab="madplan"].on svg.seal{box-shadow:0 0 0 2px #6b3a
 .ob-h:first-child{padding-top:2px}
 .ob-h span{font-size:calc(12px * var(--fs));color:var(--muted)}
 .ob-chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.ob-chips .chip{flex:none}
-.ob-seg{align-self:flex-start}
+.ob-seg{align-self:stretch;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.ob-seg button{flex:1 0 auto;padding-left:10px;padding-right:10px}
 .ob-info{font-size:calc(13px * var(--fs));color:var(--muted);display:grid;gap:4px}
 .ob-exp{display:flex;flex-wrap:wrap;gap:4px 12px}.ob-exp b{color:var(--ink);font-weight:600}
 #offBtn{position:relative}
@@ -1609,7 +1609,7 @@ let fileOffers=null;
 function pickOffers(){
   const a=state.dbOffers,b=fileOffers;const t=x=>x&&x.updatedAt?new Date(x.updatedAt).getTime():0;
   state.offers=(t(b)>=t(a)?b:a)||null;
-  offDot();
+  offDot();try{offFirst();}catch(e){}
 }
 /* a dot on the % button when offers newer than the last look have arrived */
 function offSeenKey(){let u=null;try{u=window.firebase&&firebase.auth&&firebase.auth().currentUser;}catch(e){}return "mp_offSeen"+(u&&u.uid?"_"+u.uid:"");}
@@ -1617,6 +1617,12 @@ function offStamp(){return (state.offers&&state.offers.updatedAt)?String(state.o
 function offDot(){const b=document.getElementById("offBtn");if(!b)return;const st=offStamp();let seen="";try{seen=localStorage.getItem(offSeenKey())||"";}catch(e){}
   const on=!!st&&st!==seen&&allOffers().length>0;b.classList.toggle("has-new",on);
   const t=document.querySelector('.tabs a[data-tab="indkob"]');if(t){t.classList.toggle("off-new",on);t.setAttribute("aria-label",on?"Indkøb, nye tilbud":"Indkøb");}}
+/* when each offer was first seen here, so the list can show the newest or the oldest first */
+let offFirstMap=null;
+function offFirst(){const all=allOffers();if(!all.length)return offFirstMap||{};let m={};try{m=JSON.parse(localStorage.getItem("mp_offFirst")||"{}");}catch(e){}
+  const now=Date.now(),seen=new Set();let ch=false;all.forEach(o=>{const k=offKey(o);seen.add(k);if(!m[k]){m[k]=now;ch=true;}});
+  Object.keys(m).forEach(k=>{if(!seen.has(k)){delete m[k];ch=true;}});if(ch)try{localStorage.setItem("mp_offFirst",JSON.stringify(m));}catch(e){}
+  offFirstMap=m;return m;}
 function offSeen(){try{localStorage.setItem(offSeenKey(),offStamp());}catch(e){}offDot();}
 async function loadOfferFile(){
   try{const res=await fetch("offers.json",{cache:"no-store"});if(!res.ok)return;fileOffers=await res.json();pickOffers();renderStores();renderShop();}catch(e){}
@@ -4414,6 +4420,11 @@ function openOfferBrowser(){
       html+=gs.map(g=>'<div class="ob-h"><b>'+esc(g.m.n)+'</b><span>købt '+g.m.f+' gange</span></div>'+g.os.sort((x,y)=>unitPrice(x)-unitPrice(y)).map(o=>push(o,g.m)).join("")).join("");
       if(!gs.length)html+='<p class="muted small" style="margin:8px 0">Ingen af dine faste varer er på tilbud lige nu'+(usual.length?'':'. Når du har handlet et par gange, kommer de varer, du ofte køber, øverst her')+'.</p>';
       if(rest.length)html+='<div class="ob-h"><b>Andre tilbud</b><span>'+rest.length+'</span></div>'+rest.sort((x,y)=>x.product.localeCompare(y.product,"da")).slice(0,200).map(o=>push(o,null)).join("");
+    }else if(mode==="new"||mode==="old"){
+      const fm=offFirst(),dir=mode==="new"?-1:1,day=o=>{const d=new Date(fm[offKey(o)]||0);d.setHours(0,0,0,0);return d.getTime();};
+      let last=null;list.slice().sort((x,y)=>dir*(day(x)-day(y))||dir*(x.validTo-y.validTo)||x.product.localeCompare(y.product,"da")).forEach(o=>{const d=day(o);
+        if(d!==last){last=d;const dd=new Date(d);html+='<div class="ob-h"><b>'+(d?'Kom '+esc(WD[dd.getDay()].toLowerCase())+' '+esc(fmtDate(dd)):'Tidligere')+'</b><span></span></div>';}
+        html+=push(o,mineOf(o));});
     }else if(mode==="az"){
       let last="";list.slice().sort((x,y)=>x.product.localeCompare(y.product,"da")||x.price-y.price).forEach(o=>{const L=(o.product.trim()[0]||"#").toUpperCase();const ch=/[A-ZÆØÅ]/.test(L)?L:"#";if(ch!==last){last=ch;html+='<div class="ob-h"><b>'+esc(ch)+'</b><span></span></div>';}html+=push(o,mineOf(o));});
     }else{
@@ -4431,7 +4442,7 @@ function openOfferBrowser(){
   };
   if(!allOffers().length){openSheet('<div class="sheet-head"><div><h2>Tilbud</h2></div>'+closeBtn+'</div><div class="empty">Der er ingen aktuelle tilbud endnu. De hentes automatisk for dine butikker.</div>');return;}
   openSheet(`<div class="sheet-head"><div><h2>Tilbud</h2><div class="sub" id="obCount"></div></div>${closeBtn}</div>
-    <div class="stack">${offInfoHTML(stores)}<div class="seg ob-seg" id="obSort" role="group" aria-label="Sortér tilbud"><button type="button" data-os="mine">Mine varer</button><button type="button" data-os="store">Butik</button><button type="button" data-os="az">A–Å</button></div>
+    <div class="stack">${offInfoHTML(stores)}<div class="seg ob-seg" id="obSort" role="group" aria-label="Sortér tilbud"><button type="button" data-os="mine">Mine</button><button type="button" data-os="store">Butik</button><button type="button" data-os="az">A–Å</button><button type="button" data-os="new">Nyeste</button><button type="button" data-os="old">Ældste</button></div>
     <input type="text" data-clear id="obQ" placeholder="Søg, fx kylling, kaffe, æg" aria-label="Søg i tilbud">
     <div class="row ob-chips">${['<button type="button" class="chip on" data-obst="">Alle butikker</button>'].concat(stores.map(x=>'<button type="button" class="chip" data-obst="'+esc(x)+'">'+esc(x)+'</button>')).join("")}</div>
     <p class="small muted" style="margin:0">Tryk på en vare for at lægge den på indkøbslisten i den butik. Den overstregede førpris er det højeste, varen ellers koster i butikkerne.</p>

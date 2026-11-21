@@ -1,5 +1,13 @@
 [
  {
+  "v": "1795300892",
+  "date": "2026-11-21",
+  "new": [
+   "Tilbud kan nu sorteres efter Nyeste og Ældste i tilbudsvinduet (%-knappen i Indkøb). Tilbuddene samles efter den dag, de kom."
+  ],
+  "fixed": []
+ },
+ {
   "v": "1795193506",
   "date": "2026-11-20",
   "new": [
