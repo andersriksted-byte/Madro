@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795300892";</script>
-<script src="config.js?v=1795300892"></script>
-<script src="importer.js?v=1795300892"></script>
-<script src="shim.js?v=1795300892"></script>
+<script>window.__appVersion="1795385864";</script>
+<script src="config.js?v=1795385864"></script>
+<script src="importer.js?v=1795385864"></script>
+<script src="shim.js?v=1795385864"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1415,6 +1415,12 @@ body.wv-on .toast{z-index:210}
       </div>
       <div class="card stack" id="shopCard">
         <h3>Indkøb</h3>
+        <div class="set-sec" id="badgeSec">
+        <h4>App-ikonet</h4>
+        <label class="check"><input type="checkbox" id="badgeOn"><div class="main"><div class="n">Vis antal varer på app-ikonet</div><div class="s" id="badgeNote">Et rødt tal på Madro-ikonet viser, hvor mange varer der mangler at blive købt.</div></div></label>
+        <div class="small muted" style="display:grid;gap:6px"><div><b>Genvej til at tilføje en vare:</b> Læg linket herunder ind i iPhones Genveje-app (handlingen "Åbn URL'er"). Så kan du tilføje fra hjemmeskærmen, en widget eller med Siri.</div>
+        <div class="row" style="flex-wrap:nowrap;gap:8px"><input type="text" id="addLink" readonly aria-label="Link til at tilføje en vare" style="flex:1;min-width:0;font-size:13px"><button class="btn small" type="button" id="addLinkCopy">Kopiér</button></div></div>
+        </div>
         <div class="set-sec">
         <h4>Butikker I handler i</h4>
         <p class="small muted" style="margin:0">Tryk for at vælge til og fra.</p>
@@ -2001,6 +2007,8 @@ function showWheelRes(){const r=game.wheel.res;if(!r)return;const im=imgOf(r);
 const TABS=["madplan","indkob","spil","opskrifter","butikker"];
 function route(){
   let h=(location.hash||"").replace("#","");
+  if(/^indkob\/(ny|tilbud)$/.test(h)){const what=h.split("/")[1];h="indkob";try{history.replaceState(null,"","#indkob");}catch(e){}
+    setTimeout(()=>{try{if(what==="ny")openAddSheet();else{offSeen();openOfferBrowser();}}catch(e){}},400);}
   if(h==="importer"){h="opskrifter";setTimeout(()=>{const box=$("#importBox");box.style.display="flex";$("#impText").focus();$("#impStatus").innerHTML="Tryk i tekstfeltet og vælg <b>Indsæt</b>.";},50);}
   if(!h){let sp="madplan";try{const v=JSON.parse(localStorage.getItem("mp_my_startPage")||'"madplan"');if(TABS.includes(v))sp=v;}catch(e){}h=sp;if(sp!=="madplan")try{history.replaceState(null,"","#"+sp);}catch(e){}}
   if(h==="opsaetning")h="butikker";
@@ -3994,7 +4002,12 @@ function storeMap(){
   if(plan)Object.entries(plan.per).forEach(([st,d])=>{d.offer.forEach(x=>{if(!x.it.store)map[x.it.id]={store:st,how:"tilbud",o:x.o};});d.other.forEach(it=>{if(!it.store)map[it.id]={store:st,how:"plan"};});d.fixed.forEach(x=>{map[x.it.id]={store:st,how:"dig",o:x.o};});});
   return map;
 }
-function renderShop(){
+/* the number of items still to buy, shown on the app icon (home-screen app) */
+function shopBadge(){try{if(!("setAppBadge" in navigator))return;
+  if(myPref("badge","on")!=="on"){navigator.clearAppBadge&&navigator.clearAppBadge();return;}
+  const n=(state.shopping||[]).filter(x=>!x.checked).length;
+  (n?navigator.setAppBadge(n):navigator.clearAppBadge()).catch(()=>{});}catch(e){}}
+function renderShop(){setTimeout(shopBadge,0);
   const st=state.settings,lg=myPref("listGroup","cat"),group=["store","dish"].includes(lg)?lg:"cat";
   const detail=myPref("listView","simple")==="detail";$("#shopList").classList.toggle("detail",detail);drawViewBtn();
   document.querySelectorAll("#groupSeg button").forEach(b=>b.classList.toggle("on",b.dataset.g===group));
@@ -4062,6 +4075,18 @@ $("#foundToggle").addEventListener("click",()=>{$("#showFound").checked=!showFou
 $("#showFound").addEventListener("change",e=>{showFound=e.target.checked;try{localStorage.setItem("mp_showFound",showFound?"1":"0");}catch(x){}renderShop();});
 /* "+ Tilføj" opens the add sheet with the cursor in the search field.
    iOS only opens the keyboard for a focus made inside the tap, so a hidden field takes focus first and hands it on. */
+(function(){const cb=$("#badgeOn"),note=$("#badgeNote"),link=$("#addLink");if(!cb)return;
+  const base=location.href.split("#")[0];link.value=base+"#indkob/ny";
+  $("#addLinkCopy").onclick=async()=>{try{await navigator.clipboard.writeText(link.value);toast("Linket er kopieret");}catch(e){link.select();}};
+  if(!("setAppBadge" in navigator)){cb.checked=false;cb.disabled=true;note.textContent="Kan ikke vises her. Tallet virker, når Madro er lagt på hjemmeskærmen (iPhone kræver iOS 16.4 eller nyere).";return;}
+  const ios=/iPhone|iPad|iPod/.test(navigator.userAgent);
+  const sync=()=>{cb.checked=myPref("badge","on")==="on"&&!(ios&&window.Notification&&Notification.permission!=="granted");
+    if(ios&&window.Notification&&Notification.permission==="denied")note.textContent="Tallet kræver, at Madro må sende meddelelser. Slå det til under Indstillinger → Meddelelser → Madro på iPhonen.";};
+  sync();
+  cb.onchange=async()=>{if(cb.checked){if(ios&&window.Notification&&Notification.permission!=="granted"){let r="denied";try{r=await Notification.requestPermission();}catch(e){}
+      if(r!=="granted"){setMyPref("badge","on");sync();toast("iPhone viser kun tallet, når Madro må sende meddelelser");return;}}
+      setMyPref("badge","on");}else setMyPref("badge","off");
+    shopBadge();sync();};})();
 $("#addItemBtn").addEventListener("click",()=>{try{$("#kbProxy").focus({preventScroll:true});}catch(e){}openAddSheet();});
 $("#shopList").addEventListener("click",async e=>{
   const pk=e.target.closest("[data-pack]");if(pk){e.preventDefault();const it=state.shopping.find(x=>x.id===pk.dataset.pack);if(it)openPackSheet(it);return;}

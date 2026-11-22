@@ -1,5 +1,14 @@
 [
  {
+  "v": "1795385864",
+  "date": "2026-11-22",
+  "new": [
+   "Madro-ikonet på hjemmeskærmen kan vise et tal med antal varer, der mangler på indkøbslisten. Slå det til under Opsætning → Indkøb → App-ikonet.",
+   "Genvej til at tilføje en vare: Kopiér linket under Opsætning → Indkøb, og læg det i iPhones Genveje-app. På Android og Mac findes genvejen ved et langt tryk på ikonet."
+  ],
+  "fixed": []
+ },
+ {
   "v": "1795300892",
   "date": "2026-11-21",
   "new": [
