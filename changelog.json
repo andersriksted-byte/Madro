@@ -1,5 +1,13 @@
 [
  {
+  "v": "1795449268",
+  "date": "2026-11-23",
+  "new": [],
+  "fixed": [
+   "Den røde %-prik kom igen, hver gang appen blev opdateret. Nu kommer den kun, når der faktisk er hentet nyere tilbud, end dem du har set."
+  ]
+ },
+ {
   "v": "1795449192",
   "date": "2026-11-23",
   "new": [],

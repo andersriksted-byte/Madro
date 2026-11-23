@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795449192";</script>
-<script src="config.js?v=1795449192"></script>
-<script src="importer.js?v=1795449192"></script>
-<script src="shim.js?v=1795449192"></script>
+<script>window.__appVersion="1795449268";</script>
+<script src="config.js?v=1795449268"></script>
+<script src="importer.js?v=1795449268"></script>
+<script src="shim.js?v=1795449268"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1690,7 +1690,10 @@ function pickOffers(){
 /* a dot on the % button when offers newer than the last look have arrived */
 function offSeenKey(){let u=null;try{u=window.firebase&&firebase.auth&&firebase.auth().currentUser;}catch(e){}return "mp_offSeen"+(u&&u.uid?"_"+u.uid:"");}
 function offStamp(){return (state.offers&&state.offers.updatedAt)?String(state.offers.updatedAt):"";}
-function offDot(){const b=document.getElementById("offBtn");if(!b)return;const st=offStamp();let seen="";try{seen=localStorage.getItem(offSeenKey())||"";}catch(e){}
+/* "new offers" = fetched later than the newest offers you have opened; compared as times, so a reload or an older copy arriving first does not light the dot */
+function offTime(v){if(v==null||v==="")return 0;if(/^\d+$/.test(String(v)))return +v;const n=Date.parse(v);return isNaN(n)?0:n;}
+function offSeenTime(){let m=0;try{m=Math.max(offTime(localStorage.getItem(offSeenKey())),offTime(localStorage.getItem("mp_offSeen")));}catch(e){}return m;}
+function offDot(){const b=document.getElementById("offBtn");if(!b)return;const st=offStamp();let seen="";try{seen=offTime(st)<=offSeenTime()?st:"";}catch(e){}
   const on=!!st&&st!==seen&&allOffers().length>0;b.classList.toggle("has-new",on);
   const t=document.querySelector('.tabs a[data-tab="indkob"]');if(t){t.classList.toggle("off-new",on);t.setAttribute("aria-label",on?"Indkøb, nye tilbud":"Indkøb");}}
 /* when each offer was first seen here, so the list can show the newest or the oldest first */
@@ -1699,7 +1702,8 @@ function offFirst(){const all=allOffers();if(!all.length)return offFirstMap||{};
   const now=Date.now(),seen=new Set();let ch=false;all.forEach(o=>{const k=offKey(o);seen.add(k);if(!m[k]){m[k]=now;ch=true;}});
   Object.keys(m).forEach(k=>{if(!seen.has(k)){delete m[k];ch=true;}});if(ch)try{localStorage.setItem("mp_offFirst",JSON.stringify(m));}catch(e){}
   offFirstMap=m;return m;}
-function offSeen(){try{localStorage.setItem(offSeenKey(),offStamp());}catch(e){}offDot();}
+function offSeen(){try{const st=offStamp();if(offTime(st)>=offSeenTime()){localStorage.setItem(offSeenKey(),st);localStorage.setItem("mp_offSeen",st);}}catch(e){}offDot();}
+try{window.firebase&&firebase.auth&&firebase.auth().onAuthStateChanged(()=>setTimeout(()=>{try{offDot();}catch(e){}},50));}catch(e){}
 async function loadOfferFile(){
   try{const res=await fetch("offers.json",{cache:"no-store"});if(!res.ok)return;fileOffers=await res.json();pickOffers();renderStores();renderShop();}catch(e){}
 }
