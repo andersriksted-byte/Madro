@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795442019";</script>
-<script src="config.js?v=1795442019"></script>
-<script src="importer.js?v=1795442019"></script>
-<script src="shim.js?v=1795442019"></script>
+<script>window.__appVersion="1795442155";</script>
+<script src="config.js?v=1795442155"></script>
+<script src="importer.js?v=1795442155"></script>
+<script src="shim.js?v=1795442155"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1064,6 +1064,7 @@ html.sheet-open .imp-pill{display:none}
 html[data-tab="indkob"] #addItemBtn.fab-add{display:block}
 html.sheet-open #addItemBtn.fab-add,html.no-shop #addItemBtn.fab-add{display:none!important}
 #v-indkob{padding-bottom:70px}
+.shop-foot{flex-wrap:nowrap!important;align-items:center;gap:10px}.shop-foot>.btn{width:auto!important;margin:0!important}.shop-foot>#archiveBtn{flex:none}.shop-foot>#finishBtn{flex:1 1 auto;max-width:260px}
 /* recipe actions: one tidy block — servings and share on top, two equal buttons, the main action full width */
 .rec-actions.ra{display:flex;flex-direction:column;gap:8px}
 .ra .ra-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -1386,7 +1387,7 @@ body.wv-on .toast{z-index:210}
     <input type="checkbox" id="showFound" hidden><span id="showFoundLbl" hidden></span>
     <div class="sl-grid" id="shopList"></div>
     <button type="button" class="sl-found" id="foundToggle"></button>
-    <div class="row" style="margin-top:12px;justify-content:space-between">
+    <div class="row shop-foot" style="margin-top:12px;justify-content:space-between">
       <button class="btn plain small" id="archiveBtn" type="button">Arkiv</button>
       <button class="btn" id="finishBtn" type="button">Afslut indkøb</button>
     </div>
