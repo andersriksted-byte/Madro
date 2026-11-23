@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795447245";</script>
-<script src="config.js?v=1795447245"></script>
-<script src="importer.js?v=1795447245"></script>
-<script src="shim.js?v=1795447245"></script>
+<script>window.__appVersion="1795447845";</script>
+<script src="config.js?v=1795447845"></script>
+<script src="importer.js?v=1795447845"></script>
+<script src="shim.js?v=1795447845"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2058,7 +2058,7 @@ window.addEventListener("hashchange",()=>{if(/madplan/.test(location.hash))fresh
 
 /* ---------- sheet ---------- */
 let sheetGuard=null;
-function openSheet(html,onMount){sheetGuard=null;document.documentElement.classList.add("sheet-open");$("#sheet").classList.remove("add-sheet");$("#sheet").innerHTML=html;$("#sheetWrap").classList.add("on");$("#sheet").scrollTop=0;onMount&&onMount($("#sheet"));}
+function openSheet(html,onMount){sheetGuard=null;document.documentElement.classList.add("sheet-open");$("#sheet").classList.remove("add-sheet");$("#sheet").style.minHeight="";$("#sheet").innerHTML=html;$("#sheetWrap").classList.add("on");$("#sheet").scrollTop=0;onMount&&onMount($("#sheet"));}
 let afterCreate=false;/* a new recipe was just shown: closing it lands on the full Kogebog */
 function closeSheet(){sheetGuard=null;document.documentElement.classList.remove("sheet-open");$("#sheetWrap").classList.remove("on");$("#sheet").innerHTML="";
   if(afterCreate){afterCreate=false;const q=$("#rsearch");if(q){q.value="";q.dispatchEvent(new Event("input",{bubbles:true}));}recFilter.q="";
@@ -4169,6 +4169,10 @@ $("#showFound").addEventListener("change",e=>{showFound=e.target.checked;try{loc
   const l=document.createElement("div"),r=document.createElement("div");l.className="sb-l";r.className="sb-r";
   l.appendChild($("#archiveBtn"));r.appendChild($("#finishBtn"));bar.append(l,$("#addItemBtn"),r);document.body.appendChild(bar);
   $("#addItemBtn").classList.add("fab-add");})();
+/* a window with a search field keeps its height while you type, so it does not shrink as the results get fewer */
+document.addEventListener("input",e=>{const t=e.target;if(!t.matches||!t.matches('input[type="text"],input[type="search"]'))return;
+  if(t.id==="rsearch"){const rl=$("#recipeList");if(rl)rl.style.minHeight=t.value?"100vh":"";return;}
+  const sh=t.closest(".sheet");if(!sh||sh.style.minHeight)return;sh.style.minHeight=Math.round(sh.getBoundingClientRect().height)+"px";},true);
 $("#addItemBtn").addEventListener("click",()=>{try{$("#kbProxy").focus({preventScroll:true});}catch(e){}openAddSheet();});
 $("#shopList").addEventListener("click",async e=>{
   const pk=e.target.closest("[data-pack]");if(pk){e.preventDefault();const it=state.shopping.find(x=>x.id===pk.dataset.pack);if(it)openPackSheet(it);return;}

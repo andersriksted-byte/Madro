@@ -1,5 +1,13 @@
 [
  {
+  "v": "1795447845",
+  "date": "2026-11-23",
+  "new": [],
+  "fixed": [
+   "Når du søger efter en opskrift, bliver vinduet ikke længere mindre, efterhånden som der kommer færre forslag. Det samme gælder søgning i Kogebogen og i tilbuddene."
+  ]
+ },
+ {
   "v": "1795447245",
   "date": "2026-11-23",
   "new": [],
