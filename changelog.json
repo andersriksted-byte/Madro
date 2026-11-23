@@ -1,5 +1,15 @@
 [
  {
+  "v": "1795452120",
+  "date": "2026-11-23",
+  "new": [
+   "På indkøbslisten åbner et tryk på varens navn nu det lille rette-vindue. Et tryk på eller ved kassen sætter flueben."
+  ],
+  "fixed": [
+   "Knappen i det lille rette-vindue var grå og kunne ikke trykkes, når intet var ændret. Nu står der Luk, indtil du ændrer noget, og så Gem."
+  ]
+ },
+ {
   "v": "1795451530",
   "date": "2026-11-23",
   "new": [],

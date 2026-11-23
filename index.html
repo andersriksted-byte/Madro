@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795451530";</script>
-<script src="config.js?v=1795451530"></script>
-<script src="importer.js?v=1795451530"></script>
-<script src="shim.js?v=1795451530"></script>
+<script>window.__appVersion="1795452120";</script>
+<script src="config.js?v=1795452120"></script>
+<script src="importer.js?v=1795452120"></script>
+<script src="shim.js?v=1795452120"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -4248,7 +4248,10 @@ $("#addItemBtn").addEventListener("click",()=>{try{$("#kbProxy").focus({preventS
 $("#shopList").addEventListener("click",async e=>{
   const pk=e.target.closest("[data-pack]");if(pk){e.preventDefault();const it=state.shopping.find(x=>x.id===pk.dataset.pack);if(it)openPackSheet(it);return;}
   const bt=e.target.closest("[data-bnote]");if(bt){const n=document.getElementById("bnote"+bt.dataset.bnote);if(n){n.hidden=!n.hidden;bt.textContent=bt.textContent.replace(/se note|skjul note/,n.hidden?"se note":"skjul note");}return;}
-  const ed=e.target.closest("[data-edit]");if(ed){const it=state.shopping.find(x=>x.id===ed.dataset.edit);if(it)setFound(it.id,!it.checked);return;}
+  /* tap near the box = found; tap on the text = the small edit window */
+  const ed=e.target.closest("[data-edit]");if(ed){const it=state.shopping.find(x=>x.id===ed.dataset.edit);if(!it)return;const row=ed.closest(".sl-item");const cb=row&&row.querySelector(".sl-cb");
+    if(cb&&e.clientX>=cb.getBoundingClientRect().left-28){if(!document.documentElement.classList.contains("no-pick"))setFound(it.id,!it.checked);return;}
+    openItemPop(it,row);return;}
   const d=e.target.closest("[data-del]");if(d){saveShopping(state.shopping.filter(x=>x.id!==d.dataset.del));}
 });
 $("#shopList").addEventListener("change",async e=>{
@@ -4318,10 +4321,10 @@ function openItemPop(it,rowEl){
   pop.innerHTML=offH+'<label class="small muted" for="popName">Vare</label><input type="text" id="popName" value="'+esc(name)+'" autocomplete="off" enterkeyhint="done">'+
     '<div class="amt-row"><div class="stepper"><button type="button" data-st="-1" aria-label="Mindre">−</button><input type="text" inputmode="decimal" id="popAmt" class="num" aria-label="Antal" value="'+esc(amount==null?"":fmtAmt(amount))+'" placeholder="–"><button type="button" data-st="1" aria-label="Mere">+</button></div>'+
     '<select id="popUnit" aria-label="Enhed">'+units.map(u=>'<option value="'+esc(u)+'"'+(u===unit?" selected":"")+'>'+(u||"–")+'</option>').join("")+'</select></div>'+
-    '<button type="button" class="btn wide" data-pa="save" disabled>Gem</button>'+
+    '<button type="button" class="btn wide plain" data-pa="save">Luk</button>'+
     '<div class="pop-actions"><button type="button" class="btn danger" data-pa="del">Slet fra listen</button><button type="button" class="btn plain" data-pa="more">Flere detaljer</button></div>';
   document.body.appendChild(pop);
-  const upd=()=>{pop.querySelector('[data-pa="save"]').disabled=!changed()||!name.trim();};
+  const upd=()=>{const b=pop.querySelector('[data-pa="save"]');const ch=changed()&&!!name.trim();b.textContent=ch?"Gem":"Luk";b.classList.toggle("plain",!ch);};
   pop.querySelector("#popName").addEventListener("input",e=>{name=e.target.value;upd();});
   pop.querySelector("#popAmt").addEventListener("input",e=>{const v=e.target.value.trim().replace(",",".");amount=v===""?null:(isNaN(+v)?amount:Math.max(0,+v));upd();});
   pop.querySelector("#popUnit").addEventListener("change",e=>{unit=e.target.value;upd();});
@@ -4338,7 +4341,7 @@ function openItemPop(it,rowEl){
     const stb=e.target.closest("[data-st]");if(stb){const step=stepFor(unit||"stk");const cur=amount==null?0:amount;amount=Math.max(step,Math.round((cur+Number(stb.dataset.st)*step)*100)/100);pop.querySelector("#popAmt").value=fmtAmt(amount);upd();return;}
     const pa=e.target.closest("[data-pa]");if(!pa||pa.disabled)return;
     const cur=state.shopping.find(x=>x.id===it.id)||it;
-    if(pa.dataset.pa==="save"){closePop();const nm=name.trim();const patch={name:nm,amount:amount==null?null:Math.round(amount*100)/100,unit};if(nm!==start.name){patch.category="";}
+    if(pa.dataset.pa==="save"){closePop();if(!changed()||!name.trim())return;const nm=name.trim();const patch={name:nm,amount:amount==null?null:Math.round(amount*100)/100,unit};if(nm!==start.name){patch.category="";}
       updateItem(it.id,patch);toast(nm[0].toUpperCase()+nm.slice(1)+" er gemt");return;}
     if(pa.dataset.pa==="del"){closePop();deleteWithUndo(cur);return;}
     closePop();openItemSheet(cur);
@@ -4862,9 +4865,9 @@ init();
   const G={tap:"👆",hold:"✋",left:"👈",right:"👉",drag:"✊",down:"👇"};
   const TIPS={
     indkob:{t:"Indkøbslisten",items:()=>[
-      ["tap","Tryk på firkanten","når du har lagt varen i kurven. Den bliver streget over."],
-      ["hold","Hold fingeren på en vare","for hurtigt at rette antal og enhed eller slette den."],
-      ["tap","Tryk på en vare","for flere detaljer: kategori, butik og tilbud."],
+      ["tap","Tryk på eller ved firkanten","når du har lagt varen i kurven. Den bliver streget over."],
+      ["tap","Tryk på navnet på en vare","for hurtigt at rette antal og enhed eller slette den. Tryk ved kassen for at sætte flueben."],
+      ["tap","Flere detaljer","i det lille vindue viser kategori, butik og tilbud."],
       ["tap","Kategori · Butik · Ret","sorterer listen. Under Ret kan du holde på en rets overskrift for flere valg."],
       ["tap","× i den gule tilbudslinje","fjerner et tilbud, der ikke passer til varen."],
       ["tap","Afslut indkøb","gemmer turen i Arkiv og rydder de fundne varer."]]},
