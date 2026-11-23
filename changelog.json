@@ -1,5 +1,13 @@
 [
  {
+  "v": "1795442590",
+  "date": "2026-11-23",
+  "new": [],
+  "fixed": [
+   "Beskeder som \"Mælk er tilføjet\" og Fortryd-knappen vises nu over knapperne nederst på indkøbslisten i stedet for bag dem."
+  ]
+ },
+ {
   "v": "1795442309",
   "date": "2026-11-23",
   "new": [
