@@ -1,5 +1,13 @@
 [
  {
+  "v": "1795448028",
+  "date": "2026-11-23",
+  "new": [],
+  "fixed": [
+   "Når du tilføjer en opskrift i Kogebogen, scroller siden nu frit i stedet for i hak, så du kan nå knapperne nederst."
+  ]
+ },
+ {
   "v": "1795447963",
   "date": "2026-11-23",
   "new": [
