@@ -1,5 +1,13 @@
 [
  {
+  "v": "1795449192",
+  "date": "2026-11-23",
+  "new": [],
+  "fixed": [
+   "I Kogebogen hoppede siden forbi toppen, så overskrift og knapper ikke kunne ses. Nu starter siden øverst."
+  ]
+ },
+ {
   "v": "1795449150",
   "date": "2026-11-23",
   "new": [
