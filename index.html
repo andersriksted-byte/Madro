@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795385864";</script>
-<script src="config.js?v=1795385864"></script>
-<script src="importer.js?v=1795385864"></script>
-<script src="shim.js?v=1795385864"></script>
+<script>window.__appVersion="1795417616";</script>
+<script src="config.js?v=1795417616"></script>
+<script src="importer.js?v=1795417616"></script>
+<script src="shim.js?v=1795417616"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1046,6 +1046,17 @@ html.logo-tin .tabs a[data-tab="madplan"].on svg.seal{box-shadow:0 0 0 2px #6b3a
 .imp-pill.ip-small{left:auto;right:12px;width:auto;padding:10px 12px;gap:8px}
 .imp-pill.ip-small .ip-main,.imp-pill.ip-small .ip-x{display:none}
 html.sheet-open .imp-pill{display:none}
+.op-box{display:grid;gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface)}
+.op-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:10px 12px;background:var(--offer-soft);color:var(--offer-ink)}
+.op-row{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:10px 12px;color:inherit;font:inherit;cursor:pointer}
+.op-row .op-dot{flex:none;width:20px;height:20px;border-radius:50%;border:2px solid var(--line)}
+.op-row.on .op-dot{border-color:var(--accent);box-shadow:inset 0 0 0 4px var(--surface);background:var(--accent)}
+.op-row.on{background:var(--accent-soft)}
+.op-main{flex:1;min-width:0;display:grid;gap:2px}
+.op-n{font-size:calc(14px * var(--fs))}
+.op-s{font-size:calc(12px * var(--fs));color:var(--muted)}
+.op-p{flex:none;text-align:right;font-weight:700;display:grid;line-height:1.2}
+.op-p s{font-weight:400;font-size:calc(11.5px * var(--fs));color:var(--muted)}
 /* recipe actions: one tidy block — servings and share on top, two equal buttons, the main action full width */
 .rec-actions.ra{display:flex;flex-direction:column;gap:8px}
 .ra .ra-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -3735,6 +3746,9 @@ function unitPrice(o){
 }
 /* offers the user said do not fit an item ("Tuborg Squash" is not squash) */
 function offKey(o){return norm(o.store+" "+o.product);}
+/* the offer you picked for an item (if it is still running) */
+function chosenOffer(it){if(!it||!it.offerKey)return null;return allOffers().find(o=>offKey(o)===it.offerKey)||null;}
+function upText(o){const m=String(o.unitText||"").replace(",",".").match(/(\d+(?:\.\d+)?)\s*(kg|g|l|ml|cl|dl)\b/i);if(!m)return "";const u=m[2].toLowerCase();return fmtKr(unitPrice(o))+"/"+(u==="kg"||u==="g"?"kg":"l");}
 document.addEventListener("click",async e=>{const x=e.target.closest("[data-offx]");if(!x)return;e.preventDefault();e.stopPropagation();
   const name=x.dataset.offitem;if(!await confirmBox("Fjern tilbuddet fra "+name+"?","Tilbuddet passer ikke til varen og bliver ikke vist ved "+name+" igen.","Fjern tilbud"))return;
   const st=state.settings;st.offerNo=Object.assign({},st.offerNo||{});const k=norm(name);
@@ -4102,12 +4116,15 @@ function openItemSheet(it){
   const stores=state.settings.stores.length?state.settings.stores:allStores();
   const units=["","stk","g","kg","dl","l","ml","spsk","tsk","fed","dåse","bundt","pakke"];
   const sm=storeMap()[it.id]||{};
-  const offs=offersFor(it.name,stores).slice(0,4);
+  const offs=offersFor(it.name,stores).slice(0,8);const pickedKey=it.offerKey&&chosenOffer(it)?it.offerKey:"";
   const l=leftoverOf(it);const rb=recentBuy(it.name);
   const info=[];
   if((it.from||[]).length)info.push('<div class="small muted">Til: '+esc(it.from.join(", "))+'</div>');
   if(sm.store)info.push('<div class="small">Købes i <b>'+esc(sm.store)+'</b>'+(sm.how==="tilbud"?" (billigste tilbud)":sm.how==="dig"?" (valgt af dig)":"")+'</div>');
-  if(offs.length)info.push('<div class="info-box" style="background:var(--offer-soft);color:var(--offer-ink)"><b>Tilbud</b>'+offs.map(o=>'<div>'+esc(o.store)+': '+esc(offerText(o))+' '+offerLinkHTML(o.store,"Se tilbud")+'</div>').join("")+'</div>');
+  if(offs.length)info.push('<div class="op-box"><div class="op-h"><b>'+(offs.length>1?'Vælg tilbud':'Tilbud')+'</b><span class="small muted">'+(offs.length>1?'Hvor vil du købe '+esc(it.name.toLowerCase())+'?':'')+'</span></div>'+
+    '<button type="button" class="op-row'+(!it.store?' on':'')+'" data-opick=""><span class="op-dot"></span><span class="op-main"><span class="op-n">Automatisk</span><span class="op-s">Appen vælger ud fra den billigste indkøbstur</span></span></button>'+
+    offs.map((o,i)=>{const on=pickedKey?pickedKey===offKey(o):(it.store===o.store&&!offs.slice(0,i).some(x=>x.store===o.store));
+      return '<button type="button" class="op-row'+(on?' on':'')+'" data-opick="'+i+'"><span class="op-dot"></span><span class="op-main"><span class="op-n"><b>'+esc(o.store)+'</b> · '+esc(o.product)+'</span><span class="op-s">'+esc([o.unitText,upText(o),offerWhen(o),o.limit].filter(Boolean).join(" · "))+'</span></span><span class="op-p num">'+esc(fmtKr(o.price))+(o.before?'<s>'+esc(fmtKr(o.before))+'</s>':'')+'</span></button>';}).join("")+'</div>');
   if(l)info.push('<div class="info-box" style="background:var(--good-soft);color:var(--good)"><b>Rest:</b> køber '+esc(l.buyText)+' · '+esc(l.text)+' <button type="button" class="btn plain small" id="itPack" style="margin-left:4px">Ret pakke</button></div>');
   if(rb)info.push('<div class="bought-note">'+esc(recentBuyNote(rb))+'</div>');
   openSheet(`<div class="sheet-head"><div><h2>${esc(it.name)}</h2><div class="sub">${esc(shopItemLine(it))}</div></div>${closeBtn}</div>
@@ -4121,11 +4138,16 @@ function openItemSheet(it){
     <div class="row" style="justify-content:space-between"><button class="btn plain small" type="button" id="itDel">Slet vare</button><button class="btn" type="submit">Gem</button></div>
   </form>`,s=>{
     const pk=s.querySelector("#itPack");if(pk)pk.onclick=()=>openPackSheet(it);
+    s.querySelectorAll("[data-opick]").forEach(b=>b.onclick=()=>{const i=b.dataset.opick;
+      if(i===""){updateItem(it.id,{store:"",offerKey:""});toast(it.name+": appen vælger butik");}
+      else{const o=offs[+i];updateItem(it.id,{store:o.store,offerKey:offKey(o)});toast(it.name+" købes i "+o.store+" ("+fmtKr(o.price)+")");}
+      s.querySelectorAll("[data-opick]").forEach(x=>x.classList.toggle("on",x===b));const sel=s.querySelector("#itStore");if(sel)sel.value=i===""?"":offs[+i].store;});
     s.querySelector("#itDel").onclick=()=>{closeSheet();saveShopping(state.shopping.filter(x=>x.id!==it.id));toast(it.name+" er slettet");};
     s.querySelector("#itForm").addEventListener("submit",ev=>{ev.preventDefault();
       const name=s.querySelector("#itName").value.trim()||it.name;const a=s.querySelector("#itAmt").value;
       const cat=s.querySelector("#itCat").value;
       const patch={name,amount:a===""?null:parseFloat(String(a).replace(",",".")),unit:s.querySelector("#itUnit").value,store:s.querySelector("#itStore").value,category:cat===guessCat(name)?"":cat};
+      const cur=state.shopping.find(x=>x.id===it.id)||it;patch.offerKey=patch.store&&cur.offerKey&&patch.store===cur.store?cur.offerKey:"";
       closeSheet();updateItem(it.id,patch);});
   });
 }
@@ -4386,7 +4408,7 @@ function buildPlan(){
   // items without an offer go to your regular store if it is on the trip, else to the store with most of your offers
   const fallback=chosen.includes(primary)?primary:chosen.slice().sort((a,b)=>per[b].offer.length-per[a].offer.length)[0];
   rest.forEach(it=>per[fallback].other.push(it));
-  fixed.forEach(it=>{ensure(it.store);const o=offersFor(it.name,[it.store])[0];per[it.store].fixed.push({it,o});if(o){per[it.store].sum+=o.price;total+=o.price;offerCount++;}});
+  fixed.forEach(it=>{ensure(it.store);const o=chosenOffer(it)||offersFor(it.name,[it.store])[0];per[it.store].fixed.push({it,o});if(o){per[it.store].sum+=o.price;total+=o.price;offerCount++;}});
   const missed=matches.filter(m=>m.offers.length&&!m.offers.some(o=>chosen.includes(o.store))).map(m=>({it:m.it,o:m.offers[0]}));
   return {chosen:Object.keys(per),per,total,offerCount,count:all.length,missed,fallback};
 }

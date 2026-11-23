@@ -1,5 +1,13 @@
 [
  {
+  "v": "1795417616",
+  "date": "2026-11-23",
+  "new": [
+   "Er en vare på tilbud flere steder, kan du selv vælge tilbuddet og dermed butikken. Tryk på varen på indkøbslisten, og vælg under \"Vælg tilbud\". Indkøbsturen bruger dit valg."
+  ],
+  "fixed": []
+ },
+ {
   "v": "1795385864",
   "date": "2026-11-22",
   "new": [
