@@ -1,5 +1,13 @@
 [
  {
+  "v": "1795447245",
+  "date": "2026-11-23",
+  "new": [],
+  "fixed": [
+   "Knapperne på Madplan, Indkøb og Kogebog bliver nu altid stående oppe ved siden af overskriften, også i uger med lange datoer."
+  ]
+ },
+ {
   "v": "1795446983",
   "date": "2026-11-23",
   "new": [
