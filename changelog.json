@@ -1,11 +1,11 @@
 [
  {
-  "v": "1795442155",
+  "v": "1795442309",
   "date": "2026-11-23",
-  "new": [],
-  "fixed": [
-   "Arkiv og Afslut indkøb står nu på samme linje nederst på indkøbslisten."
-  ]
+  "new": [
+   "Arkiv, + Tilføj og Afslut indkøb står nu samlet på én linje nederst på indkøbslisten, lige over menuen, så de er nemme at nå med tommelen."
+  ],
+  "fixed": []
  },
  {
   "v": "1795442019",
