@@ -1,5 +1,14 @@
 [
  {
+  "v": "1795447963",
+  "date": "2026-11-23",
+  "new": [
+   "Opskrifter kan nu have en video. Tryk Rediger på en opskrift, og indsæt et link under \"Link til video\". YouTube- og Vimeo-videoer afspilles direkte i opskriften og fra knappen ▶ Video i Trinvis. Andre links åbner videoen i et nyt vindue.",
+   "Når en opskrift hentes fra et link, kommer sidens video med, hvis den har en."
+  ],
+  "fixed": []
+ },
+ {
   "v": "1795447845",
   "date": "2026-11-23",
   "new": [],

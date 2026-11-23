@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795447845";</script>
-<script src="config.js?v=1795447845"></script>
-<script src="importer.js?v=1795447845"></script>
-<script src="shim.js?v=1795447845"></script>
+<script>window.__appVersion="1795447963";</script>
+<script src="config.js?v=1795447963"></script>
+<script src="importer.js?v=1795447963"></script>
+<script src="shim.js?v=1795447963"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1079,6 +1079,13 @@ html.no-shop #addItemBtn.fab-add{visibility:hidden}
 html[data-tab="indkob"]:not(.sheet-open) .toast,html[data-tab="indkob"]:not(.sheet-open) .undo-bar{bottom:calc(env(safe-area-inset-bottom,0px) + 148px)}
 html[data-tab="indkob"]:not(.sheet-open) .imp-pill{bottom:calc(env(safe-area-inset-bottom,0px) + 148px)}
 #days .meal[data-entry]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.vid-frame{position:relative;width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#000}
+.vid-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.vid-link{text-decoration:none;text-align:center}
+.cook-vid{border:1.5px solid currentColor;background:none;color:inherit;border-radius:999px;padding:6px 12px;font-weight:700;font-size:calc(13px * var(--fs));margin-right:6px;cursor:pointer}
+.vid-ov{position:fixed;inset:0;z-index:2147482000;background:rgba(0,0,0,.82);display:grid;place-items:center;padding:16px}
+.vid-box{width:100%;max-width:760px;display:grid;gap:10px}
+.vid-x{justify-self:end;color:#fff;border-color:#fff}
 /* recipe actions: one tidy block — servings and share on top, two equal buttons, the main action full width */
 .rec-actions.ra{display:flex;flex-direction:column;gap:8px}
 .ra .ra-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -2586,7 +2593,7 @@ $("#impGo").addEventListener("click",async()=>{
 function cleanRecipe(o){
   return {title:String(o.title||"Uden titel").slice(0,140),servings:Math.max(1,Math.round(Number(o.servings)||4)),time:String(o.time||""),description:String(o.description||""),
     ingredients:(Array.isArray(o.ingredients)?o.ingredients:[]).slice(0,80).map(i=>({group:String(i.group||""),amount:(i.amount===null||i.amount===""||isNaN(Number(i.amount)))?null:Number(i.amount),unit:String(i.unit||""),name:String(i.name||"").trim(),note:String(i.note||"")})).filter(i=>i.name),
-    steps:(Array.isArray(o.steps)?o.steps:[]).slice(0,60).map(String).filter(Boolean),tags:(Array.isArray(o.tags)?o.tags:[]).slice(0,4).map(String),source:String(o.source||""),
+    steps:(Array.isArray(o.steps)?o.steps:[]).slice(0,60).map(String).filter(Boolean),tags:(Array.isArray(o.tags)?o.tags:[]).slice(0,4).map(String),source:String(o.source||""),video:/^https?:\/\//i.test(String(o.video||"").trim())?String(o.video).trim():"",
     themes:(Array.isArray(o.themes)?o.themes:[]).map(String).map(t=>t.trim()).filter(Boolean).map(t=>t[0].toUpperCase()+t.slice(1)).slice(0,4),
     rating:Math.max(0,Math.min(5,Math.round(+o.rating||0))),meals:Array.isArray(o.meals)?o.meals.filter(m=>MEALS.includes(m)):undefined,kids:(o.kids&&typeof o.kids==="object")?o.kids:{},nutrition:cleanNutri(o.nutrition),image:(typeof o.image==="string"&&isImg(o.image))?o.image:""};
 }
@@ -2656,11 +2663,22 @@ function drawCook(){
 function cookGo(d){const n=(cook.r.steps||[]).length;const j=cook.i+d;if(j<0)return;if(j>=n){closeCook(true);return;}cook.i=j;drawCook();}
 function closeCook(done){if(!cook.el)return;cook.el.hidden=true;sayStop();releaseAwake();document.documentElement.style.overflow="";
   if(done){try{localStorage.removeItem("mp_cook_"+cook.r.id);localStorage.removeItem("mp_cookchk_"+cook.r.id);}catch(e){}toast("Velbekomme!");}}
+/* video: YouTube and Vimeo play right in the app, other links open in a new window */
+function videoEmbed(u){u=String(u||"");let m=u.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([\w-]{11})/i);
+  if(m){const t=(u.match(/[?&]t=(\d+)/)||[])[1];return "https://www.youtube-nocookie.com/embed/"+m[1]+"?rel=0&playsinline=1"+(t?"&start="+t:"");}
+  m=u.match(/vimeo\.com\/(?:video\/)?(\d+)/i);if(m)return "https://player.vimeo.com/video/"+m[1];return "";}
+function videoSite(u){try{return new URL(u).hostname.replace(/^www\./,"").replace(/^m\./,"");}catch(e){return "video";}}
+function videoHTML(r){if(!r||!r.video)return "";const em=videoEmbed(r.video);
+  if(em)return '<div class="card vid-card"><h3 style="margin-bottom:8px">Video</h3><div class="vid-frame"><iframe src="'+esc(em)+'" title="Video: '+esc(r.title)+'" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div><a class="small muted" style="display:block;margin-top:6px" href="'+esc(r.video)+'" target="_blank" rel="noopener">Virker videoen ikke? Åbn den på '+esc(videoSite(r.video))+'</a></div>';
+  return '<a class="btn plain wide vid-link" href="'+esc(r.video)+'" target="_blank" rel="noopener">▶ Se video på '+esc(videoSite(r.video))+'</a>';}
+function openVideo(r){const em=videoEmbed(r.video);if(!em){window.open(r.video,"_blank","noopener");return;}
+  const ov=document.createElement("div");ov.className="vid-ov";ov.innerHTML='<div class="vid-box"><button type="button" class="cook-x vid-x" aria-label="Luk video">×</button><div class="vid-frame"><iframe src="'+esc(em+(em.includes("?")?"&":"?")+"autoplay=1")+'" title="Video" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div></div>';
+  ov.onclick=e=>{if(e.target===ov||e.target.closest(".vid-x"))ov.remove();};document.body.appendChild(ov);}
 function openCook(r,servings){
   if(!r||!(r.steps||[]).length){toast("Opskriften har ingen trin");return;}
   const el=cookEl();cook.r=r;cook.f=(Number(servings)||r.servings||4)/(r.servings||4);
   let saved=0;try{saved=+localStorage.getItem("mp_cook_"+r.id)||0;}catch(e){}cook.i=saved>0&&saved<r.steps.length?saved:0;
-  el.innerHTML=`<div class="cook-top"><div class="ttl">${esc(r.title)}${servings?" · "+esc(servings)+" pers.":""}</div><button type="button" class="cook-wake" data-ck="wake"></button><button type="button" class="cook-x" data-ck="close" aria-label="Luk trin for trin">×</button></div>
+  el.innerHTML=`<div class="cook-top"><div class="ttl">${esc(r.title)}${servings?" · "+esc(servings)+" pers.":""}</div>${r.video?'<button type="button" class="cook-vid" data-ck="video" aria-label="Se video">▶ Video</button>':''}<button type="button" class="cook-wake" data-ck="wake"></button><button type="button" class="cook-x" data-ck="close" aria-label="Luk trin for trin">×</button></div>
     <div class="cook-pos"><div class="n" aria-live="polite"></div><div class="row" style="gap:12px"><button type="button" class="linkbtn cook-restart" data-ck="restart">Start forfra</button><button type="button" class="cook-say" data-ck="say" aria-pressed="false"></button><button type="button" class="linkbtn" data-ck="ing">Ingredienser</button></div></div>
     <div class="cook-bar" role="img"></div>
     <div class="cook-main"><p class="cook-text"></p><div class="cook-ing"></div></div>
@@ -2670,7 +2688,7 @@ function openCook(r,servings){
   el.hidden=false;document.documentElement.style.overflow="hidden";
   setWake(false);keepAwake();drawCookIng();drawCook();
   if(cook.i>0)toast("Du fortsætter ved trin "+(cook.i+1));
-  el.onclick=e=>{const b=e.target.closest("[data-ck]");if(!b)return;const a=b.dataset.ck;
+  el.onclick=e=>{const b=e.target.closest("[data-ck]");if(!b)return;const a=b.dataset.ck;if(a==="video"){openVideo(cook.r);return;}
     if(a==="close")closeCook(false);else if(a==="prev")cookGo(-1);else if(a==="next")cookGo(1);else if(a==="wake")keepAwake();
     else if(a==="restart"){cook.i=0;drawCook();}else if(a==="say"){const on=!sayOn();setSayOn(on);drawSay();if(on)sayStep();else sayStop();}else if(a==="ing")el.querySelector(".cook-panel").hidden=false;else if(a==="ingclose"){el.querySelector(".cook-panel").hidden=true;const so=sayOn();if(so)setSayOn(false);drawCook();if(so){setSayOn(true);drawSay();}}};
   el.querySelector(".cook-panel .list").addEventListener("click",e=>{const b=e.target.closest("[data-got]");if(!b)return;const ix=+b.dataset.got;const g=cookGot();g.has(ix)?g.delete(ix):g.add(ix);setCookGot(g);drawCookIng();});
@@ -2747,6 +2765,7 @@ function openRecipe(id,fallback){
       <div class="rec-actions ra"><div class="ra-top"><div class="stepper"><button type="button" id="sMinus" aria-label="Færre personer">−</button><span class="num">${serv} pers.</span><button type="button" id="sPlus" aria-label="Flere personer">+</button></div><div class="ra-icons">${(window.__communityOn&&r.id&&!r.fromLibrary&&window.__isAdmin!==false)?'<button type="button" class="icon-btn lock-t'+(r.shared!==false?' open':'')+'" id="rShare" aria-pressed="'+(r.shared!==false)+'" aria-label="'+(r.shared!==false?'Delt med fællesskabet. Tryk for at gøre privat':'Privat. Tryk for at dele med fællesskabet')+'" title="'+(r.shared!==false?'Delt med fællesskabet':'Privat')+'">'+(r.shared!==false?'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.6-1.7"/></svg>':'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>')+'<small>'+(r.shared!==false?'Delt':'Privat')+'</small></button>':''}<button type="button" class="icon-btn" id="rSend" aria-label="Del opskriften" title="Del opskriften"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7.5 7.5 12 3l4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></button></div></div>
       <div class="ra-grid${(r.steps||[]).length?'':' one'}">${(r.steps||[]).length?'<button type="button" class="btn plain" id="rCook">👩‍🍳 Trinvis</button>':''}<button class="btn plain" type="button" id="toShop">🛒 Indkøbsliste</button></div>
       <button class="btn wide" type="button" id="toPlan">Tilføj til madplan</button></div>
+      ${videoHTML(r)}
       <div class="card"><h3 style="margin-bottom:4px">Ingredienser</h3>${ingHTML(r.ingredients||[],f)||'<p class="muted">Ingen ingredienser.</p>'}</div>
       <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="margin:0">Fremgangsmåde</h3></div><ol class="steps">${(r.steps||[]).map(s=>'<li><span>'+esc(s)+'</span></li>').join("")||'<p class="muted">Ingen trin.</p>'}</ol></div>
       ${srcLinkHTML(r)}
@@ -2831,6 +2850,7 @@ function openEditor(id,r,onSaved){
       <div class="row" style="flex-wrap:nowrap;margin-top:6px"><input type="text" id="edThemeNew" placeholder="Andet tema, fx Koreansk" maxlength="24" aria-label="Nyt tema"><button type="button" class="btn plain small" id="edThemeAdd">Tilføj</button></div>
       <div class="small muted" style="margin-top:4px">Typen (kylling, fisk, vegetar …) findes automatisk ud fra ingredienserne${r.ingredients&&r.ingredients.length?": "+esc(recipeTypes(r).join(", ")||"–"):""}.</div></div>
     <div><label class="lbl" for="edSrc">Link</label><input type="url" id="edSrc" value="${esc(r.source||"")}"></div>
+    <div><label class="lbl" for="edVid">Link til video</label><input type="url" id="edVid" placeholder="fx YouTube, Instagram eller TikTok" value="${esc(r.video||"")}"></div>
     <div><span class="lbl">Billede</span><div class="img-pick" id="edImgBox"><label class="btn plain small" for="edImg">Vælg billede</label><input type="file" id="edImg" accept="image/*" hidden><button type="button" class="btn plain small" id="edImgRm">Fjern billede</button></div><div class="small muted" style="margin-top:4px">Du kan også indsætte et kopieret billede i ingrediensfeltet.</div></div>
     <div><span class="lbl">Næringsindhold pr. portion</span><div class="row" style="flex-wrap:nowrap">
       <div style="flex:1"><label class="lbl" for="edK">kcal</label><input type="number" id="edK" min="0" value="${esc(r.nutrition&&r.nutrition.kcal!=null?r.nutrition.kcal:"")}"></div>
@@ -2862,7 +2882,7 @@ function openEditor(id,r,onSaved){
       const parsed=s.querySelector("#edIng").value.split("\n").map(parseLine).filter(Boolean);
       // keep notes/groups of unchanged lines
       const ings=parsed.map(p=>{const m=old&&(old.ingredients||[]).find(o=>norm(o.name)===norm(p.name));return m?Object.assign({},p,{note:m.note||"",group:m.group||""}):Object.assign(p,{note:""});});
-      const out=cleanRecipe({title:s.querySelector("#edTitle").value,servings:s.querySelector("#edServ").value,time:s.querySelector("#edTime").value,description:old?old.description:"",ingredients:ings,steps:s.querySelector("#edSteps").value.split("\n").map(x=>x.trim()).filter(Boolean),tags:old?old.tags:[],rating:old?old.rating:0,meals:edMeals,kids:old&&old.kids?old.kids:{},themes:edThemes,source:s.querySelector("#edSrc").value.trim(),image:edImage,
+      const out=cleanRecipe({video:s.querySelector("#edVid").value.trim(),title:s.querySelector("#edTitle").value,servings:s.querySelector("#edServ").value,time:s.querySelector("#edTime").value,description:old?old.description:"",ingredients:ings,steps:s.querySelector("#edSteps").value.split("\n").map(x=>x.trim()).filter(Boolean),tags:old?old.tags:[],rating:old?old.rating:0,meals:edMeals,kids:old&&old.kids?old.kids:{},themes:edThemes,source:s.querySelector("#edSrc").value.trim(),image:edImage,
         nutrition:(()=>{const k=s.querySelector("#edK").value,pr=s.querySelector("#edP").value,f=s.querySelector("#edF").value;const o=old&&old.nutrition;const same=o&&String(o.kcal??"")===k&&String(o.protein??"")===pr&&String(o.fiber??"")===f;return {kcal:k,protein:pr,fiber:f,source:same?o.source:"opskrift"};})()});
       out.createdAt=old?(old.createdAt||Date.now()):Date.now();
       if(old)["shared","fromLibrary","image"].forEach(k=>{if(old[k]!==undefined&&out[k]===undefined)out[k]=old[k];});

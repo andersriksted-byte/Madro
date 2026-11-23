@@ -180,6 +180,8 @@ function genericRecipe(doc){
   const h1=doc.querySelector("h1");
   return {name:(h1&&h1.textContent.replace(/\s+/g," ").trim())||m('meta[property="og:title"]'),description:m('meta[name="description"]')||m('meta[property="og:description"]'),
     recipeIngredient:ingr.slice(0,60),recipeInstructions:st.slice(0,40),image:m('meta[property="og:image"]'),keywords:"",recipeCategory:""};}
+function videoOf(r){let v=r&&r.video;if(Array.isArray(v))v=v[0];if(!v)return "";if(typeof v==="string")return /^https?:/.test(v)?v:"";
+  const u=v.embedUrl||v.contentUrl||v.url||"";return typeof u==="string"&&/^https?:/.test(u)?u:"";}
 function recipeFromHTML(html,url){
   const doc=new DOMParser().parseFromString(html,"text/html");
   let r=null;for(const s of doc.querySelectorAll('script[type="application/ld+json"]')){try{r=findRecipe(JSON.parse(s.textContent));}catch(e){try{r=findRecipe(JSON.parse(s.textContent.replace(/[\u0000-\u001f]+/g," ")));}catch(e2){}}if(r)break;}
@@ -205,6 +207,7 @@ function recipeFromHTML(html,url){
   const tags=tagsOf(r,title);
   return {title,servings,time:isoDur(r.totalTime||r.cookTime||r.prepTime),description:desc,ingredients:ingr,steps:st,tags:tags.length?tags:[/drink|cocktail/i.test(url)?"Drinks":"Aftensmad"],meals:tags.includes("Drinks")?["Drinks"]:tags.includes("Dessert")?["Dessert"]:tags.includes("Morgenmad")?["Morgenmad"]:tags.includes("Frokost")?["Frokost"]:["Aftensmad"],
     _lang:langOf(doc,r,[title,desc].concat(st).join(" ")),
+    video:videoOf(r),
     source:url,createdAt:Date.now(),nutrition:kcal?{kcal,protein:protein||0,fiber:fiber||0,source:"opskrift"}:null,image:img&&!/^data:/.test(img)?new URL(img,url).href:""};
 }
 async function shrink(blob){try{const bmp=await createImageBitmap(blob);const sc=Math.min(1,720/Math.max(bmp.width,bmp.height));const cv=document.createElement("canvas");
