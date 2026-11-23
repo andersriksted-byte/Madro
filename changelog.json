@@ -1,5 +1,16 @@
 [
  {
+  "v": "1795449150",
+  "date": "2026-11-23",
+  "new": [
+   "Står en ret på madplanen uden opskrift, kan du trykke på den og vælge \"Lav en opskrift til retten\". Opskriften gemmes i Kogebogen og sættes på madplanen i stedet.",
+   "Under \"Ny opskrift\" i vinduet \"Vælg en ret\" kan du nu også skrive retten på madplanen uden opskrift."
+  ],
+  "fixed": [
+   "Teksten under \"Opskriftens tekst\" sagde, at links hentes af Claude i chatten. Nu står der, at de hentes automatisk."
+  ]
+ },
+ {
   "v": "1795448894",
   "date": "2026-11-23",
   "new": [

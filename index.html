@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795448894";</script>
-<script src="config.js?v=1795448894"></script>
-<script src="importer.js?v=1795448894"></script>
-<script src="shim.js?v=1795448894"></script>
+<script>window.__appVersion="1795449150";</script>
+<script src="config.js?v=1795449150"></script>
+<script src="importer.js?v=1795449150"></script>
+<script src="shim.js?v=1795449150"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1108,6 +1108,7 @@ html.logo-tin .view>.top>div:first-child::before{font-family:'Alfa Slab One',var
 .set-about .masthead-w{margin:0}
 .set-about .ver{font-size:calc(11px * var(--fs));color:var(--muted)}
 @media (prefers-reduced-motion:reduce){.splash{transition:none}}
+.ni-rec{display:grid;gap:4px;padding:10px 0 2px;border-top:1px solid var(--line);margin-top:4px}
 /* recipe actions: one tidy block — servings and share on top, two equal buttons, the main action full width */
 .rec-actions.ra{display:flex;flex-direction:column;gap:8px}
 .ra .ra-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -3000,7 +3001,11 @@ function openNoteImage(en,key){const cur=noteImg(en);
   openSheet('<div class="sheet-head"><div><h2>'+esc(en.note)+'</h2><div class="sub">Tekst og billede til punktet</div></div>'+closeBtn+'</div>'+
     '<div class="stack"><form class="row" id="niSubF" style="flex-wrap:nowrap"><input type="text" id="niSub" maxlength="80" value="'+esc(en.sub||"")+'" placeholder="Tekst under, fx hos Claus og Nina" aria-label="Tekst under punktet"><button class="btn" type="submit">Gem</button></form>'+(cur?'<img src="'+esc(cur)+'" alt="" style="width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px">':'<p class="muted" style="margin:0">Intet billede endnu.</p>')+
     '<label class="btn wide" style="cursor:pointer"><input type="file" accept="image/*" id="niFile" hidden>📷 '+(cur?'Skift billede':'Tilføj billede')+'</label>'+
-    (cur?'<button class="btn plain wide" type="button" id="niRm">Fjern billede</button>':'')+guestToggleHTML(key,en.day)+'</div>',s=>{bindGuestToggle(s,key,en.day);
+    (cur?'<button class="btn plain wide" type="button" id="niRm">Fjern billede</button>':'')+
+    (can("recipe")?'<div class="ni-rec"><button class="btn wide" type="button" id="niRec">📖 Lav en opskrift til retten</button><div class="small muted">Opskriften gemmes i Kogebogen og erstatter punktet på madplanen.</div></div>':'')+guestToggleHTML(key,en.day)+'</div>',s=>{bindGuestToggle(s,key,en.day);
+    const nr=s.querySelector("#niRec");if(nr)nr.onclick=()=>openEditor(null,{title:en.note,description:en.sub||"",image:noteImg(en)||""},async(nid,rec)=>{
+      const entries=planOf(key).map(x=>{if(x.id!==en.id)return x;const y=Object.assign({},x,{recipeId:nid,servings:x.servings||rec.servings||4});["note","sub","image","noImage"].forEach(k=>delete y[k]);return y;});
+      await savePlan(key,entries);renderPlan();toast(rec.title+" er gemt i Kogebogen og sat på madplanen");});
     const save=async patch=>{const entries=planOf(key).map(x=>{if(x.id!==en.id)return x;const y=Object.assign({},x,patch);Object.keys(y).forEach(k=>{if(y[k]===undefined)delete y[k];});return y;});await savePlan(key,entries);closeSheet();renderPlan();};
     s.querySelector("#niSubF").addEventListener("submit",ev=>{ev.preventDefault();const v=s.querySelector("#niSub").value.trim();save({sub:v||undefined});});
     s.querySelector("#niFile").addEventListener("change",ev=>takeImage(ev.target.files[0],d=>{save({image:d,noImage:undefined});toast("Billedet er sat ind");}));
@@ -3357,8 +3362,9 @@ function openDayAdd(day){
     <div class="card stack" id="newRecBox" style="display:none;gap:8px">
       <h3>Ny opskrift til ${DAYS[day].toLowerCase()}</h3>
       <div><label class="lbl" for="nrUrl">Link til opskriften</label><input type="url" id="nrUrl" placeholder="https://…"></div>
-      <div><label class="lbl" for="nrText">Opskriftens tekst (valgfri)</label><textarea id="nrText" style="min-height:90px" placeholder="Indsæt teksten, så sættes den op med det samme. Kun link: hentes ${recWhen()}."></textarea></div>
+      <div><label class="lbl" for="nrText">Opskriftens tekst (valgfri)</label><textarea id="nrText" style="min-height:90px" placeholder="Indsæt teksten, så sættes den op med det samme. ${window.__webApp?"Kun link: hentes automatisk med det samme.":"Kun link: hentes "+recWhen()+"."}"></textarea></div>
       <div class="row"><button class="btn" type="button" id="nrGo">Læg på ${DAYS[day].toLowerCase()}</button><button class="btn plain small" type="button" id="nrManual">Skriv selv</button></div>
+      <button class="linkbtn" type="button" id="nrNote" style="align-self:flex-start">✎ Skriv bare retten på madplanen uden opskrift</button>
       <div class="small" id="nrStatus"></div>
     </div>
     ${los.length?'<div class="left-box"><div class="row" style="justify-content:space-between"><b>Du har til overs</b><button type="button" class="btn plain small" id="leftIdeas">Idéer fra Claude</button></div><div class="row" style="gap:6px" id="leftChips">'+los.map(l=>'<button type="button" class="chip lchip" data-left="'+esc(l.e.k)+'" title="'+esc(l.src)+'">'+esc(l.e.k)+': '+esc(l.text.replace(" til overs",""))+'</button>').join("")+'</div><div class="small muted">Tryk på en rest for kun at se retter, der bruger den.</div></div>':''}
@@ -3393,6 +3399,8 @@ function openDayAdd(day){
     s.querySelector("#newRecToggle").onclick=()=>{const b=s.querySelector("#newRecBox");const show=b.style.display==="none";b.style.display=show?"flex":"none";s.querySelector("#noteBox").style.display="none";s.querySelector("#noteToggle").textContent="Andet";b.closest(".sheet")?.scrollTo?.({top:0,behavior:"smooth"});const t=s.querySelector("#newRecToggle");t.textContent=show?"Luk":"+ Tilføj";if(show)s.querySelector("#nrUrl").focus();};
     s.querySelector("#nrText").addEventListener("input",()=>{const t=s.querySelector("#nrText").value.trim();if(/^https?:\/\/\S+$/.test(t)){s.querySelector("#nrUrl").value=t;s.querySelector("#nrText").value="";}
       else{const m=t.match(/https?:\/\/[^\s"'<>]+/);if(m&&!s.querySelector("#nrUrl").value.trim())s.querySelector("#nrUrl").value=m[0].replace(/[).,]+$/,"");}});
+    s.querySelector("#nrNote").onclick=()=>{const t=s.querySelector("#nrText").value.trim().split("\n")[0].slice(0,80);if(s.querySelector("#newRecBox").style.display!=="none")s.querySelector("#newRecToggle").click();if(s.querySelector("#noteBox").style.display==="none")s.querySelector("#noteToggle").click();
+      const ti=s.querySelector("#noteText2");if(t&&!ti.value)ti.value=t;ti.focus();ti.scrollIntoView({block:"center"});};
     s.querySelector("#nrManual").onclick=()=>openEditor(null,{source:s.querySelector("#nrUrl").value.trim()},(nid,rec)=>{add({recipeId:nid,servings:rec.servings||4});toast(rec.title+" er lagt på "+DAYS[day].toLowerCase());});
     s.querySelector("#nrGo").onclick=async()=>{
       const url=s.querySelector("#nrUrl").value.trim(),text=s.querySelector("#nrText").value.trim(),st=s.querySelector("#nrStatus"),btn=s.querySelector("#nrGo");
