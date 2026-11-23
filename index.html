@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795417616";</script>
-<script src="config.js?v=1795417616"></script>
-<script src="importer.js?v=1795417616"></script>
-<script src="shim.js?v=1795417616"></script>
+<script>window.__appVersion="1795427767";</script>
+<script src="config.js?v=1795427767"></script>
+<script src="importer.js?v=1795427767"></script>
+<script src="shim.js?v=1795427767"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1431,6 +1431,11 @@ body.wv-on .toast{z-index:210}
         <label class="check"><input type="checkbox" id="badgeOn"><div class="main"><div class="n">Vis antal varer på app-ikonet</div><div class="s" id="badgeNote">Et rødt tal på Madro-ikonet viser, hvor mange varer der mangler at blive købt.</div></div></label>
         <div class="small muted" style="display:grid;gap:6px"><div><b>Genvej til at tilføje en vare:</b> Læg linket herunder ind i iPhones Genveje-app (handlingen "Åbn URL'er"). Så kan du tilføje fra hjemmeskærmen, en widget eller med Siri.</div>
         <div class="row" style="flex-wrap:nowrap;gap:8px"><input type="text" id="addLink" readonly aria-label="Link til at tilføje en vare" style="flex:1;min-width:0;font-size:13px"><button class="btn small" type="button" id="addLinkCopy">Kopiér</button></div></div>
+        </div>
+        <div class="set-sec">
+        <h4>Skærmen på indkøbslisten</h4>
+        <div class="seg" id="wakeSeg" role="group" aria-label="Skærmen på indkøbslisten"><button type="button" data-wk="normal">Som normalt</button><button type="button" data-wk="long">Længere</button><button type="button" data-wk="on">Hold tændt</button></div>
+        <p class="small muted" style="margin:0" id="wakeNote">Gælder kun dig og kun mens indkøbslisten er åben.</p>
         </div>
         <div class="set-sec">
         <h4>Butikker I handler i</h4>
@@ -4101,6 +4106,20 @@ $("#showFound").addEventListener("change",e=>{showFound=e.target.checked;try{loc
       if(r!=="granted"){setMyPref("badge","on");sync();toast("iPhone viser kun tallet, når Madro må sende meddelelser");return;}}
       setMyPref("badge","on");}else setMyPref("badge","off");
     shopBadge();sync();};})();
+/* keep the screen awake on the shopping list: as normal, 10 min after the last touch, or all the time */
+(function(){const LONG=10*60*1000;let lock=null,timer=null,busy=false;
+  const mode=()=>myPref("shopWake","normal");
+  const onShop=()=>/^#indkob/.test(location.hash)&&document.visibilityState==="visible";
+  async function take(){if(lock||busy||!("wakeLock" in navigator))return;busy=true;try{lock=await navigator.wakeLock.request("screen");lock.addEventListener("release",()=>{lock=null;});}catch(e){lock=null;}busy=false;}
+  function drop(){clearTimeout(timer);timer=null;if(lock){try{lock.release();}catch(e){}lock=null;}}
+  function arm(){clearTimeout(timer);timer=setTimeout(()=>{if(mode()==="long")drop();},LONG);}
+  function check(){const m=mode();if(m==="normal"||!onShop()){drop();return;}take();if(m==="long")arm();}
+  ["pointerdown","keydown","scroll","touchstart"].forEach(ev=>document.addEventListener(ev,()=>{if(mode()==="long"&&onShop()){if(!lock)take();arm();}},{passive:true,capture:true}));
+  window.addEventListener("hashchange",check);document.addEventListener("visibilitychange",check);
+  function draw(){const v=mode();document.querySelectorAll("#wakeSeg [data-wk]").forEach(b=>{b.classList.toggle("on",b.dataset.wk===v);b.setAttribute("aria-pressed",b.dataset.wk===v);});
+    const n=$("#wakeNote");if(n)n.textContent=!("wakeLock" in navigator)?"Kan ikke styres i denne browser. På iPhone kræver det iOS 16.4 eller nyere.":v==="long"?"Skærmen holdes tændt i 10 minutter efter sidste tryk. Gælder kun dig.":v==="on"?"Skærmen slukker ikke, så længe indkøbslisten er åben. Gælder kun dig.":"Skærmen slukker som den plejer. Gælder kun dig.";}
+  const seg=$("#wakeSeg");if(seg)seg.addEventListener("click",e=>{const b=e.target.closest("[data-wk]");if(!b)return;setMyPref("shopWake",b.dataset.wk);draw();check();});
+  draw();setTimeout(check,500);})();
 $("#addItemBtn").addEventListener("click",()=>{try{$("#kbProxy").focus({preventScroll:true});}catch(e){}openAddSheet();});
 $("#shopList").addEventListener("click",async e=>{
   const pk=e.target.closest("[data-pack]");if(pk){e.preventDefault();const it=state.shopping.find(x=>x.id===pk.dataset.pack);if(it)openPackSheet(it);return;}

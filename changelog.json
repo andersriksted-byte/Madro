@@ -1,5 +1,13 @@
 [
  {
+  "v": "1795427767",
+  "date": "2026-11-23",
+  "new": [
+   "Vælg om skærmen skal slukke som normalt, holdes tændt i 10 minutter efter sidste tryk eller holdes tændt hele tiden, mens indkøbslisten er åben. Find det under Opsætning → Indkøb."
+  ],
+  "fixed": []
+ },
+ {
   "v": "1795417616",
   "date": "2026-11-23",
   "new": [
