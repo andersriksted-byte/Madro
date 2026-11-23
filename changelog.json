@@ -1,5 +1,13 @@
 [
  {
+  "v": "1795451341",
+  "date": "2026-11-23",
+  "new": [],
+  "fixed": [
+   "Når tilbudsvinduet er åbent, kan du nu stadig se og bruge menuen i bunden. Trykker du på en anden fane, lukker vinduet."
+  ]
+ },
+ {
   "v": "1795449418",
   "date": "2026-11-23",
   "new": [],

@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795449418";</script>
-<script src="config.js?v=1795449418"></script>
-<script src="importer.js?v=1795449418"></script>
-<script src="shim.js?v=1795449418"></script>
+<script>window.__appVersion="1795451341";</script>
+<script src="config.js?v=1795451341"></script>
+<script src="importer.js?v=1795451341"></script>
+<script src="shim.js?v=1795451341"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1111,6 +1111,9 @@ html.logo-tin .view>.top>div:first-child::before{font-family:'Alfa Slab One',var
 .ni-rec{display:grid;gap:4px;padding:10px 0 2px;border-top:1px solid var(--line);margin-top:4px}
 html.wheel #v-opskrifter>.top{scroll-snap-align:start;scroll-margin-top:calc(env(safe-area-inset-top,0px) + 18px)}
 html.wheel{scroll-padding-top:0}
+html.sheet-open.sheet-tabs .sheet-wrap{bottom:var(--tabh,0px)!important}
+html.sheet-open.sheet-tabs .tabs{visibility:visible;z-index:96}
+html.sheet-open.sheet-tabs .sheet{max-height:calc(100dvh - var(--tabh,68px) - 28px)}
 /* recipe actions: one tidy block — servings and share on top, two equal buttons, the main action full width */
 .rec-actions.ra{display:flex;flex-direction:column;gap:8px}
 .ra .ra-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -2094,9 +2097,9 @@ window.addEventListener("hashchange",()=>{if(/madplan/.test(location.hash))fresh
 
 /* ---------- sheet ---------- */
 let sheetGuard=null;
-function openSheet(html,onMount){sheetGuard=null;document.documentElement.classList.add("sheet-open");$("#sheet").classList.remove("add-sheet");$("#sheet").style.minHeight="";$("#sheet").innerHTML=html;$("#sheetWrap").classList.add("on");$("#sheet").scrollTop=0;onMount&&onMount($("#sheet"));}
+function openSheet(html,onMount){sheetGuard=null;document.documentElement.classList.remove("sheet-tabs");document.documentElement.classList.add("sheet-open");$("#sheet").classList.remove("add-sheet");$("#sheet").style.minHeight="";$("#sheet").innerHTML=html;$("#sheetWrap").classList.add("on");$("#sheet").scrollTop=0;onMount&&onMount($("#sheet"));}
 let afterCreate=false;/* a new recipe was just shown: closing it lands on the full Kogebog */
-function closeSheet(){sheetGuard=null;document.documentElement.classList.remove("sheet-open");$("#sheetWrap").classList.remove("on");$("#sheet").innerHTML="";
+function closeSheet(){sheetGuard=null;document.documentElement.classList.remove("sheet-open","sheet-tabs");$("#sheetWrap").classList.remove("on");$("#sheet").innerHTML="";
   if(afterCreate){afterCreate=false;const q=$("#rsearch");if(q){q.value="";q.dispatchEvent(new Event("input",{bubbles:true}));}recFilter.q="";
     if(location.hash!=="#opskrifter")location.hash="#opskrifter";else renderRecipes();window.scrollTo(0,0);}}
 /* ask before leaving an editor with unsaved changes */
@@ -4240,6 +4243,7 @@ document.addEventListener("input",e=>{const t=e.target;if(!t.matches||!t.matches
   const host=document.querySelector("#v-butikker .stack")||document.getElementById("v-butikker");
   if(host){const ab=document.createElement("div");ab.className="set-about";ab.appendChild(mw.cloneNode(true));
     const v=document.createElement("div");v.className="ver";v.textContent=window.__appVersion?"Version "+new Date(+window.__appVersion*1000).toLocaleDateString("da-DK",{day:"numeric",month:"short",year:"numeric"}):"";ab.appendChild(v);host.parentNode.appendChild(ab);}})();
+window.addEventListener("hashchange",()=>{if(document.documentElement.classList.contains("sheet-tabs"))closeSheet();});
 $("#addItemBtn").addEventListener("click",()=>{try{$("#kbProxy").focus({preventScroll:true});}catch(e){}openAddSheet();});
 $("#shopList").addEventListener("click",async e=>{
   const pk=e.target.closest("[data-pack]");if(pk){e.preventDefault();const it=state.shopping.find(x=>x.id===pk.dataset.pack);if(it)openPackSheet(it);return;}
@@ -4637,7 +4641,7 @@ function openOfferBrowser(){
     el.querySelectorAll("[data-os]").forEach(b=>b.onclick=()=>{mode=b.dataset.os;setMyPref("offSort",mode);setSort();draw();});
     el.querySelector("#obQ").addEventListener("input",e=>{q=e.target.value;draw();});
     el.querySelectorAll("[data-obst]").forEach(b=>b.onclick=()=>{st=b.dataset.obst;el.querySelectorAll("[data-obst]").forEach(x=>x.classList.toggle("on",x===b));draw();});
-    draw();});
+    document.documentElement.classList.add("sheet-tabs");draw();});
 }
 $("#offBtn").addEventListener("click",()=>{offSeen();openOfferBrowser();});
 /* when the offers were fetched, and until when each store's offers run */
