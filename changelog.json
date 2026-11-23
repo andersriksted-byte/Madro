@@ -1,5 +1,13 @@
 [
  {
+  "v": "1795451530",
+  "date": "2026-11-23",
+  "new": [],
+  "fixed": [
+   "Når du trykker på en vare på indkøbslisten, står der nu \"Luk\" på knappen, indtil du ændrer noget. Så skifter den til \"Gem\"."
+  ]
+ },
+ {
   "v": "1795451341",
   "date": "2026-11-23",
   "new": [],

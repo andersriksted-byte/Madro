@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795451372";</script>
-<script src="config.js?v=1795451372"></script>
-<script src="importer.js?v=1795451372"></script>
-<script src="shim.js?v=1795451372"></script>
+<script>window.__appVersion="1795451530";</script>
+<script src="config.js?v=1795451530"></script>
+<script src="importer.js?v=1795451530"></script>
+<script src="shim.js?v=1795451530"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -4278,15 +4278,20 @@ function openItemSheet(it){
     <div style="flex:1"><label class="lbl" for="itUnit">Enhed</label><select id="itUnit">${units.map(u=>'<option value="'+u+'"'+((it.unit||"")===u?" selected":"")+'>'+(u||"–")+'</option>').join("")}${units.includes(it.unit||"")?"":'<option selected>'+esc(it.unit)+'</option>'}</select></div></div>
     <div><label class="lbl" for="itStore">Butik</label><select id="itStore"><option value="">Automatisk (billigste tur)</option>${stores.map(x=>'<option'+(it.store===x?" selected":"")+'>'+esc(x)+'</option>').join("")}</select></div>
     <div><label class="lbl" for="itCat">Kategori</label><select id="itCat">${CATS.map(c=>'<option'+(catOf(it)===c?" selected":"")+'>'+c+'</option>').join("")}</select></div>
-    <div class="row" style="justify-content:space-between"><button class="btn plain small" type="button" id="itDel">Slet vare</button><button class="btn" type="submit">Gem</button></div>
+    <div class="row" style="justify-content:space-between"><button class="btn plain small" type="button" id="itDel">Slet vare</button><button class="btn" type="submit" id="itSave">Luk</button></div>
   </form>`,s=>{
+    /* one button: Luk while nothing is changed, Gem as soon as something is */
+    const itSnap=()=>["#itName","#itAmt","#itUnit","#itStore","#itCat"].map(q=>(s.querySelector(q)||{}).value).join("|");let itBase=itSnap();
+    const itBtn=()=>{const ch=itSnap()!==itBase;const b=s.querySelector("#itSave");b.textContent=ch?"Gem":"Luk";b.classList.toggle("plain",!ch);};
+    s.querySelector("#itForm").addEventListener("input",itBtn);s.querySelector("#itForm").addEventListener("change",itBtn);itBtn();
     const pk=s.querySelector("#itPack");if(pk)pk.onclick=()=>openPackSheet(it);
     s.querySelectorAll("[data-opick]").forEach(b=>b.onclick=()=>{const i=b.dataset.opick;
       if(i===""){updateItem(it.id,{store:"",offerKey:""});toast(it.name+": appen vælger butik");}
       else{const o=offs[+i];updateItem(it.id,{store:o.store,offerKey:offKey(o)});toast(it.name+" købes i "+o.store+" ("+fmtKr(o.price)+")");}
-      s.querySelectorAll("[data-opick]").forEach(x=>x.classList.toggle("on",x===b));const sel=s.querySelector("#itStore");if(sel)sel.value=i===""?"":offs[+i].store;});
+      s.querySelectorAll("[data-opick]").forEach(x=>x.classList.toggle("on",x===b));const sel=s.querySelector("#itStore");if(sel)sel.value=i===""?"":offs[+i].store;itBase=itSnap();itBtn();});
     s.querySelector("#itDel").onclick=()=>{closeSheet();saveShopping(state.shopping.filter(x=>x.id!==it.id));toast(it.name+" er slettet");};
     s.querySelector("#itForm").addEventListener("submit",ev=>{ev.preventDefault();
+      if(itSnap()===itBase){closeSheet();return;}
       const name=s.querySelector("#itName").value.trim()||it.name;const a=s.querySelector("#itAmt").value;
       const cat=s.querySelector("#itCat").value;
       const patch={name,amount:a===""?null:parseFloat(String(a).replace(",",".")),unit:s.querySelector("#itUnit").value,store:s.querySelector("#itStore").value,category:cat===guessCat(name)?"":cat};
