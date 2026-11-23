@@ -1,5 +1,16 @@
 [
  {
+  "v": "1795446983",
+  "date": "2026-11-23",
+  "new": [
+   "Flyt en ret til en anden dag ved at holde fingeren på retten et øjeblik og trække den hen på dagen. Det lille greb ⠿ virker stadig.",
+   "Antal varer på app-ikonet er nu slået til som standard. På iPhone spørger appen én gang, om Madro må vise det."
+  ],
+  "fixed": [
+   "Det var svært at flytte retter på telefonen, fordi man skulle ramme det lille greb præcist."
+  ]
+ },
+ {
   "v": "1795442590",
   "date": "2026-11-23",
   "new": [],

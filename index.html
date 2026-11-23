@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795442590";</script>
-<script src="config.js?v=1795442590"></script>
-<script src="importer.js?v=1795442590"></script>
-<script src="shim.js?v=1795442590"></script>
+<script>window.__appVersion="1795446983";</script>
+<script src="config.js?v=1795446983"></script>
+<script src="importer.js?v=1795446983"></script>
+<script src="shim.js?v=1795446983"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1075,6 +1075,7 @@ html.no-shop #addItemBtn.fab-add{visibility:hidden}
 .shop-foot{flex-wrap:nowrap!important;align-items:center;gap:10px}.shop-foot>.btn{width:auto!important;margin:0!important}.shop-foot>#archiveBtn{flex:none}.shop-foot>#finishBtn{flex:1 1 auto;max-width:260px}
 html[data-tab="indkob"]:not(.sheet-open) .toast,html[data-tab="indkob"]:not(.sheet-open) .undo-bar{bottom:calc(env(safe-area-inset-bottom,0px) + 148px)}
 html[data-tab="indkob"]:not(.sheet-open) .imp-pill{bottom:calc(env(safe-area-inset-bottom,0px) + 148px)}
+#days .meal[data-entry]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 /* recipe actions: one tidy block — servings and share on top, two equal buttons, the main action full width */
 .rec-actions.ra{display:flex;flex-direction:column;gap:8px}
 .ra .ra-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -3279,7 +3280,7 @@ $("#wToday").onclick=()=>goWeek(0);
     t0={x:e.touches[0].clientX,y:e.touches[0].clientY,t:Date.now()};
   },{passive:true});
   v.addEventListener("touchend",e=>{
-    if(!t0||document.querySelector(".drag-ghost"))return;
+    if(!t0||document.querySelector(".drag-ghost")||(window.__mealDragged||0)>=t0.t)return;
     const t=e.changedTouches[0],dx=t.clientX-t0.x,dy=t.clientY-t0.y,dt=Date.now()-t0.t;t0=null;
     if(Math.abs(dx)>60&&Math.abs(dx)>1.6*Math.abs(dy)&&dt<800)goWeek(dx<0?1:-1);
   },{passive:true});
@@ -3394,16 +3395,32 @@ $("#days").addEventListener("click",async e=>{
   /* the other dish in the day nearest the pointer, and whether to go before or after it */
   const slotAt=(dayEl,y)=>{let best=null;dayEl.querySelectorAll(".meal[data-entry]").forEach(m=>{if(m.dataset.entry===drag.id)return;const r=m.getBoundingClientRect();const mid=r.top+r.height/2;const dist=Math.abs(y-mid);if(!best||dist<best.dist)best={el:m,id:m.dataset.entry,before:y<mid,dist};});return best;};
   const dayAt=(x,y)=>{const el=document.elementFromPoint(x,y);return el&&el.closest("[data-dayidx]");};
+  function startDrag(row,id,e,capEl){
+    const ghost=document.createElement("div");ghost.className="drag-ghost";
+    const tt=row.querySelector(".mag-t,.mt,.t");ghost.textContent=(tt||row).textContent.replace(/·.*$/,"").trim().slice(0,40);
+    document.body.appendChild(ghost);row.classList.add("dragging");
+    drag={id,row,ghost,target:null,pid:e.pointerId};
+    try{capEl.setPointerCapture(e.pointerId);}catch(x){}
+    move(e);}
   $("#days").addEventListener("pointerdown",e=>{
     const g=e.target.closest("[data-grip]");if(!g||e.button>0)return;
-    e.preventDefault();
-    const row=g.closest(".meal");const ghost=document.createElement("div");ghost.className="drag-ghost";
-    ghost.textContent=(row.querySelector(".t")||row).textContent.replace(/·.*$/,"").trim();
-    document.body.appendChild(ghost);row.classList.add("dragging");
-    drag={id:g.dataset.grip,row,ghost,target:null,pid:e.pointerId};
-    try{g.setPointerCapture(e.pointerId);}catch(x){}
-    move(e);
+    e.preventDefault();startDrag(g.closest(".meal"),g.dataset.grip,e,g);
   });
+  /* hold a dish for a moment, then drag it to another day (works without hitting the small handle) */
+  let lp=null;window.__mealDragged=0;
+  $("#days").addEventListener("pointerdown",e=>{
+    if(drag||e.button>0||e.target.closest("[data-grip],[data-rm],[data-status],[data-add],a,input"))return;
+    const row=e.target.closest(".meal[data-entry]");if(!row||!can("plan"))return;
+    const x0=e.clientX,y0=e.clientY,pid=e.pointerId;
+    lp={pid,x0,y0,t:setTimeout(()=>{if(!lp)return;lp=null;startDrag(row,row.dataset.entry,{clientX:x0,clientY:y0,pointerId:pid},row);window.__mealDragged=Date.now();try{gHaptic();}catch(x){}try{navigator.vibrate&&navigator.vibrate(15);}catch(x){}},380)};
+  });
+  const lpCancel=e=>{if(lp&&(!e||e.type!=="pointermove"||Math.hypot(e.clientX-lp.x0,e.clientY-lp.y0)>8)){clearTimeout(lp.t);lp=null;}};
+  document.addEventListener("pointermove",e=>{if(lp&&e.pointerId===lp.pid)lpCancel(e);},{passive:true});
+  document.addEventListener("pointerup",lpCancel,{passive:true});document.addEventListener("pointercancel",lpCancel,{passive:true});
+  /* while dragging, the page must not scroll under the finger */
+  document.addEventListener("touchmove",e=>{if(drag)e.preventDefault();},{passive:false});
+  document.addEventListener("click",e=>{if(Date.now()-window.__mealDragged<700&&e.target.closest("#days")){e.stopPropagation();e.preventDefault();}},true);
+  $("#days").addEventListener("contextmenu",e=>{if(e.target.closest(".meal[data-entry]"))e.preventDefault();});
   function move(e){
     if(!drag)return;
     drag.ghost.style.left=(e.clientX+12)+"px";drag.ghost.style.top=(e.clientY-18)+"px";
@@ -4117,6 +4134,12 @@ $("#showFound").addEventListener("change",e=>{showFound=e.target.checked;try{loc
   $("#addLinkCopy").onclick=async()=>{try{await navigator.clipboard.writeText(link.value);toast("Linket er kopieret");}catch(e){link.select();}};
   if(!("setAppBadge" in navigator)){cb.checked=false;cb.disabled=true;note.textContent="Kan ikke vises her. Tallet virker, når Madro er lagt på hjemmeskærmen (iPhone kræver iOS 16.4 eller nyere).";return;}
   const ios=/iPhone|iPad|iPod/.test(navigator.userAgent);
+  /* on by default: iPhone only shows the number once Madro may send notifications, and it may only ask after a tap, so ask (once) at the first tap */
+  const standalone=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone;
+  if(ios&&standalone&&window.Notification&&Notification.permission==="default"&&myPref("badge","on")==="on"){let asked=false;try{asked=!!localStorage.getItem("mp_badgeAsked");}catch(e){}
+    if(!asked){const ask=async()=>{document.removeEventListener("click",ask,true);try{localStorage.setItem("mp_badgeAsked","1");}catch(e){}
+      try{const r=await Notification.requestPermission();if(r==="granted"){shopBadge();toast("Antal varer vises nu på Madro-ikonet");}}catch(e){}sync();};
+      document.addEventListener("click",ask,true);}}
   const sync=()=>{cb.checked=myPref("badge","on")==="on"&&!(ios&&window.Notification&&Notification.permission!=="granted");
     if(ios&&window.Notification&&Notification.permission==="denied")note.textContent="Tallet kræver, at Madro må sende meddelelser. Slå det til under Indstillinger → Meddelelser → Madro på iPhonen.";};
   sync();
