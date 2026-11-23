@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795452120";</script>
-<script src="config.js?v=1795452120"></script>
-<script src="importer.js?v=1795452120"></script>
-<script src="shim.js?v=1795452120"></script>
+<script>window.__appVersion="1795452931";</script>
+<script src="config.js?v=1795452931"></script>
+<script src="importer.js?v=1795452931"></script>
+<script src="shim.js?v=1795452931"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1114,6 +1114,7 @@ html.wheel{scroll-padding-top:0}
 html.sheet-open.sheet-tabs .sheet-wrap{bottom:var(--tabh,0px)!important}
 html.sheet-open.sheet-tabs .tabs{visibility:visible;z-index:96}
 html.sheet-open.sheet-tabs .sheet{max-height:calc(100dvh - var(--tabh,68px) - 28px)}
+.sl-pop .pop-actions:has(.pop-trash){display:flex!important;gap:8px}.sl-pop .pop-trash{flex:none!important;width:48px;padding:0!important;display:grid;place-items:center}.sl-pop .pop-trash+.btn{flex:1}
 /* recipe actions: one tidy block — servings and share on top, two equal buttons, the main action full width */
 .rec-actions.ra{display:flex;flex-direction:column;gap:8px}
 .ra .ra-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -4322,7 +4323,7 @@ function openItemPop(it,rowEl){
     '<div class="amt-row"><div class="stepper"><button type="button" data-st="-1" aria-label="Mindre">−</button><input type="text" inputmode="decimal" id="popAmt" class="num" aria-label="Antal" value="'+esc(amount==null?"":fmtAmt(amount))+'" placeholder="–"><button type="button" data-st="1" aria-label="Mere">+</button></div>'+
     '<select id="popUnit" aria-label="Enhed">'+units.map(u=>'<option value="'+esc(u)+'"'+(u===unit?" selected":"")+'>'+(u||"–")+'</option>').join("")+'</select></div>'+
     '<button type="button" class="btn wide plain" data-pa="save">Luk</button>'+
-    '<div class="pop-actions"><button type="button" class="btn danger" data-pa="del">Slet fra listen</button><button type="button" class="btn plain" data-pa="more">Flere detaljer</button></div>';
+    '<div class="pop-actions"><button type="button" class="btn danger pop-trash" data-pa="del" aria-label="Slet fra listen" title="Slet fra listen"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button><button type="button" class="btn plain" data-pa="more">Flere detaljer</button></div>';
   document.body.appendChild(pop);
   const upd=()=>{const b=pop.querySelector('[data-pa="save"]');const ch=changed()&&!!name.trim();b.textContent=ch?"Gem":"Luk";b.classList.toggle("plain",!ch);};
   pop.querySelector("#popName").addEventListener("input",e=>{name=e.target.value;upd();});
