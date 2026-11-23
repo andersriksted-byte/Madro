@@ -1,5 +1,13 @@
 [
  {
+  "v": "1795442019",
+  "date": "2026-11-23",
+  "new": [
+   "\"+ Tilføj\" på indkøbslisten sidder nu nederst på midten, lige over menuen, så den er nem at nå med tommelen. Tilbud- og send-knapperne står ved siden af overskriften."
+  ],
+  "fixed": []
+ },
+ {
   "v": "1795427948",
   "date": "2026-11-23",
   "new": [],

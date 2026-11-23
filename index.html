@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795427948";</script>
-<script src="config.js?v=1795427948"></script>
-<script src="importer.js?v=1795427948"></script>
-<script src="shim.js?v=1795427948"></script>
+<script>window.__appVersion="1795442019";</script>
+<script src="config.js?v=1795442019"></script>
+<script src="importer.js?v=1795442019"></script>
+<script src="shim.js?v=1795442019"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1057,6 +1057,13 @@ html.sheet-open .imp-pill{display:none}
 .op-s{font-size:calc(12px * var(--fs));color:var(--muted)}
 .op-p{flex:none;text-align:right;font-weight:700;display:grid;line-height:1.2}
 .op-p s{font-weight:400;font-size:calc(11.5px * var(--fs));color:var(--muted)}
+#v-indkob>.top>div:first-child{flex:1 1 0;min-width:0}
+#v-indkob>.top h1{font-size:calc(36px * var(--fs))}
+#v-indkob>.top>.row{align-self:flex-end}
+#addItemBtn.fab-add{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:44;width:124px;height:44px;border-radius:22px;padding:0 14px;font-size:calc(15px * var(--fs));font-weight:700;background:var(--accent);color:var(--on-accent);border:0;box-shadow:0 6px 18px rgba(0,0,0,.24);display:none}
+html[data-tab="indkob"] #addItemBtn.fab-add{display:block}
+html.sheet-open #addItemBtn.fab-add,html.no-shop #addItemBtn.fab-add{display:none!important}
+#v-indkob{padding-bottom:70px}
 /* recipe actions: one tidy block — servings and share on top, two equal buttons, the main action full width */
 .rec-actions.ra{display:flex;flex-direction:column;gap:8px}
 .ra .ra-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -2030,7 +2037,7 @@ function route(){
   if(h==="opsaetning")h="butikker";
   if(!TABS.includes(h))h="madplan";
   if(h==="spil")renderGames();
-  TABS.forEach(t=>{$("#v-"+t).classList.toggle("on",t===h);document.querySelector('.tabs a[data-tab="'+t+'"]').classList.toggle("on",t===h);});
+  TABS.forEach(t=>{$("#v-"+t).classList.toggle("on",t===h);document.querySelector('.tabs a[data-tab="'+t+'"]').classList.toggle("on",t===h);});document.documentElement.dataset.tab=h;
 }
 window.addEventListener("hashchange",()=>{if(/madplan/.test(location.hash))freshDayWeek();route();window.scrollTo(0,0);});
 
@@ -4120,6 +4127,8 @@ $("#showFound").addEventListener("change",e=>{showFound=e.target.checked;try{loc
     const n=$("#wakeNote");if(n)n.textContent=!("wakeLock" in navigator)?"Kan ikke styres i denne browser. På iPhone kræver det iOS 16.4 eller nyere.":v==="long"?"Skærmen holdes tændt i 1 minut efter sidste tryk. Gælder kun dig.":v==="on"?"Skærmen slukker ikke, så længe indkøbslisten er åben. Gælder kun dig.":"Skærmen slukker som den plejer. Gælder kun dig.";}
   const seg=$("#wakeSeg");if(seg)seg.addEventListener("click",e=>{const b=e.target.closest("[data-wk]");if(!b)return;setMyPref("shopWake",b.dataset.wk);draw();check();});
   draw();setTimeout(check,500);})();
+/* the add button floats above the tab bar, where the thumb reaches it */
+document.body.appendChild($("#addItemBtn"));$("#addItemBtn").classList.add("fab-add");
 $("#addItemBtn").addEventListener("click",()=>{try{$("#kbProxy").focus({preventScroll:true});}catch(e){}openAddSheet();});
 $("#shopList").addEventListener("click",async e=>{
   const pk=e.target.closest("[data-pack]");if(pk){e.preventDefault();const it=state.shopping.find(x=>x.id===pk.dataset.pack);if(it)openPackSheet(it);return;}
