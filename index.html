@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795448709";</script>
-<script src="config.js?v=1795448709"></script>
-<script src="importer.js?v=1795448709"></script>
-<script src="shim.js?v=1795448709"></script>
+<script>window.__appVersion="1795448894";</script>
+<script src="config.js?v=1795448894"></script>
+<script src="importer.js?v=1795448894"></script>
+<script src="shim.js?v=1795448894"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1088,6 +1088,26 @@ html[data-tab="indkob"]:not(.sheet-open) .imp-pill{bottom:calc(env(safe-area-ins
 .vid-x{justify-self:end;color:#fff;border-color:#fff}
 html.imp-open,html.imp-open body{scroll-snap-type:none!important}
 #goTodayBtn{display:none!important}
+/* compact header (B): small "Madro" over the page title; the big logo lives on the splash screen and at the bottom of Opsætning */
+.app>.masthead-w{display:none}
+.view>.top::before{display:none!important}
+.view>.top{padding:0 0 8px!important;margin:0 0 10px!important;align-items:center!important;border-bottom:1px solid var(--line)!important}
+.view>.top>div:first-child::before{content:"Madro";display:block;font-family:var(--serif);font-style:italic;font-weight:700;color:var(--brand);font-size:calc(15px * var(--fs));line-height:1;margin-bottom:2px}
+html.logo-tin .view>.top>div:first-child::before{font-family:'Alfa Slab One',var(--serif);font-style:normal;font-weight:400;text-transform:uppercase;letter-spacing:.04em;color:#d9a43a;font-size:calc(13px * var(--fs))}
+.view>.top h1,#v-madplan>.top h1,#v-indkob>.top h1{font-size:calc(26px * var(--fs))!important}
+.view>.top .sub{margin-top:2px!important;font-size:calc(10px * var(--fs))!important}
+.view>.top>.row .icon-btn{width:36px!important;height:36px!important}
+.view>.top>.row .btn.small,.view>.top>.row .btn{height:36px!important;padding:0 10px!important;min-height:0}
+.view>.top>.row{gap:5px!important;align-self:center!important}
+.splash{position:fixed;inset:0;z-index:2147483000;background:var(--bg);display:grid;place-items:center;padding:24px;transition:opacity .45s ease,visibility .45s}
+.splash.out{opacity:0;visibility:hidden}
+.splash .masthead-w{width:min(420px,88vw);margin:0}
+.splash .masthead-w .masthead span{font-size:calc(52px * var(--fs))}
+.splash .mast-sub{margin-top:10px}
+.set-about{text-align:center;padding:26px 0 8px;display:grid;gap:6px}
+.set-about .masthead-w{margin:0}
+.set-about .ver{font-size:calc(11px * var(--fs));color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.splash{transition:none}}
 /* recipe actions: one tidy block — servings and share on top, two equal buttons, the main action full width */
 .rec-actions.ra{display:flex;flex-direction:column;gap:8px}
 .ra .ra-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -4198,6 +4218,14 @@ document.addEventListener("input",e=>{const t=e.target;if(!t.matches||!t.matches
 /* no snapping while the "add recipe" box is open, so you can scroll freely down to its buttons */
 (function(){const b=$("#importBox");if(!b)return;const f=()=>document.documentElement.classList.toggle("imp-open",b.style.display!=="none");
   new MutationObserver(f).observe(b,{attributes:true,attributeFilter:["style","class"]});f();})();
+/* the big logo: a short splash when the app opens, and a footer in Opsætning */
+(function(){const mw=document.querySelector(".app>.masthead-w")||document.querySelector(".masthead-w");if(!mw)return;
+  const sp=document.createElement("div");sp.className="splash";sp.setAttribute("aria-hidden","true");sp.appendChild(mw.cloneNode(true));document.body.appendChild(sp);
+  setTimeout(()=>{sp.classList.add("out");setTimeout(()=>sp.remove(),600);},900);
+  sp.addEventListener("click",()=>{sp.classList.add("out");setTimeout(()=>sp.remove(),500);});
+  const host=document.querySelector("#v-butikker .stack")||document.getElementById("v-butikker");
+  if(host){const ab=document.createElement("div");ab.className="set-about";ab.appendChild(mw.cloneNode(true));
+    const v=document.createElement("div");v.className="ver";v.textContent=window.__appVersion?"Version "+new Date(+window.__appVersion*1000).toLocaleDateString("da-DK",{day:"numeric",month:"short",year:"numeric"}):"";ab.appendChild(v);host.parentNode.appendChild(ab);}})();
 $("#addItemBtn").addEventListener("click",()=>{try{$("#kbProxy").focus({preventScroll:true});}catch(e){}openAddSheet();});
 $("#shopList").addEventListener("click",async e=>{
   const pk=e.target.closest("[data-pack]");if(pk){e.preventDefault();const it=state.shopping.find(x=>x.id===pk.dataset.pack);if(it)openPackSheet(it);return;}
