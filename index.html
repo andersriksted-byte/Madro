@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795427767";</script>
-<script src="config.js?v=1795427767"></script>
-<script src="importer.js?v=1795427767"></script>
-<script src="shim.js?v=1795427767"></script>
+<script>window.__appVersion="1795427948";</script>
+<script src="config.js?v=1795427948"></script>
+<script src="importer.js?v=1795427948"></script>
+<script src="shim.js?v=1795427948"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -4107,7 +4107,7 @@ $("#showFound").addEventListener("change",e=>{showFound=e.target.checked;try{loc
       setMyPref("badge","on");}else setMyPref("badge","off");
     shopBadge();sync();};})();
 /* keep the screen awake on the shopping list: as normal, 10 min after the last touch, or all the time */
-(function(){const LONG=10*60*1000;let lock=null,timer=null,busy=false;
+(function(){const LONG=60*1000;let lock=null,timer=null,busy=false;
   const mode=()=>myPref("shopWake","normal");
   const onShop=()=>/^#indkob/.test(location.hash)&&document.visibilityState==="visible";
   async function take(){if(lock||busy||!("wakeLock" in navigator))return;busy=true;try{lock=await navigator.wakeLock.request("screen");lock.addEventListener("release",()=>{lock=null;});}catch(e){lock=null;}busy=false;}
@@ -4117,7 +4117,7 @@ $("#showFound").addEventListener("change",e=>{showFound=e.target.checked;try{loc
   ["pointerdown","keydown","scroll","touchstart"].forEach(ev=>document.addEventListener(ev,()=>{if(mode()==="long"&&onShop()){if(!lock)take();arm();}},{passive:true,capture:true}));
   window.addEventListener("hashchange",check);document.addEventListener("visibilitychange",check);
   function draw(){const v=mode();document.querySelectorAll("#wakeSeg [data-wk]").forEach(b=>{b.classList.toggle("on",b.dataset.wk===v);b.setAttribute("aria-pressed",b.dataset.wk===v);});
-    const n=$("#wakeNote");if(n)n.textContent=!("wakeLock" in navigator)?"Kan ikke styres i denne browser. På iPhone kræver det iOS 16.4 eller nyere.":v==="long"?"Skærmen holdes tændt i 10 minutter efter sidste tryk. Gælder kun dig.":v==="on"?"Skærmen slukker ikke, så længe indkøbslisten er åben. Gælder kun dig.":"Skærmen slukker som den plejer. Gælder kun dig.";}
+    const n=$("#wakeNote");if(n)n.textContent=!("wakeLock" in navigator)?"Kan ikke styres i denne browser. På iPhone kræver det iOS 16.4 eller nyere.":v==="long"?"Skærmen holdes tændt i 1 minut efter sidste tryk. Gælder kun dig.":v==="on"?"Skærmen slukker ikke, så længe indkøbslisten er åben. Gælder kun dig.":"Skærmen slukker som den plejer. Gælder kun dig.";}
   const seg=$("#wakeSeg");if(seg)seg.addEventListener("click",e=>{const b=e.target.closest("[data-wk]");if(!b)return;setMyPref("shopWake",b.dataset.wk);draw();check();});
   draw();setTimeout(check,500);})();
 $("#addItemBtn").addEventListener("click",()=>{try{$("#kbProxy").focus({preventScroll:true});}catch(e){}openAddSheet();});

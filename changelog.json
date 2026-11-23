@@ -1,5 +1,13 @@
 [
  {
+  "v": "1795427948",
+  "date": "2026-11-23",
+  "new": [],
+  "fixed": [
+   "\"Længere\" for skærmen på indkøbslisten holder nu skærmen tændt i 1 minut efter sidste tryk i stedet for 10."
+  ]
+ },
+ {
   "v": "1795427767",
   "date": "2026-11-23",
   "new": [
