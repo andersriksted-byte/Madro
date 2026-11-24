@@ -1,5 +1,13 @@
 [
  {
+  "v": "1795514953",
+  "date": "2026-11-24",
+  "new": [],
+  "fixed": [
+   "Når du søger efter en ret til madplanen, forsvinder filtrene, og knapperne Ny opskrift, Uden opskrift og Søg på nettet står lige under søgefeltet, så du kan nå dem over tastaturet, også når der er fundet retter."
+  ]
+ },
+ {
   "v": "1795514607",
   "date": "2026-11-24",
   "new": [
