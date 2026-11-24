@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795453108";</script>
-<script src="config.js?v=1795453108"></script>
-<script src="importer.js?v=1795453108"></script>
-<script src="shim.js?v=1795453108"></script>
+<script>window.__appVersion="1795514607";</script>
+<script src="config.js?v=1795514607"></script>
+<script src="importer.js?v=1795514607"></script>
+<script src="shim.js?v=1795514607"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1119,6 +1119,9 @@ html.sheet-open.sheet-tabs .sheet{max-height:calc(100dvh - var(--tabh,68px) - 28
 .sl-pop .amt-row{gap:6px}.sl-pop .amt-row .stepper span{min-width:0}.sl-pop .amt-row .stepper input{width:40px!important}
 .sl-pop .amt-row .stepper button{width:32px;min-width:32px}.sl-pop .amt-row select{padding-left:6px;padding-right:18px}
 .sl-pop .pop-actions .btn{font-size:calc(14px * var(--fs));padding-left:10px;padding-right:10px}
+#pickSearch.pick-big{font-size:calc(17px * var(--fs));padding:14px 16px;border-radius:14px;border:1.5px solid var(--ink);background:var(--surface)}
+.pk-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:10px 2px 4px;border-bottom:1.5px solid var(--ink);margin-bottom:6px}
+.pk-h span{font-size:calc(12px * var(--fs));color:var(--muted);text-align:right}
 /* recipe actions: one tidy block — servings and share on top, two equal buttons, the main action full width */
 .rec-actions.ra{display:flex;flex-direction:column;gap:8px}
 .ra .ra-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -2858,7 +2861,7 @@ function nearHTML(q,list,dayName){q=String(q||"").trim();return q&&!hasExact(q,l
 function notFoundHTML(q,dayName,near){q=String(q||"").trim();if(!q)return "";
   return '<div class="nf-box'+(near?' near':'')+'">'+(near?'<p><b>Ikke det, du søgte?</b> Der er ingen ret, der hedder "'+esc(q)+'".</p>':'<p><b>"'+esc(q)+'"</b> findes ikke i Kogebogen.</p>')+'<p class="muted">Vil du oprette den som opskrift, eller bare skrive retten på madplanen?</p>'+
     '<button type="button" class="btn wide" data-nf="rec">+ Opret "'+esc(q)+'" i Kogebogen</button>'+
-    '<button type="button" class="btn plain wide" data-nf="note">✎ Skriv på madplanen'+(dayName?' ('+esc(dayName.toLowerCase())+')':'')+' uden opskrift</button>'+
+    '<button type="button" class="btn plain wide" data-nf="note">✎ Opret ret på madplan'+(dayName?' ('+esc(dayName.toLowerCase())+')':'')+' uden opskrift</button>'+
     '<div class="nf-h">🔎 Søg efter en opskrift på nettet</div><div class="nf-web">'+nfWebLinks(q)+'</div>'+
     '<p class="small muted" style="margin-top:4px">Find du en, du kan lide, så kopiér linket og sæt det ind under + Tilføj, så hentes opskriften ind.</p></div>';}
 function nfWebLinks(q){const g=s=>"https://www.google.com/search?q="+encodeURIComponent(s);const hs=[...new Set(discSources().map(x=>srcHost(x.url)).filter(Boolean))];
@@ -3358,12 +3361,24 @@ function openDayAdd(day){
   const los=allLeftovers();
   const list=()=>{
     const useL=f.left?los.filter(l=>l.e.k===f.left):los;
-    const rs=state.recipes.filter(r=>matchesFilter(r,f)).map(r=>({r,u:useL.length?recipeUses(r,useL):[]})).filter(x=>!f.left||x.u.length)
+    const qq=(f.q||"").trim(),ff=qq?Object.assign({},f,{meal:"",type:"",theme:"",dinner:false,kid:"",kidsFav:false,leftOnly:false}):f;
+    const rs=state.recipes.filter(r=>matchesFilter(r,ff)).map(r=>({r,u:useL.length?recipeUses(r,useL):[]})).filter(x=>!f.left||x.u.length)
       .sort((a,b)=>b.u.length-a.u.length||rateOf(b.r)-rateOf(a.r));
     if(f.sort&&f.sort!=="new")sortRecipes(rs,f.sort,x=>x.r,{date,weekend:isWeekend(date),los:useL});
-    return rs.length?rs.slice(0,60).map(({r,u})=>magCardHTML(r,u,"data-pick")).join("")+nearHTML(f.q,rs.map(x=>x.r),DAYS[day]):('<p class="small muted">Ingen opskrifter matcher.</p>'+notFoundHTML(f.q,DAYS[day]));};
+    const q=(f.q||"").trim();
+    if(!q)return rs.length?rs.slice(0,60).map(({r,u})=>magCardHTML(r,u,"data-pick")).join(""):'<p class="small muted">Ingen opskrifter matcher.</p>';
+    /* searching: your own cookbook first, then the community's, then "create without a recipe" or search the web */
+    const toks=norm(q).split(/\s+/).filter(Boolean);
+    const comm=(window.__communityOn?state.community:[]).filter(r=>!commSaved(r)).filter(r=>{const h=norm([r.title,(r.tags||[]).join(" "),(r.ingredients||[]).map(i=>i.name).join(" ")].join(" "));return toks.every(t=>h.includes(t));}).slice(0,20);
+    let h="";
+    if(rs.length)h+='<div class="pk-h"><b>🏠 Fra din kogebog</b><span>'+rs.length+'</span></div>'+rs.slice(0,40).map(({r,u})=>magCardHTML(r,u,"data-pick")).join("");
+    if(comm.length)h+='<div class="pk-h"><b>🌍 Fra fællesskabets kogebog</b><span>Gemmes i din kogebog, når du vælger den</span></div>'+comm.map(r=>magCardHTML(r,[],"data-cpick")).join("");
+    const all=rs.map(x=>x.r).concat(comm);
+    h+=all.length?nearHTML(q,all,DAYS[day]):notFoundHTML(q,DAYS[day]);
+    return h;};
   openSheet(`<div class="sheet-head"><div><h2>${DAYS[day]} ${fmtDate(date)}</h2><div class="sub">Vælg en ret</div></div><div class="row" style="gap:8px;flex-wrap:nowrap;align-items:center"><button type="button" class="btn small ghost" id="noteToggle">Andet</button><button type="button" class="btn small" id="newRecToggle">+ Tilføj</button>${closeBtn}</div></div>
   <div class="stack">
+    <input type="text" data-clear id="pickSearch" class="pick-big" placeholder="Hvad skal I have? Fx lasagne, kylling" aria-label="Søg efter en ret" enterkeyhint="search" autocomplete="off">
     <div class="card stack" id="noteBox" style="display:none;gap:8px">
       <h3>Uden opskrift</h3>
       <div class="row" data-presets style="gap:6px"></div>
@@ -3383,7 +3398,6 @@ function openDayAdd(day){
     </div>
     ${los.length?'<div class="left-box"><div class="row" style="justify-content:space-between"><b>Du har til overs</b><button type="button" class="btn plain small" id="leftIdeas">Idéer fra Claude</button></div><div class="row" style="gap:6px" id="leftChips">'+los.map(l=>'<button type="button" class="chip lchip" data-left="'+esc(l.e.k)+'" title="'+esc(l.src)+'">'+esc(l.e.k)+': '+esc(l.text.replace(" til overs",""))+'</button>').join("")+'</div><div class="small muted">Tryk på en rest for kun at se retter, der bruger den.</div></div>':''}
     <div class="qs-row pick-qs"><div class="dd-bar" id="pickDD" role="group" aria-label="Sortér og filtrér"></div><button type="button" class="icon-btn" id="pickSearchTg" aria-label="Søg" aria-expanded="false"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
-    <input type="text" data-clear id="pickSearch" placeholder="Søg, fx kylling" aria-label="Søg i opskrifter" enterkeyhint="search" autocomplete="off" hidden>
     <div class="pick-list" id="pickList"></div>
 
   </div>`,s=>{
@@ -3403,7 +3417,7 @@ function openDayAdd(day){
     s.querySelector("#noteForm2").addEventListener("submit",ev=>{ev.preventDefault();const v=s.querySelector("#noteText2").value.trim();if(v){remember(v);add(withImg({note:v}));}else s.querySelector("#noteText2").focus();});
     const drawDD=()=>{const bar=s.querySelector("#pickDD");bar.innerHTML=ddBarHTML(f);wireDD(bar,f,ch=>{if(ch)redraw();else drawDD();});};
     const st=s.querySelector("#pickSearchTg"),si=s.querySelector("#pickSearch");
-    st.onclick=()=>{const show=si.hidden;si.hidden=!show;st.setAttribute("aria-expanded",String(show));if(show){f.ddOpen="";drawDD();si.focus();}else if(f.q){f.q="";si.value="";s.querySelector("#pickList").innerHTML=list();}st.toggleAttribute("data-q",!!f.q);};
+    st.style.display="none";const shEl=s.closest(".sheet")||$("#sheet");shEl.style.minHeight="min(88dvh, calc(100dvh - 28px))";setTimeout(()=>{try{si.focus();}catch(e){}},60);
     const redraw=()=>{drawDD();s.querySelector("#pickList").innerHTML=list();
       s.querySelectorAll("[data-left]").forEach(b=>b.classList.toggle("on",f.left===b.dataset.left));};
     s.querySelectorAll("[data-left]").forEach(b=>b.onclick=()=>{f.left=f.left===b.dataset.left?"":b.dataset.left;redraw();});
@@ -3429,9 +3443,11 @@ function openDayAdd(day){
         await add({recipeId:nid,servings:rec.servings||4});toast(rec.title+" er lagt på "+DAYS[day].toLowerCase());}
       catch(e){st.textContent=recipeErr(e);btn.disabled=false;}
     };
-    s.querySelector("#pickList").addEventListener("click",ev=>{const nf=ev.target.closest("[data-nf]");if(nf){const q=(f.q||"").trim();
+    s.querySelector("#pickList").addEventListener("click",async ev=>{const nf=ev.target.closest("[data-nf]");if(nf){const q=(f.q||"").trim();
         if(nf.dataset.nf==="note"){add({note:q});}
         else openEditor(null,{title:q},(nid,rec)=>{add({recipeId:nid,servings:rec.servings||4});toast(rec.title+" er lagt på "+DAYS[day].toLowerCase());});return;}
+      const cb=ev.target.closest("[data-cpick]");if(cb){const r=state.community.find(x=>x.id===cb.dataset.cpick);if(!r)return;cb.disabled=true;
+        const nid=await saveCommunityCopy(r);if(!nid){cb.disabled=false;return;}await add({recipeId:nid,servings:r.servings||4});toast(r.title+" er gemt i din kogebog og lagt på "+DAYS[day].toLowerCase());return;}
       const b=ev.target.closest("[data-pick]");if(!b)return;const r=getRecipe(b.dataset.pick);if(r)add({recipeId:r.id,servings:r.servings||4});});
   });
 }

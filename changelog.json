@@ -1,5 +1,13 @@
 [
  {
+  "v": "1795514607",
+  "date": "2026-11-24",
+  "new": [
+   "Når du trykker + på en dag i madplanen, kommer du direkte til et søgefelt. Skriv hvad I skal have: retter fra din egen kogebog vises først, derefter fra fællesskabets kogebog (de gemmes i din kogebog, når du vælger dem). Findes retten ikke, kan du oprette den uden opskrift, lave en opskrift eller søge på nettet."
+  ],
+  "fixed": []
+ },
+ {
   "v": "1795452120",
   "date": "2026-11-23",
   "new": [
