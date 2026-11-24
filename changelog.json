@@ -1,5 +1,13 @@
 [
  {
+  "v": "1795515501",
+  "date": "2026-11-24",
+  "new": [
+   "I søgningen på madplanen spørger \"Opskrift: link eller skriv\" nu, om du vil oprette fra et link eller skrive selv. \"Uden opskrift\" åbner menuen med forvalg, tekst under og billede, med det du har søgt på udfyldt."
+  ],
+  "fixed": []
+ },
+ {
   "v": "1795515230",
   "date": "2026-11-24",
   "new": [
