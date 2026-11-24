@@ -1,5 +1,13 @@
 [
  {
+  "v": "1795515230",
+  "date": "2026-11-24",
+  "new": [
+   "I søgningen på madplanen hedder knappen nu \"Opskrift: link eller skriv\". Den åbner feltet, hvor du kan indsætte et link til en opskrift eller skrive opskriften selv. Du kan også indsætte et link direkte i søgefeltet."
+  ],
+  "fixed": []
+ },
+ {
   "v": "1795514953",
   "date": "2026-11-24",
   "new": [],

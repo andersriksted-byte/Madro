@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795514953";</script>
-<script src="config.js?v=1795514953"></script>
-<script src="importer.js?v=1795514953"></script>
-<script src="shim.js?v=1795514953"></script>
+<script>window.__appVersion="1795515230";</script>
+<script src="config.js?v=1795515230"></script>
+<script src="importer.js?v=1795515230"></script>
+<script src="shim.js?v=1795515230"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1124,7 +1124,7 @@ html.sheet-open.sheet-tabs .sheet{max-height:calc(100dvh - var(--tabh,68px) - 28
 .pk-h span{font-size:calc(12px * var(--fs));color:var(--muted);text-align:right}
 .pk-top{position:sticky;top:0;z-index:6;background:var(--bg);padding:4px 0 6px;display:grid;gap:8px;margin-top:-4px}
 .pk-acts{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.pk-acts .chip{text-decoration:none;font-weight:600;justify-content:center;text-align:center;padding:8px 6px;font-size:calc(13px * var(--fs));line-height:1.2;white-space:normal;border-radius:12px}
+.pk-acts .chip{text-decoration:none;font-weight:600;min-height:44px;justify-content:center;text-align:center;padding:8px 6px;font-size:calc(13px * var(--fs));line-height:1.2;white-space:normal;border-radius:12px}
 .pk-acts[hidden]{display:none}
 /* recipe actions: one tidy block — servings and share on top, two equal buttons, the main action full width */
 .rec-actions.ra{display:flex;flex-direction:column;gap:8px}
@@ -3381,8 +3381,8 @@ function openDayAdd(day){
     return h;};
   openSheet(`<div class="sheet-head"><div><h2>${DAYS[day]} ${fmtDate(date)}</h2><div class="sub">Vælg en ret</div></div><div class="row" style="gap:8px;flex-wrap:nowrap;align-items:center"><button type="button" class="btn small ghost" id="noteToggle">Andet</button><button type="button" class="btn small" id="newRecToggle">+ Tilføj</button>${closeBtn}</div></div>
   <div class="stack">
-    <div class="pk-top"><input type="text" data-clear id="pickSearch" class="pick-big" placeholder="Hvad skal I have? Fx lasagne, kylling" aria-label="Søg efter en ret" enterkeyhint="search" autocomplete="off">
-    <div class="pk-acts" id="pkActs" hidden><button type="button" class="chip" data-nfa="rec">📖 Ny opskrift</button><button type="button" class="chip" data-nfa="note">✎ Uden opskrift</button><a class="chip" id="pkWeb" href="#" target="_blank" rel="noopener">🔎 Søg på nettet</a></div></div>
+    <div class="pk-top"><input type="text" data-clear id="pickSearch" class="pick-big" placeholder="Hvad skal I have? Søg, eller indsæt et link" aria-label="Søg efter en ret" enterkeyhint="search" autocomplete="off">
+    <div class="pk-acts" id="pkActs" hidden><button type="button" class="chip" data-nfa="rec">📖 Opskrift: link eller skriv</button><button type="button" class="chip" data-nfa="note">✎ Uden opskrift</button><a class="chip" id="pkWeb" href="#" target="_blank" rel="noopener">🔎 Søg på nettet</a></div></div>
     <div class="card stack" id="noteBox" style="display:none;gap:8px">
       <h3>Uden opskrift</h3>
       <div class="row" data-presets style="gap:6px"></div>
@@ -3433,14 +3433,15 @@ function openDayAdd(day){
 }};
     acts.addEventListener("click",ev=>{const b=ev.target.closest("[data-nfa]");if(!b)return;const q=(f.q||"").trim();if(!q)return;
       if(b.dataset.nfa==="note")add({note:q});
-      else openEditor(null,{title:q},(nid,rec)=>{add({recipeId:nid,servings:rec.servings||4});toast(rec.title+" er lagt på "+DAYS[day].toLowerCase());});});
-    si.addEventListener("input",ev=>{f.q=ev.target.value;st.toggleAttribute("data-q",!!f.q.trim());syncActs();s.querySelector("#pickList").innerHTML=list();});
+      else{const box=s.querySelector("#newRecBox");if(box.style.display==="none")s.querySelector("#newRecToggle").click();setTimeout(()=>{box.scrollIntoView({block:"start",behavior:"smooth"});s.querySelector("#nrUrl").focus();},50);}});
+    si.addEventListener("input",ev=>{const m=ev.target.value.trim().match(/^https?:\/\/\S+$/i);if(m){const box=s.querySelector("#newRecBox");if(box.style.display==="none")s.querySelector("#newRecToggle").click();s.querySelector("#nrUrl").value=m[0];ev.target.value="";f.q="";syncActs();s.querySelector("#pickList").innerHTML=list();toast("Linket er sat ind under Ny opskrift");return;}
+      f.q=ev.target.value;st.toggleAttribute("data-q",!!f.q.trim());syncActs();s.querySelector("#pickList").innerHTML=list();});
     s.querySelector("#newRecToggle").onclick=()=>{const b=s.querySelector("#newRecBox");const show=b.style.display==="none";b.style.display=show?"flex":"none";s.querySelector("#noteBox").style.display="none";s.querySelector("#noteToggle").textContent="Andet";b.closest(".sheet")?.scrollTo?.({top:0,behavior:"smooth"});const t=s.querySelector("#newRecToggle");t.textContent=show?"Luk":"+ Tilføj";if(show)s.querySelector("#nrUrl").focus();};
     s.querySelector("#nrText").addEventListener("input",()=>{const t=s.querySelector("#nrText").value.trim();if(/^https?:\/\/\S+$/.test(t)){s.querySelector("#nrUrl").value=t;s.querySelector("#nrText").value="";}
       else{const m=t.match(/https?:\/\/[^\s"'<>]+/);if(m&&!s.querySelector("#nrUrl").value.trim())s.querySelector("#nrUrl").value=m[0].replace(/[).,]+$/,"");}});
     s.querySelector("#nrNote").onclick=()=>{const t=s.querySelector("#nrText").value.trim().split("\n")[0].slice(0,80);if(s.querySelector("#newRecBox").style.display!=="none")s.querySelector("#newRecToggle").click();if(s.querySelector("#noteBox").style.display==="none")s.querySelector("#noteToggle").click();
       const ti=s.querySelector("#noteText2");if(t&&!ti.value)ti.value=t;ti.focus();ti.scrollIntoView({block:"center"});};
-    s.querySelector("#nrManual").onclick=()=>openEditor(null,{source:s.querySelector("#nrUrl").value.trim()},(nid,rec)=>{add({recipeId:nid,servings:rec.servings||4});toast(rec.title+" er lagt på "+DAYS[day].toLowerCase());});
+    s.querySelector("#nrManual").onclick=()=>openEditor(null,{source:s.querySelector("#nrUrl").value.trim(),title:(f.q||"").trim()&&!/^https?:/i.test((f.q||"").trim())?(f.q||"").trim():""},(nid,rec)=>{add({recipeId:nid,servings:rec.servings||4});toast(rec.title+" er lagt på "+DAYS[day].toLowerCase());});
     s.querySelector("#nrGo").onclick=async()=>{
       const url=s.querySelector("#nrUrl").value.trim(),text=s.querySelector("#nrText").value.trim(),st=s.querySelector("#nrStatus"),btn=s.querySelector("#nrGo");
       if(!text){
