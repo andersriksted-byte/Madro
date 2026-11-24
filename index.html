@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795515501";</script>
-<script src="config.js?v=1795515501"></script>
-<script src="importer.js?v=1795515501"></script>
-<script src="shim.js?v=1795515501"></script>
+<script>window.__appVersion="1795515642";</script>
+<script src="config.js?v=1795515642"></script>
+<script src="importer.js?v=1795515642"></script>
+<script src="shim.js?v=1795515642"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -3386,7 +3386,7 @@ function openDayAdd(day){
     <div class="pk-acts" id="pkActs" hidden><button type="button" class="chip" data-nfa="rec">📖 Opskrift: link eller skriv</button><button type="button" class="chip" data-nfa="note">✎ Uden opskrift</button><a class="chip" id="pkWeb" href="#" target="_blank" rel="noopener">🔎 Søg på nettet</a></div>
     <div class="pk-choice" id="pkRecChoice" hidden><span class="small muted">Hvordan vil du oprette opskriften?</span><div class="row" style="gap:6px;flex-wrap:nowrap"><button type="button" class="btn small" data-nfa="link">🔗 Fra et link</button><button type="button" class="btn small plain" data-nfa="manual">✍️ Skriv selv</button></div></div></div>
     <div class="card stack" id="noteBox" style="display:none;gap:8px">
-      <h3>Uden opskrift</h3>
+      <div class="row" style="justify-content:space-between;align-items:center"><h3>Uden opskrift</h3><button type="button" class="linkbtn" data-boxclose="noteToggle">Luk</button></div>
       <div class="row" data-presets style="gap:6px"></div>
       <form class="stack" id="noteForm2" style="gap:8px"><input type="text" id="noteText2" maxlength="80" placeholder="Vælg herover, eller skriv selv" aria-label="Punkt uden opskrift">
       <input type="text" id="noteSub2" maxlength="80" placeholder="Tekst under, fx hos Claus og Nina (valgfri)" aria-label="Tekst under punktet">
@@ -3395,7 +3395,7 @@ function openDayAdd(day){
       <p class="small muted" style="margin:0">Tryk på et forvalg, tilføj evt. tekst og billede, og tryk Gem på madplanen. Det du selv skriver, gemmes som et forvalg. Tryk × for at slette et forvalg. Kommer ikke på indkøbslisten.</p>
     </div>
     <div class="card stack" id="newRecBox" style="display:none;gap:8px">
-      <h3>Ny opskrift til ${DAYS[day].toLowerCase()}</h3>
+      <div class="row" style="justify-content:space-between;align-items:center"><h3>Ny opskrift til ${DAYS[day].toLowerCase()}</h3><button type="button" class="linkbtn" data-boxclose="newRecToggle">Luk</button></div>
       <div><label class="lbl" for="nrUrl">Link til opskriften</label><input type="url" id="nrUrl" placeholder="https://…"></div>
       <div><label class="lbl" for="nrText">Opskriftens tekst (valgfri)</label><textarea id="nrText" style="min-height:90px" placeholder="Indsæt teksten, så sættes den op med det samme. ${window.__webApp?"Kun link: hentes automatisk med det samme.":"Kun link: hentes "+recWhen()+"."}"></textarea></div>
       <div class="row"><button class="btn" type="button" id="nrGo">Læg på ${DAYS[day].toLowerCase()}</button><button class="btn plain small" type="button" id="nrManual">Skriv selv</button></div>
@@ -3414,6 +3414,8 @@ function openDayAdd(day){
       const su=s.querySelector("#noteSub2");su.focus();return;}
       const x=e.target.closest("[data-delnote]");if(x){const t=x.dataset.delnote;if(!await confirmBox('Slet forvalget "'+t+'"?',"","Slet"))return;state.settings.notePresets=notePresets().filter(v=>v!==t);drawPresets();await saveSettings();}});
     const remember=v=>{const l=notePresets();if(!l.some(x=>x.toLowerCase()===v.toLowerCase())){state.settings.notePresets=l.concat(v).slice(-12);saveSettings();}};
+    s.querySelector("#noteToggle").style.display="none";s.querySelector("#newRecToggle").style.display="none";
+    s.querySelectorAll("[data-boxclose]").forEach(b=>b.onclick=()=>{s.querySelector("#"+b.dataset.boxclose).click();try{s.querySelector("#pickSearch").focus();}catch(e){}});
     s.querySelector("#noteToggle").onclick=()=>{const b=s.querySelector("#noteBox"),t=s.querySelector("#noteToggle");const show=b.style.display==="none";b.style.display=show?"flex":"none";t.textContent=show?"Luk":"Andet";
       s.querySelector("#newRecBox").style.display="none";s.querySelector("#newRecToggle").textContent="+ Tilføj";b.closest(".sheet")?.scrollTo?.({top:0,behavior:"smooth"});};
     let noteImgData="";const nPrev=s.querySelector("#noteImgPrev");
