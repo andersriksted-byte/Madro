@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795515642";</script>
-<script src="config.js?v=1795515642"></script>
-<script src="importer.js?v=1795515642"></script>
-<script src="shim.js?v=1795515642"></script>
+<script>window.__appVersion="1795694481";</script>
+<script src="config.js?v=1795694481"></script>
+<script src="importer.js?v=1795694481"></script>
+<script src="shim.js?v=1795694481"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -3414,7 +3414,7 @@ function openDayAdd(day){
       const su=s.querySelector("#noteSub2");su.focus();return;}
       const x=e.target.closest("[data-delnote]");if(x){const t=x.dataset.delnote;if(!await confirmBox('Slet forvalget "'+t+'"?',"","Slet"))return;state.settings.notePresets=notePresets().filter(v=>v!==t);drawPresets();await saveSettings();}});
     const remember=v=>{const l=notePresets();if(!l.some(x=>x.toLowerCase()===v.toLowerCase())){state.settings.notePresets=l.concat(v).slice(-12);saveSettings();}};
-    s.querySelector("#noteToggle").style.display="none";s.querySelector("#newRecToggle").style.display="none";
+    s.querySelector("#newRecToggle").style.display="none";
     s.querySelectorAll("[data-boxclose]").forEach(b=>b.onclick=()=>{s.querySelector("#"+b.dataset.boxclose).click();try{s.querySelector("#pickSearch").focus();}catch(e){}});
     s.querySelector("#noteToggle").onclick=()=>{const b=s.querySelector("#noteBox"),t=s.querySelector("#noteToggle");const show=b.style.display==="none";b.style.display=show?"flex":"none";t.textContent=show?"Luk":"Andet";
       s.querySelector("#newRecBox").style.display="none";s.querySelector("#newRecToggle").textContent="+ Tilføj";b.closest(".sheet")?.scrollTo?.({top:0,behavior:"smooth"});};
