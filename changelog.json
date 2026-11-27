@@ -1,5 +1,13 @@
 [
  {
+  "v": "1795805425",
+  "date": "2026-11-27",
+  "new": [],
+  "fixed": [
+   "\"Højst antal butikker pr. indkøbstur\" gælder nu kun den, der vælger det. Vælger én i familien 1 butik, påvirker det ikke de andres valg."
+  ]
+ },
+ {
   "v": "1795515501",
   "date": "2026-11-24",
   "new": [

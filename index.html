@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795694481";</script>
-<script src="config.js?v=1795694481"></script>
-<script src="importer.js?v=1795694481"></script>
-<script src="shim.js?v=1795694481"></script>
+<script>window.__appVersion="1795805425";</script>
+<script src="config.js?v=1795805425"></script>
+<script src="importer.js?v=1795805425"></script>
+<script src="shim.js?v=1795805425"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1524,6 +1524,7 @@ body.wv-on .toast{z-index:210}
         <div class="set-sec">
         <h4>Højst antal butikker pr. indkøbstur</h4>
         <div class="seg" id="maxSeg"><button type="button" data-v="1">1</button><button type="button" data-v="2">2</button><button type="button" data-v="3">3</button></div>
+        <p class="small muted" style="margin:0">Gælder kun dig. De andre i familien vælger selv.</p>
         </div>
         <div class="set-sec">
         <h4>Ugens tilbud</h4>
@@ -4583,7 +4584,7 @@ function buildPlan(){
   const fixed=all.filter(x=>x.store),items=all.filter(x=>!x.store);
   // stores you picked for single items are always part of the trip
   const must=[...new Set(fixed.map(x=>x.store))];
-  const k=Math.max(must.length,Math.min(state.settings.maxStores||2,sel.length));
+  const k=Math.max(must.length,Math.min(myMaxStores(),sel.length));
   const pool=sel.filter(x=>!must.includes(x));
   const matches=items.map(it=>({it,offers:offersFor(it.name,sel)}));
   let best=null;
@@ -4810,7 +4811,7 @@ function renderStores(){renderSched();renderKidsEdit();renderSrcEdit();
   const custom=st.customStores||[];
   $("#storeChips").innerHTML=allStores().map(s=>'<span class="row" style="gap:2px"><button type="button" class="chip'+(st.stores.includes(s)?" on":"")+'" data-store="'+esc(s)+'" aria-pressed="'+st.stores.includes(s)+'">'+(st.stores.includes(s)?"✓ ":"")+esc(s)+'</button>'+(custom.includes(s)?'<button type="button" class="chip" data-rmstore="'+esc(s)+'" aria-label="Fjern '+esc(s)+'" style="padding:6px 9px">×</button>':'')+'</span>').join("");
   $("#primary").innerHTML=(st.stores.length?st.stores:allStores()).map(s=>'<option'+(s===st.primary?" selected":"")+'>'+esc(s)+'</option>').join("");
-  {const n=Math.max(1,st.stores.length),cur=Math.min(st.maxStores||2,n);/* one button per chosen store */
+  {const n=Math.max(1,st.stores.length),cur=Math.min(myMaxStores(),n);/* one button per chosen store */
    $("#maxSeg").innerHTML=Array.from({length:n},(_,i)=>'<button type="button" data-v="'+(i+1)+'"'+(i+1===cur?' class="on"':'')+'>'+(i+1)+'</button>').join("");}
   const off=state.offers;const offs=allOffers();
   if(!offs.length){$("#offerStatus").innerHTML='<span class="pill">Ingen gældende tilbud</span>';}
@@ -4832,7 +4833,9 @@ $("#addStoreForm").addEventListener("submit",async e=>{e.preventDefault();const 
   else{st.customStores=[...(st.customStores||[]),v];st.stores=[...st.stores,v];}
   $("#addStore").value="";renderStores();await saveSettings();toast((exists||v)+" er valgt");});
 $("#primary").addEventListener("change",async e=>{state.settings.primary=e.target.value;await saveSettings();});
-$("#maxSeg").addEventListener("click",async e=>{const b=e.target.closest("button");if(!b)return;state.settings.maxStores=+b.dataset.v;renderStores();await saveSettings();});
+/* how many stores per trip is each person's own choice; the family setting is only the starting point */
+function myMaxStores(){const v=+myPref("maxStores",0);return v>0?v:(state.settings.maxStores||2);}
+$("#maxSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;setMyPref("maxStores",+b.dataset.v);renderStores();try{renderShop();}catch(x){}});
 $("#copyOffer").addEventListener("click",()=>copy("Opdater tilbuddene i min madplan-app"));
 
 init();
