@@ -19,10 +19,10 @@
 <script src="lib/firebase-app-compat.js"></script>
 <script src="lib/firebase-auth-compat.js"></script>
 <script src="lib/firebase-firestore-compat.js"></script>
-<script>window.__appVersion="1795805425";</script>
-<script src="config.js?v=1795805425"></script>
-<script src="importer.js?v=1795805425"></script>
-<script src="shim.js?v=1795805425"></script>
+<script>window.__appVersion="1795865654";</script>
+<script src="config.js?v=1795865654"></script>
+<script src="importer.js?v=1795865654"></script>
+<script src="shim.js?v=1795865654"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -4834,7 +4834,7 @@ $("#addStoreForm").addEventListener("submit",async e=>{e.preventDefault();const 
   $("#addStore").value="";renderStores();await saveSettings();toast((exists||v)+" er valgt");});
 $("#primary").addEventListener("change",async e=>{state.settings.primary=e.target.value;await saveSettings();});
 /* how many stores per trip is each person's own choice; the family setting is only the starting point */
-function myMaxStores(){const v=+myPref("maxStores",0);return v>0?v:(state.settings.maxStores||2);}
+function myMaxStores(){const v=+myPref("maxStores",0);return v>0?v:2;}
 $("#maxSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;setMyPref("maxStores",+b.dataset.v);renderStores();try{renderShop();}catch(x){}});
 $("#copyOffer").addEventListener("click",()=>copy("Opdater tilbuddene i min madplan-app"));
 

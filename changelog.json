@@ -1,5 +1,13 @@
 [
  {
+  "v": "1795865654",
+  "date": "2026-11-28",
+  "new": [],
+  "fixed": [
+   "Indkøbslisten viste kun 1 butik for dem, der ikke selv havde valgt antal butikker, fordi en andens valg blev brugt. Nu starter alle på 2 butikker, og hver person vælger selv under Opsætning → Indkøb."
+  ]
+ },
+ {
   "v": "1795805425",
   "date": "2026-11-27",
   "new": [],
